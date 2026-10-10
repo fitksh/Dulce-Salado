@@ -29,6 +29,6 @@ Conservar diseño y MVP. Ejecutar secuencialmente, sin ampliar precios, carrito,
 - [x] Tarea 4 — Exportar CSV completo/filtrado desde Admin con permisos y protección de fórmulas; 13 tests afectados y 14 comprobaciones Chromium OK.
 - [x] Tarea 5 — Configuración comercial única, dirección y Cómo llegar; migración 0003 aplicada, 23 tests afectados y 15 comprobaciones Chromium OK.
 - [x] Tarea 6 — Intervalos semanales, validaciones y estado abierto/cerrado actualizado localmente; migración 0004 aplicada, 33 tests afectados, 7 Node y 16 comprobaciones Chromium OK.
-- [x] Tarea 7 — QA completo: 60 Django, 7 Node y 16 Chromium OK, responsive/axe/regresiones; publicado en main, CI success run 38095362239.
+- [x] Tarea 7 — QA completo: 60 Django, 7 Node y 16 Chromium OK, responsive/axe/regresiones; publicado en main, CI success run 38095823292 (incluye corrección de foco tras Escape).
 
 Etapa complementaria completada y publicada. Historial MVP conservado. Siguiente paso: revisar datos comerciales y pruebas manuales reales de teléfono/lector/Maps/Excel según QA.md. Despliegue de producción permanece fuera de alcance.

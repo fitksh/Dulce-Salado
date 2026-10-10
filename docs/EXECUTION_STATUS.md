@@ -3,7 +3,7 @@
 Fecha de inicio: 2026-10-10. Trabajo autorizado secuencial en `main` hasta completar el MVP.
 
 ## Tarea actual
-Etapa complementaria UX/UI implementada y publicada. CI funcional verificada; ajustando retorno de foco tras un fallo intermitente del último cierre documental. El MVP anterior completado se conserva como historial. Datos comerciales reales y pruebas de dispositivo/lector/Excel requieren revisión del dueño.
+Etapa complementaria UX/UI COMPLETADA Y PUBLICADA. Siete tareas verificadas, incluido ajuste de foco tras Escape, con CI success. El MVP anterior completado se conserva como historial. Datos comerciales reales y pruebas de dispositivo/lector/Excel requieren revisión del dueño.
 
 ## Decisiones autorizadas
 - kg, unidad y paquete; incrementos iniciales 0,1 kg y 1 unidad/paquete. Sin conversión de gramos.
@@ -114,3 +114,5 @@ Verificación local de configuración (sin exponer valores): dirección y enlace
 Este commit sólo cierra documentación y roadmap. Su hash se obtiene con git log -1 --format=%H y su CI se verifica al publicarlo; no se incrusta el identificador de un commit dentro de sí mismo.
 
 Corrección de CI: run 38095501842 (commit documental 8fffa5b) falló intermitentemente en el test de foco tras Escape. Se comprobaba el botón antes de finalizar el refresh del evento close; los escenarios dependientes luego agotaban su espera. Se hace explícito el foco al botón de revisión antes de refrescar y el test espera la respuesta y foco recuperado. Verificada localmente: 13 tests Django afectados, check/Ruff/migraciones y 16 Chromium OK. Pendiente verificar la corrección en CI; las suites Django/Node/migraciones/lint del run anterior pasaron.
+
+Corrección publicada y verificada: `95e79262507aff4b718690161d3f1dca30e91fb4`, [CI success run 38095823292](https://github.com/fitksh/Dulce-Salado/actions/runs/38095823292). Suite completa de CI correcta (60 Django, 7 Node, 16 Chromium, checks/Ruff y migraciones). Entorno local reconstruido nuevamente, check OK y migrate sin pendientes. Servidor/base QA descartados. El fallo anterior queda como historial; no quedan correcciones de implementación pendientes. Este cierre documental registra el último resultado funcional conocido; el hash y CI del propio commit de documentación se consultan en Git/GitHub.
