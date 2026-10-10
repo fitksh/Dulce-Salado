@@ -23,11 +23,11 @@ Reducir consultas manuales de precios y facilitar pedidos de productos y cantida
 ## 5. Sin implementar en MVP
 Autenticación de clientes, historial/registro de pedidos, stock, pagos, pagos a cuenta, envíos, facturación, cupones, promociones complejas, umbrales mayoristas automáticos, múltiples fotografías, ratings, newsletter, notificaciones, chat embebido, API REST pública, WhatsApp Business API, PWA.
 
-## 6. Entidades previstas (no implementadas en el esqueleto)
+## 6. Entidades
 **Category**: `name`, `slug`, `sort_order`, `is_active`.
 **Product**: `category`, `name`, `brand` (opcional), `description` (opcional), `sale_unit`, `quantity_step`, `retail_price`, `wholesale_price` (opcional), `wholesale_condition` (opcional), `image` (opcional), `is_active`, `created_at`, `updated_at`.
 
-Las unidades disponibles y la semántica exacta de `quantity_step` deben concretarse antes de implementar modelos y widgets. La unidad de venta se muestra siempre junto al precio; se recomienda precio por kilogramo para artículos vendidos por peso, pero esto aún requiere confirmación. No inventar un catálogo real ni precios.
+Decisiones autorizadas el 2026-10-10: kg, unidad y paquete. Incremento inicial 0,1 kg o 1 unidad/paquete; cantidad positiva y múltiplo de ese incremento. El administrador puede definir incrementos positivos con hasta dos decimales para kg e incrementos enteros para unidad/paquete. Sin conversiones de gramos. Precios por unidad de venta en ARS con dos decimales, no negativos; mayorista opcional y manual. No inventar un catálogo real ni precios.
 
 ## 7. Reglas de cálculo
 - Ambos precios expresan el importe por unidad de venta definida para ese producto.
@@ -67,10 +67,5 @@ Ofrecer “Volver al carrito” y “Continuar a WhatsApp”.
 9. Interfaz usable en móvil con teclado, lector de pantalla y controles táctiles.
 10. No se persisten pedidos ni se gestionan existencias.
 
-## 11. Cuestiones abiertas para resolver durante fase de modelos
-- Lista exacta de unidades (kg, unidad, paquete, etc.), incrementos y conversión de gramos si corresponde.
-- ¿Precio mayorista es opcional y cómo se presenta al faltar? Propuesta: ocultar opción mayorista.
-- Número WhatsApp real y denominación comercial final para encabezados.
-- Si el negocio prefiere redondeo monetario sin centavos o admite centavos. Propuesta inicial: dos decimales internamente, formato ARS es-AR.
-
-No decidir estas cuestiones mediante suposiciones silenciosas.
+## 11. Configuración comercial pendiente
+El dueño debe configurar el número real de WhatsApp por entorno y cargar productos/precios reales en Admin. Denominación inicial: Dulce y Salado. Mayorista sin precio no se ofrece. Los subtotales se redondean a dos decimales con mitad hacia arriba y el total suma esos subtotales, con formato ARS es-AR.
