@@ -95,3 +95,6 @@ No usar `down -v` para conservar base e imágenes. Los volúmenes `postgres_data
 - [QA y validaciones manuales](docs/QA.md).
 - Sólo desarrollo local en main. Servidor Django de desarrollo ligado a localhost; VPS, HTTPS, backups remotos y despliegue quedan fuera del MVP.
 - Validación manual pendiente en teléfono real con TalkBack/VoiceOver y WhatsApp del comercio. Los colores son provisionales hasta disponer del logo original.
+# Exportar catálogo desde Admin
+
+En el listado de productos, «Exportar CSV» descarga todos los productos del conjunto actual, incluidas páginas no visibles. Conserva búsqueda y filtros por categoría, unidad y activo. Sin filtros incluye activos e inactivos. Requiere usuario staff con permiso de ver o cambiar productos. Archivo UTF-8 con BOM y separador `;`, importes con coma decimal para Excel es-AR. Los textos que podrían ejecutarse como fórmulas llevan un apóstrofo protector. No existe importación.

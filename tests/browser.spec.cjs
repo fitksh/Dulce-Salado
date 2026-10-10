@@ -1,7 +1,7 @@
 // Sólo pruebas: herramientas instaladas en .qa, sin dependencias del sitio.
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { mkdirSync } = require("node:fs");
+const { mkdirSync, readFileSync } = require("node:fs");
 const { chromium } = require("../.qa/node_modules/playwright");
 const { default: AxeBuilder } = require("../.qa/node_modules/@axe-core/playwright");
 const base = process.env.QA_BASE_URL || "http://127.0.0.1:8001";
@@ -130,6 +130,18 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await page.locator("#cart-review").isDisabled(), true);
     await setQuantity("0.3");
     await waitCart("$ 27,15");
+  });
+
+  await t.test("Admin descarga CSV del conjunto filtrado", async () => {
+    await admin.goto(`${base}/admin/catalog/product/?q=Scroll&sale_unit__exact=unidad&is_active__exact=1`);
+    const downloaded = admin.waitForEvent("download");
+    await admin.getByRole("link", { name: "Exportar CSV", exact: true }).click();
+    const download = await downloaded;
+    const bytes = readFileSync(await download.path());
+    assert.equal(bytes.subarray(0, 3).equals(Buffer.from([0xef, 0xbb, 0xbf])), true);
+    const lines = bytes.toString("utf8").trim().split(/\r?\n/);
+    assert.equal(lines.length, 11);
+    assert.equal(lines.slice(1).every(line => line.includes("ZZZ QA Scroll") && line.endsWith(";Sí")), true);
   });
 
   await t.test("carrito largo conserva control, foco y scroll durante y después del recálculo", async () => {
