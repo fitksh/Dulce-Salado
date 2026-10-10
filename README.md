@@ -17,11 +17,17 @@ Docker Engine / Docker Desktop y Docker Compose.
 ## Inicio local
 ```sh
 cp .env.example .env
+python -c "import secrets; print(secrets.token_urlsafe(50))"
+```
+Copiar la clave generada en `DJANGO_SECRET_KEY` de `.env` y cambiar `POSTGRES_PASSWORD` por una contraseña local. No compartir ni versionar `.env`. Django no inicia con una clave vacía. En PowerShell usar `Copy-Item .env.example .env`.
+
+```sh
 docker compose up --build -d
 docker compose exec web python manage.py migrate
 docker compose exec web python manage.py createsuperuser
 ```
 Visitar `http://localhost:8000/` y `http://localhost:8000/admin/`.
+El superusuario creado administra todo. También pueden acceder usuarios activos con `is_staff`, limitados a los permisos asignados en Django Admin; `is_staff` por sí solo no autoriza editar productos.
 
 Pruebas:
 ```sh
