@@ -42,10 +42,13 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await admin.locator("#id_retail_price").fill(retail);
     await admin.locator("#id_wholesale_price").fill(wholesale);
     await admin.locator('input[name="_save"]').click();
+    await admin.locator(".messagelist .success").waitFor();
+    assert.equal(await admin.locator(".messagelist .success").count(), 1);
+    assert.equal(await admin.locator(".messagelist .success").isVisible(), true);
   }
 
   await t.test("responsive, sólo activos, búsqueda y WCAG automatizado", async () => {
-    assert.equal(await page.locator(".product-card").count(), 2);
+    assert.equal(await page.locator(".product-card").count(), 12);
     assert.equal(await page.getByText("QA Invisible").count(), 0);
     for (const width of [360, 390, 430, 1280]) {
       await page.setViewportSize({ width, height: 844 });
@@ -102,6 +105,9 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await card.locator('select[name="price_type"]').selectOption("wholesale");
     await card.getByRole("button", { name: "Agregar al carrito" }).click();
     await page.getByRole("status").filter({ hasText: "Producto agregado" }).waitFor();
+    assert.equal(await card.getByRole("link", { name: "Ver carrito" }).isVisible(), true);
+    assert.equal(await page.locator("[data-cart-count]").innerText(), "1");
+    await accessible();
     const stored = JSON.parse(await page.evaluate(() => localStorage.getItem("dulce-salado.cart.v1")));
     assert.equal(stored.items[0].quantity, "0.30");
     assert.equal(stored.items[0].price_type, "wholesale");
@@ -124,6 +130,41 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await page.locator("#cart-review").isDisabled(), true);
     await setQuantity("0.3");
     await waitCart("$ 27,15");
+  });
+
+  await t.test("carrito largo conserva control, foco y scroll durante y después del recálculo", async () => {
+    const isolated = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const scrolled = await isolated.newPage();
+    await scrolled.goto(base);
+    await scrolled.locator(".add-product").first().waitFor();
+    await scrolled.locator(".add-product").evaluateAll(forms => {
+      const items = forms.map(form => ({ id: Number(form.dataset.id), quantity: form.elements.quantity.value,
+        price_type: "retail", sale_unit: form.dataset.unit, revision: form.dataset.revision }));
+      localStorage.setItem("dulce-salado.cart.v1", JSON.stringify({ version: 1, items }));
+    });
+    await scrolled.goto(`${base}/carrito/`);
+    await scrolled.locator(".total").waitFor();
+    const input = scrolled.locator(".cart-quantity").nth(8);
+    await input.evaluate(node => { node.scrollIntoView({ block: "center" }); node.focus({ preventScroll: true }); window.qaQuantityNode = node; });
+    const before = await scrolled.evaluate(() => scrollY);
+    assert.ok(before > 2000);
+    let unblock, arrived;
+    const release = new Promise(resolve => { unblock = resolve; });
+    const requested = new Promise(resolve => { arrived = resolve; });
+    await scrolled.route("**/carrito/recalcular/", async route => { arrived(); await release; await route.continue(); });
+    try {
+      await input.fill("2");
+      await input.dispatchEvent("change");
+      await requested;
+      assert.equal(await input.isVisible(), true);
+      assert.ok(Math.abs(await scrolled.evaluate(() => scrollY) - before) < 3);
+      unblock();
+      await scrolled.locator("#cart-contents[aria-busy]").waitFor({ state: "detached" });
+      assert.ok(Math.abs(await scrolled.evaluate(() => scrollY) - before) < 3);
+      assert.equal(await input.evaluate(node => node === window.qaQuantityNode && node === document.activeElement), true);
+      assert.equal(Number(await input.inputValue()), 2);
+      assert.match(await scrolled.locator(".total").innerText(), /46,13/);
+    } finally { unblock(); await isolated.close(); }
   });
 
   await t.test("mayorista retirado exige selección explícita", async () => {

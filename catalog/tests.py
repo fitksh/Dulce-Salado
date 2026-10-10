@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.contrib.messages import SUCCESS, get_messages
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models.deletion import ProtectedError
@@ -88,3 +89,28 @@ class CatalogAdminTests(TestCase):
         })
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Product.objects.get().quantity_step, Decimal("0.10"))
+
+    def test_native_admin_success_messages_for_create_and_edit(self):
+        owner = get_user_model().objects.create_superuser(username="messages-owner", email="", password="test")
+        self.client.force_login(owner)
+        category_data = {"name": "Test", "slug": "test", "sort_order": 0, "is_active": True}
+        response = self.client.post(reverse("admin:catalog_category_add"), category_data, follow=True)
+        self.assert_native_success(response)
+        category = Category.objects.get()
+        category_data["name"] = "Categoría editada"
+        response = self.client.post(reverse("admin:catalog_category_change", args=[category.pk]), category_data, follow=True)
+        self.assert_native_success(response)
+        product_data = {"category": category.pk, "name": "Test", "sale_unit": "unidad", "quantity_step": "1", "retail_price": "10", "is_active": True}
+        response = self.client.post(reverse("admin:catalog_product_add"), product_data, follow=True)
+        self.assert_native_success(response)
+        product_data["retail_price"] = "12.50"
+        response = self.client.post(reverse("admin:catalog_product_change", args=[Product.objects.get().pk]), product_data, follow=True)
+        self.assert_native_success(response)
+        self.assertEqual(Product.objects.get().retail_price, Decimal("12.50"))
+
+    def assert_native_success(self, response):
+        self.assertEqual(response.status_code, 200)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0].level, SUCCESS)
+        self.assertContains(response, 'class="success"')

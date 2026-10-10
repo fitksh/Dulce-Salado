@@ -52,6 +52,10 @@ def main():
                 image=SimpleUploadedFile("qa.png", image.getvalue()),
             )
             Product.objects.create(category=other, name="QA Velas (test)", retail_price="25.10")
+            Product.objects.bulk_create([
+                Product(category=category, name=f"ZZZ QA Scroll {index:02}", retail_price="1")
+                for index in range(10)
+            ])
             Product.objects.create(category=hidden, name="QA Invisible", retail_price="1")
             Product.objects.create(category=category, name="QA Inactivo", retail_price="1", is_active=False)
             get_user_model().objects.create_superuser("qa-admin", "", "qa-only-password-582")

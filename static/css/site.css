@@ -79,9 +79,14 @@ p { line-height: 1.55; }
 .product-controls input, .product-controls select { width: 100%; }
 .add-product { margin-top: auto; }
 .add-product button { width: 100%; }
-.feedback, .notice { padding: 1rem; border-radius: .6rem; border: 1px solid #dac0a3; background: var(--cream); line-height: 1.5; }
-.feedback { position: sticky; top: .5rem; z-index: 2; }
+.feedback, .notice { padding: 1rem; border-radius: .6rem; border: 1px solid var(--line); background: #f5f2ef; color: var(--muted); line-height: 1.5; }
+.success { color: #235b38; background: #edf8ef; border-color: #bdd7c5; }
 .error { color: #8a2030; background: #fff0f2; border-color: #e1b4bc; }
+.warning { color: #6e4a14; background: #fff4dc; border-color: #dfc798; }
+.product-feedback { margin-bottom: 0; font-size: .85rem; }
+.product-feedback a { display: inline-flex; align-items: center; min-height: 44px; color: #235b38; font-weight: 650; }
+#cart-loading { min-height: 25px; }
+.is-unverified [data-cart-amount] { visibility: hidden; }
 ul.notice { padding-left: 2rem; }
 .cart-toolbar { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
 .cart-layout { display: grid; gap: 1.25rem; }

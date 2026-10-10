@@ -1,8 +1,8 @@
 {% load catalog_format %}
 {{ cart.items|json_script:"review-current-items" }}
 <h2 id="review-title" tabindex="-1">Antes de abrir WhatsApp</h2>
-<p class="notice" id="review-warning">{{ warning }}</p>
-{% if cart.notices %}<ul class="notice" role="status">{% for notice in cart.notices %}<li>{{ notice }}</li>{% endfor %}</ul>{% endif %}
+<p class="notice warning" id="review-warning">{{ warning }}</p>
+{% if cart.notices %}<div class="notice warning" role="status"><ul>{% for notice in cart.notices %}<li>{{ notice }}</li>{% endfor %}</ul></div>{% endif %}
 {% if cart.valid %}
   <p>Total estimado: <strong>{{ cart.total|ars }}</strong></p>
   <label for="whatsapp-message">Mensaje que vas a preparar</label>

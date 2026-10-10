@@ -1,6 +1,6 @@
 {% load catalog_format l10n %}
 {{ cart.items|json_script:"cart-current-items" }}
-{% if cart.notices %}<div class="notice" role="status"><p>Información actualizada</p><ul>{% for notice in cart.notices %}<li>{{ notice }}</li>{% endfor %}</ul></div>{% endif %}
+{% if cart.notices %}<div class="notice warning" role="status"><p>Información actualizada</p><ul>{% for notice in cart.notices %}<li>{{ notice }}</li>{% endfor %}</ul></div>{% endif %}
 {% if cart.rows %}
   <div class="cart-layout"><div class="cart-items">
     {% for row in cart.rows %}
@@ -8,7 +8,7 @@
         <div class="cart-item-heading"><h2 id="cart-product-{{ row.entry.id }}">{% if row.product %}{{ row.product.name }}{% else %}Producto no disponible ({{ row.entry.id }}){% endif %}</h2><button type="button" class="secondary remove-item" aria-label="Quitar {% if row.product %}{{ row.product.name }}{% else %}producto {{ row.entry.id }}{% endif %}">Quitar</button></div>
         {% if row.product %}
           {% if row.product.brand %}<p class="product-brand">{{ row.product.brand }}</p>{% endif %}
-          <p>Precio {% if row.entry.price_type == 'wholesale' %}mayorista{% else %}minorista{% endif %}: {% if row.price is not None %}{{ row.price|ars }} / {{ row.product.sale_unit }}{% else %}no disponible{% endif %}</p>
+          <p data-cart-amount>Precio {% if row.entry.price_type == 'wholesale' %}mayorista{% else %}minorista{% endif %}: {% if row.price is not None %}{{ row.price|ars }} / {{ row.product.sale_unit }}{% else %}no disponible{% endif %}</p>
           {% if row.entry.price_type == 'wholesale' and row.product.wholesale_condition %}<p class="wholesale-note">{{ row.product.wholesale_condition }}</p>{% endif %}
           <div class="product-controls">
             {% include "includes/quantity_control.html" with product=row.product input_id_prefix="cart-quantity-" quantity=row.quantity_value input_class="cart-quantity" %}
@@ -18,14 +18,14 @@
               {% if row.product.wholesale_price is not None %}<option value="wholesale" {% if row.entry.price_type == 'wholesale' %}selected{% endif %}>Mayorista</option>{% endif %}
             </select></div>
           </div>
-          {% if row.subtotal is not None %}<p class="subtotal">Subtotal estimado: <strong>{{ row.subtotal|ars }}</strong></p>{% endif %}
+          {% if row.subtotal is not None %}<p class="subtotal" data-cart-amount>Subtotal estimado: <strong>{{ row.subtotal|ars }}</strong></p>{% endif %}
         {% endif %}
-        {% if row.errors %}<ul class="notice error" role="alert">{% for error in row.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+        {% if row.errors %}<div class="notice error" role="alert"><ul>{% for error in row.errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
       </article>
     {% endfor %}
   </div><aside class="cart-summary" aria-labelledby="summary-title">
     <h2 id="summary-title">Total estimado</h2>
-    {% if cart.total is not None %}<p class="total">{{ cart.total|ars }}</p>{% else %}<p>Corregí los artículos indicados para calcular el total.</p>{% endif %}
+    {% if cart.total is not None %}<p class="total" data-cart-amount>{{ cart.total|ars }}</p>{% else %}<p>Corregí los artículos indicados para calcular el total.</p>{% endif %}
     <p>Disponibilidad y precios sujetos a confirmación.</p>
     <button type="button" id="cart-review" {% if not cart.valid %}disabled{% endif %}>Revisar y preparar WhatsApp</button>
   </aside></div>
