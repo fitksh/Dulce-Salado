@@ -1,3 +1,5 @@
+
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -7,6 +9,7 @@ from django.views.decorators.http import require_POST
 
 from .cart import calculate_cart, parse_items, product_revision
 from .models import Category, Product
+from .whatsapp import PRICE_WARNING, whatsapp_message, whatsapp_url
 
 
 def catalog_list(request):
@@ -39,3 +42,35 @@ def cart_refresh(request):
     except ValidationError as error:
         return render(request, "cart_error.html", {"error": error.messages[0]}, status=400)
     return render(request, "cart_contents.html", {"cart": cart})
+
+
+def render_review(request, cart, ready_url=""):
+    return render(request, "cart_review.html", {
+        "cart": cart, "warning": PRICE_WARNING, "message": whatsapp_message(cart),
+        "whatsapp_configured": bool(settings.WHATSAPP_PHONE), "ready_url": ready_url,
+    })
+
+
+@require_POST
+@never_cache
+def cart_review(request):
+    try:
+        cart = calculate_cart(parse_items(request.POST.get("items")))
+    except ValidationError as error:
+        return render(request, "cart_error.html", {"error": error.messages[0]}, status=400)
+    return render_review(request, cart)
+
+
+@require_POST
+@never_cache
+def cart_whatsapp(request):
+    try:
+        submitted = parse_items(request.POST.get("items"))
+        cart = calculate_cart(submitted)
+    except ValidationError as error:
+        return render(request, "cart_error.html", {"error": error.messages[0]}, status=400)
+    changed = any(before.get("revision") != after["revision"] for before, after in zip(submitted, cart["items"]))
+    if changed and not cart["notices"]:
+        cart["notices"].append("Revisá la información actual del catálogo antes de continuar.")
+    ready = request.POST.get("accepted") == "yes" and cart["valid"] and not changed
+    return render_review(request, cart, whatsapp_url(whatsapp_message(cart)) if ready else "")

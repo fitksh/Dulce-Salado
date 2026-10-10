@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
@@ -72,3 +73,6 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+WHATSAPP_PHONE = os.environ.get("WHATSAPP_PHONE", "").strip()
+if WHATSAPP_PHONE and not re.fullmatch(r"[1-9][0-9]{7,14}", WHATSAPP_PHONE):
+    raise ImproperlyConfigured("WHATSAPP_PHONE debe contener 8 a 15 dígitos internacionales, sin + ni espacios.")

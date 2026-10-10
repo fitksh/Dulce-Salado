@@ -3,7 +3,7 @@
 Fecha de inicio: 2026-10-10. Trabajo autorizado secuencial en `main` hasta completar el MVP.
 
 ## Tarea actual
-Fase 4 completada: carrito local con cálculo vigente en servidor. Siguiente: revisión y WhatsApp.
+Fase 5 completada: revisión, aviso y enlace WhatsApp. Siguiente: QA de integración/accesibilidad.
 
 ## Decisiones autorizadas
 - kg, unidad y paquete; incrementos iniciales 0,1 kg y 1 unidad/paquete. Sin conversión de gramos.
@@ -19,7 +19,8 @@ Fase 4 completada: carrito local con cálculo vigente en servidor. Siguiente: re
 - Catálogo finalizado: búsqueda nombre/marca, categorías activas, paginación de 24, estados vacíos, formato ARS, templates escapados y CSS mobile-first.
 - Carrito finalizado: localStorage guarda ID/cantidad/tarifa, unidad y hash de revisión, nunca importes; refresco POST con CSRF devuelve HTML y calcula Decimal. Cantidades/selección editables, quitar/vaciar, persistencia y sincronización entre pestañas.
 - Cambios de precio informados; mayorista ausente, producto retirado o cambio de unidad bloquean total hasta corregir. Durante consultas/fallos no se muestran totales anteriores.
-- Pendientes: WhatsApp; QA final visual y accesibilidad.
+- WhatsApp finalizado: diálogo nativo, aviso exacto, cancelar/continuar, mensaje completo y copiable. Última validación al continuar; si cambió catálogo exige nueva revisión. Número opcional por entorno; sin configurar no navega.
+- Pendientes: QA final visual y accesibilidad, instrucciones completas de uso local.
 
 ## Archivos de la tarea
 Auditoría: configuración, tests core, Docker ignores y documentación. Modelos: `catalog/models.py`, `catalog/admin.py`, `catalog/apps.py`, `catalog/tests.py`, `catalog/migrations/0001_initial.py`, settings y especificación.
@@ -36,12 +37,14 @@ Auditoría: configuración, tests core, Docker ignores y documentación. Modelos
 - Catálogo en Docker: 27 tests OK, check/Ruff OK y sin migraciones pendientes. Archivos: views, templatetags, test_views, templates base/home, CSS, rutas y test core. Se retiró la vista temporal.
 - Herramienta de navegador: no hay superficies disponibles (inventario vacío); QA visual pendiente en fase 6. Colores provisionales, sin logo original disponible.
 - Carrito en Docker: 34 tests Django OK, 4 tests Node OK, check/Ruff OK y sin migraciones pendientes. CI ampliada a migraciones/Node. Archivos: cart.py, vistas/rutas, templates, JS cart-core/cart, CSS, tests y CI.
+- WhatsApp en Docker: 39 tests Django OK, 4 Node OK, check/Ruff OK y sin migraciones pendientes. Tests verifican texto completo codificado, marcas opcionales, redondeo y cambios antes de salida. No se envió ningún mensaje ni se visitó un teléfono de prueba.
+- Archivos fase 5: whatsapp.py/test_whatsapp.py, vistas/rutas/settings, .env.example, templates carrito/revisión, JS y CSS.
 
 ## Publicación
-Último commit publicado: `1486025` (catálogo). Modelos `1813f7b`: CI success, run `38084873987`. Auditoría `50ef9b0`: CI success, run `38084761552`. Cada commit siguiente incluye el avance verificado y el identificador del commit anterior; el HEAD exacto se consulta con `git log -1`.
+Último commit publicado: `8a904e7` (carrito). Catálogo `1486025`: CI success, run `38085214330`; imágenes `a639373`: CI success, run `38084993979`; modelos `1813f7b`: CI success, run `38084873987`; auditoría `50ef9b0`: CI success, run `38084761552`. Cada commit siguiente incluye el avance verificado y el identificador del commit anterior; el HEAD exacto se consulta con `git log -1`.
 
 ## Bloqueos
 Ninguno de implementación. El número real de WhatsApp deberá configurarlo el dueño.
 
 ## Próxima tarea exacta
-Publicar carrito y desarrollar revisión/aviso obligatorio con mensaje WhatsApp de datos actuales.
+Publicar WhatsApp y ejecutar pruebas completas de navegador con datos aislados de test, accesibilidad y QA móvil. Completar README para uso local.

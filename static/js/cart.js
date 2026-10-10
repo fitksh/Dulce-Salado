@@ -4,6 +4,7 @@
   const feedback = document.getElementById("cart-feedback");
   const app = document.getElementById("cart-app");
   let items = [], storageFailed = false, serial = 0;
+  let reviewing = false;
   function announce(message) { feedback.textContent = message; feedback.hidden = false; }
   function count() { document.querySelectorAll("[data-cart-count]").forEach(node => { node.textContent = String(items.length); }); }
   function load() {
@@ -17,6 +18,7 @@
     count();
   }
   async function refresh() {
+    if (app) { const dialog = document.getElementById("cart-review-dialog"); if (dialog.open) dialog.close(); }
     if (!app || storageFailed) { if (app) document.getElementById("cart-loading").hidden = true; return; }
     const requestNumber = ++serial;
     const contents = document.getElementById("cart-contents");
@@ -62,8 +64,46 @@
     });
   });
   if (app) {
+    const dialog = document.getElementById("cart-review-dialog");
+    const reviewContents = document.getElementById("cart-review-contents");
+    async function review(accepted = false) {
+      if (storageFailed || reviewing) return;
+      reviewing = true;
+      const requestNumber = ++serial;
+      const data = new FormData();
+      data.set("items", JSON.stringify(items));
+      data.set("csrfmiddlewaretoken", document.querySelector("#cart-token input").value);
+      if (accepted) data.set("accepted", "yes");
+      if (accepted) document.getElementById("review-continue").disabled = true;
+      try {
+        const response = await fetch(accepted ? app.dataset.whatsappUrl : app.dataset.reviewUrl, { method: "POST", body: data, cache: "no-store", credentials: "same-origin" });
+        const html = await response.text();
+        if (requestNumber !== serial) return;
+        if (!response.ok) throw new Error("No se pudo verificar el mensaje. Volvé al carrito y reintentá.");
+        reviewContents.innerHTML = html;
+        items = JSON.parse(reviewContents.querySelector("#review-current-items").textContent);
+        persist();
+        const ready = reviewContents.querySelector("#whatsapp-ready");
+        if (ready && !storageFailed) { window.location.assign(ready.href); return; }
+        if (!dialog.open) dialog.showModal();
+        if (storageFailed) document.getElementById("review-continue").disabled = true;
+        document.getElementById("review-cancel").focus();
+      } catch (error) { if (requestNumber === serial) { if (dialog.open) dialog.close(); announce(error.message); } }
+      finally { reviewing = false; }
+    }
+    dialog.addEventListener("close", () => { if (!reviewing) refresh(); });
+    dialog.addEventListener("click", async event => {
+      if (event.target.closest("#review-cancel")) dialog.close();
+      if (event.target.closest("#review-continue")) review(true);
+      if (event.target.closest("#copy-message")) {
+        const field = document.getElementById("whatsapp-message");
+        try { await navigator.clipboard.writeText(field.value); event.target.textContent = "Mensaje copiado"; }
+        catch { field.focus(); field.select(); event.target.textContent = "Seleccionado: copiá el texto"; }
+      }
+    });
     document.getElementById("cart-clear").addEventListener("click", () => { items = []; persist(); announce("Carrito vacío."); refresh(); });
     app.addEventListener("click", event => {
+      if (event.target.closest("#cart-review")) { review(); return; }
       const remove = event.target.closest(".remove-item");
       if (!remove) return;
       items = items.filter(item => item.id !== Number(remove.closest(".cart-item").dataset.id));

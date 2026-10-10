@@ -7,7 +7,7 @@ Trabajar secuencialmente y actualizar el estado sólo al terminar y verificar ca
 - [x] Fase 2 — Category/Product, migraciones, Admin con permisos e imagen única validada/optimizada. Verificado en Docker: 20 tests, checks y Ruff OK. Unidades e incrementos autorizados documentados.
 - [x] Fase 3 — Catálogo público mobile-first, búsqueda, categorías y estados vacíos; 27 tests/check/Ruff OK. QA visual final en fase 6.
 - [x] Fase 4 — Carrito local, cantidades/tarifa, refresco de datos y cálculos Decimal; 34 tests Django y 4 Node/check/Ruff OK.
-- [ ] Fase 5 — Revisión, aviso obligatorio, mensaje `wa.me`, pruebas de flujo sin envío automático.
+- [x] Fase 5 — Revisión y aviso obligatorio, mensaje completo wa.me, validación final y bloqueo sin teléfono; 39 tests Django y 4 Node/check/Ruff OK, sin envío real.
 - [ ] Fase 6 — QA móvil, corrección de accesibilidad, optimización de imágenes y pruebas finales.
 - [ ] Fase futura — VPS, dominio, HTTPS, proxy estáticos/media, backups y despliegue; fuera del alcance actual.
 

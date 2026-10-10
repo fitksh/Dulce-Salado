@@ -27,7 +27,8 @@
     <h2 id="summary-title">Total estimado</h2>
     {% if cart.total is not None %}<p class="total">{{ cart.total|ars }}</p>{% else %}<p>Corregí los artículos indicados para calcular el total.</p>{% endif %}
     <p>Disponibilidad y precios sujetos a confirmación.</p>
+    <button type="button" id="cart-review" {% if not cart.valid %}disabled{% endif %}>Revisar y preparar WhatsApp</button>
   </aside></div>
 {% else %}
-  <div class="empty-state"><h2>Tu carrito está vacío</h2><p>Buscá productos en el catálogo para empezar.</p><a class="button" href="{% url 'home' %}">Explorar catálogo</a></div>
+  <div class="empty-state"><h2>Tu carrito está vacío</h2><p>Buscá productos en el catálogo para empezar.</p><a class="button" href="{% url 'home' %}">Explorar catálogo</a><p><button type="button" disabled>Revisar y preparar WhatsApp</button></p></div>
 {% endif %}

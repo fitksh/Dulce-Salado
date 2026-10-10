@@ -82,5 +82,12 @@ ul.notice { padding-left: 2rem; }
 .cart-item-heading h2 { overflow-wrap: anywhere; }
 .cart-summary { align-self: start; }
 .total { font-size: 2rem; font-weight: 750; overflow-wrap: anywhere; }
+.cart-summary button { width: 100%; }
+dialog { width: min(100% - 2rem, 640px); max-height: 90dvh; border: 1px solid var(--line); border-radius: 1rem; padding: 1.4rem; color: #292324; }
+dialog::backdrop { background: rgb(41 35 36 / 55%); }
+textarea { display: block; width: 100%; margin-block: .6rem; padding: .8rem; font: inherit; font-size: .9rem; line-height: 1.5; border: 1px solid #988780; border-radius: .5rem; resize: vertical; }
+.muted { color: var(--muted); font-size: .85rem; }
+.dialog-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.3rem; }
+.dialog-actions button { flex: 1; }
 @media (min-width: 800px) { .cart-layout { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } .cart-summary { position: sticky; top: 1rem; } }
 @media (max-width: 380px) { .search-controls { flex-wrap: wrap; } .search-controls button { width: 100%; } }
