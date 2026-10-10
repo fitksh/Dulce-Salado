@@ -1,0 +1,8 @@
+:root { color-scheme: light; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #fff9f4; color: #242124; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+.container { width: min(100% - 2rem, 40rem); margin: clamp(3rem, 15vh, 8rem) auto; }
+h1 { font-size: clamp(2rem, 8vw, 3.2rem); line-height: 1.1; margin: .4rem 0 1rem; }
+p { line-height: 1.6; }
+.eyebrow { color: #b63c05; font-weight: 750; letter-spacing: .03em; }
+.note { border-left: 3px solid #da4d0a; padding-left: 1rem; color: #5b5250; }
