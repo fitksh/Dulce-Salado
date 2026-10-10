@@ -335,4 +335,51 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.getByRole("heading", { name: "Mapa interceptado de QA" }).waitFor();
     await page.goto(`${base}/como-llegar/`);
   });
+
+  await t.test("horario partido, validación Admin, desplegable y reloj local sin peticiones", async () => {
+    await page.getByText("Horarios no disponibles", { exact: true }).waitFor();
+    await admin.goto(`${base}/admin/catalog/businesssettings/1/change/`);
+    await admin.locator("#id_hours_initialized").check();
+    await admin.locator("#id_opening_intervals-0-weekday").selectOption("0");
+    await admin.locator("#id_opening_intervals-0-opens_at").fill("09:00");
+    await admin.locator("#id_opening_intervals-0-closes_at").fill("12:00");
+    await admin.locator(".add-row a").click();
+    await admin.locator("#id_opening_intervals-1-weekday").selectOption("0");
+    await admin.locator("#id_opening_intervals-1-opens_at").fill("11:00");
+    await admin.locator("#id_opening_intervals-1-closes_at").fill("15:00");
+    await admin.locator('input[name="_save"]').click();
+    await admin.getByText("Los intervalos de un mismo día no pueden superponerse.", { exact: true }).waitFor();
+    await admin.locator("#id_opening_intervals-1-opens_at").fill("15:00");
+    await admin.locator("#id_opening_intervals-1-closes_at").fill("18:00");
+    await admin.locator('input[name="_save"]').click();
+    await admin.locator(".messagelist .success").waitFor();
+    await page.clock.install({ time: new Date("2026-10-12T14:59:50-03:00") });
+    await page.reload();
+    await page.locator("#business-status-text").filter({ hasText: "Cerrado" }).waitFor();
+    let backgroundRequests = 0;
+    page.on("request", request => { if (["fetch", "xhr"].includes(request.resourceType())) backgroundRequests++; });
+    await page.clock.fastForward(20000);
+    await page.locator("#business-status-text").filter({ hasText: "Abierto" }).waitFor();
+    assert.equal(backgroundRequests, 0);
+    assert.equal(await page.locator("#business-status-dot").evaluate(node => node.classList.contains("open")), true);
+    await page.locator(".hours-panel summary").click();
+    assert.equal(await page.locator(".weekly-hours > div").count(), 7);
+    assert.match(await page.locator(".weekly-hours dd").first().innerText(), /09:00–12:00\s+15:00–18:00/);
+    assert.equal(await page.locator(".weekly-hours dd").nth(1).innerText(), "Cerrado");
+    for (const width of [360, 390, 430, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      await page.screenshot({ path: `.qa/screenshots/hours-${width}.png`, fullPage: true });
+    }
+    await accessible();
+    await page.locator(".hours-panel summary").press("Enter");
+    assert.equal(await page.locator(".hours-panel").evaluate(node => node.open), false);
+    const plain = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 360, height: 844 } });
+    const plainPage = await plain.newPage();
+    await plainPage.goto(`${base}/como-llegar/`);
+    await plainPage.locator(".hours-panel summary").click();
+    assert.equal(await plainPage.locator(".weekly-hours").isVisible(), true);
+    await plain.close();
+    assert.deepEqual(errors, []);
+  });
 });

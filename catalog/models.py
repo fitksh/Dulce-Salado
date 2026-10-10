@@ -99,6 +99,10 @@ class BusinessSettings(models.Model):
         "enlace exacto de Google Maps", max_length=500, blank=True,
         help_text="Opcional: enlace HTTPS compartido desde Google Maps. Sin enlace se busca la dirección.",
     )
+    hours_initialized = models.BooleanField(
+        "publicar horario semanal", default=False,
+        help_text="Activar después de completar los intervalos. Los días sin intervalos se publicarán como cerrados.",
+    )
 
     class Meta:
         verbose_name = "configuración comercial"
@@ -122,3 +126,49 @@ class BusinessSettings(models.Model):
 
     def __str__(self):
         return "Datos de Dulce y Salado"
+
+
+class OpeningInterval(models.Model):
+    class Weekday(models.IntegerChoices):
+        MONDAY = 0, "Lunes"
+        TUESDAY = 1, "Martes"
+        WEDNESDAY = 2, "Miércoles"
+        THURSDAY = 3, "Jueves"
+        FRIDAY = 4, "Viernes"
+        SATURDAY = 5, "Sábado"
+        SUNDAY = 6, "Domingo"
+
+    business = models.ForeignKey(BusinessSettings, on_delete=models.CASCADE, related_name="opening_intervals")
+    weekday = models.PositiveSmallIntegerField("día", choices=Weekday.choices)
+    opens_at = models.TimeField("apertura")
+    closes_at = models.TimeField("cierre")
+
+    class Meta:
+        ordering = ["weekday", "opens_at", "pk"]
+        verbose_name = "intervalo horario"
+        verbose_name_plural = "intervalos horarios"
+        constraints = [
+            models.CheckConstraint(condition=models.Q(opens_at__lt=models.F("closes_at")), name="opening_before_closing"),
+            models.CheckConstraint(condition=models.Q(weekday__gte=0, weekday__lte=6), name="opening_valid_weekday"),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.opens_at and self.closes_at and self.opens_at >= self.closes_at:
+            raise ValidationError({"closes_at": "El cierre debe ser posterior a la apertura, dentro del mismo día."})
+
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude)
+        # Django excluye el FK inline; su formset valida todos los intervalos finales juntos.
+        if exclude and "business" in exclude:
+            return
+        if self.business_id and self.weekday is not None and self.opens_at and self.closes_at:
+            overlaps = type(self).objects.filter(
+                business_id=self.business_id, weekday=self.weekday,
+                opens_at__lt=self.closes_at, closes_at__gt=self.opens_at,
+            ).exclude(pk=self.pk)
+            if overlaps.exists():
+                raise ValidationError("Los intervalos de un mismo día no pueden superponerse.")
+
+    def __str__(self):
+        return f"{self.get_weekday_display()}: {self.opens_at:%H:%M}–{self.closes_at:%H:%M}"

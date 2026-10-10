@@ -46,7 +46,8 @@ class BusinessSettingsTests(TestCase):
         owner = get_user_model().objects.create_superuser("business-owner", "", "test")
         self.client.force_login(owner)
         url = reverse("admin:catalog_businesssettings_add")
-        response = self.client.post(url, {"address": "Dirección de test", "maps_url": ""})
+        inline = {"opening_intervals-TOTAL_FORMS": "0", "opening_intervals-INITIAL_FORMS": "0"}
+        response = self.client.post(url, {"address": "Dirección de test", "maps_url": "", **inline})
         self.assertEqual(response.status_code, 302)
         business = BusinessSettings.objects.get()
         self.assertEqual(business.pk, 1)
@@ -54,7 +55,7 @@ class BusinessSettingsTests(TestCase):
         with self.assertRaises(IntegrityError), transaction.atomic():
             BusinessSettings.objects.create(pk=2, address="No permitida")
         self.assertEqual(self.client.post(reverse("admin:catalog_businesssettings_delete", args=[1]), {"post": "yes"}).status_code, 403)
-        response = self.client.post(reverse("admin:catalog_businesssettings_change", args=[1]), {"address": "Dirección corregida", "maps_url": ""})
+        response = self.client.post(reverse("admin:catalog_businesssettings_change", args=[1]), {"address": "Dirección corregida", "maps_url": "", **inline})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(BusinessSettings.objects.count(), 1)
         self.assertEqual(BusinessSettings.objects.get().address, "Dirección corregida")

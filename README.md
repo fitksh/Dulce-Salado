@@ -101,3 +101,8 @@ En el listado de productos, «Exportar CSV» descarga todos los productos del co
 
 ## Dirección y Cómo llegar
 En Admin → Catalog → Configuración comercial, crear una única configuración con la dirección real. El enlace exacto de Google Maps es opcional: pegar un enlace HTTPS compartido por Maps o dejarlo vacío para buscar la dirección. Luego editar ese mismo registro. La página pública `/como-llegar/` está enlazada desde el footer. Si falta dirección muestra un aviso sin destino ficticio. Migración nueva: `catalog.0003_business_settings`; ejecutar `docker compose exec web python manage.py migrate` al actualizar.
+
+## Horarios comerciales
+En esa misma configuración, añadir intervalos indicando día, apertura y cierre (hora de Buenos Aires). Para un horario partido, añadir dos filas del mismo día. Se permiten más intervalos; deben terminar el mismo día y no superponerse. Tras completar la semana, activar «Publicar horario semanal» y guardar. Los días sin filas se mostrarán cerrados. Antes de publicar se verá «Horarios no disponibles», incluso si hay intervalos borrador. Una semana publicada sin filas significa todos los días cerrados.
+
+El desplegable debajo del header muestra la semana; el estado se basa en los horarios publicados, sin feriados/excepciones. Con JavaScript usa el reloj del dispositivo convertido a America/Argentina/Buenos_Aires y se actualiza cada 15 segundos sin peticiones. Sin JavaScript refleja el estado al cargar. Migración: `catalog.0004_opening_hours`; no crea dirección ni horarios ficticios.

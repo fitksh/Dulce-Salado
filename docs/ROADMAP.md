@@ -28,5 +28,5 @@ Conservar diseño y MVP. Ejecutar secuencialmente, sin ampliar precios, carrito,
 - [x] Tarea 3 — Scroll estable del carrito, mensajes consistentes y confirmaciones nativas Admin; 22 tests afectados, 5 Node y 13 comprobaciones Chromium OK.
 - [x] Tarea 4 — Exportar CSV completo/filtrado desde Admin con permisos y protección de fórmulas; 13 tests afectados y 14 comprobaciones Chromium OK.
 - [x] Tarea 5 — Configuración comercial única, dirección y Cómo llegar; migración 0003 aplicada, 23 tests afectados y 15 comprobaciones Chromium OK.
-- [ ] Tarea 6 — Intervalos semanales, validaciones y estado abierto/cerrado actualizado localmente.
+- [x] Tarea 6 — Intervalos semanales, validaciones y estado abierto/cerrado actualizado localmente; migración 0004 aplicada, 33 tests afectados, 7 Node y 16 comprobaciones Chromium OK.
 - [ ] Tarea 7 — QA completo, regresiones, accesibilidad y cierre documental/publicación.

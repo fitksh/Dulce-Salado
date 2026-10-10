@@ -10,6 +10,7 @@
   <script src="{% static 'js/cart-core.js' %}" defer></script>
   <script src="{% static 'js/quantity.js' %}" defer></script>
   <script src="{% static 'js/cart.js' %}" defer></script>
+  <script src="{% static 'js/business-hours.js' %}" defer></script>
   {% block scripts %}{% endblock %}
 </head>
 <body>
@@ -25,6 +26,7 @@
     </a>
     {% block header_actions %}{% endblock %}
   </div></header>
+  {% include "includes/business_hours.html" %}
   <main id="contenido" class="container" tabindex="-1">
     <p id="cart-feedback" class="feedback" role="status" aria-live="polite" hidden></p>
     <noscript><p class="notice">Para armar y guardar el carrito en este navegador necesitás activar JavaScript.</p></noscript>

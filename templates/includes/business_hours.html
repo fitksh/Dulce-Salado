@@ -1,0 +1,19 @@
+<div class="container business-hours">
+  {% if business_hours.initialized %}
+    {{ business_hours.data|json_script:"business-hours-data" }}
+    <details class="hours-panel">
+      <summary><span id="business-status-dot" class="hours-dot{% if business_hours.open %} open{% endif %}" aria-hidden="true"></span> <span id="business-status-text" role="status" aria-live="polite">{{ business_hours.label }}</span> <span class="hours-action">Ver horarios</span></summary>
+      <div class="hours-details">
+        <p class="muted">Hora de Buenos Aires. Horario semanal publicado por el comercio.</p>
+        <dl class="weekly-hours">
+          {% for day in business_hours.week %}
+            <div><dt>{{ day.day }}</dt><dd>{% for interval in day.intervals %}{{ interval.opens_at|time:"H:i" }}–{{ interval.closes_at|time:"H:i" }}{% if not forloop.last %}<br>{% endif %}{% empty %}Cerrado{% endfor %}</dd></div>
+          {% endfor %}
+        </dl>
+      </div>
+    </details>
+    <p class="hours-basis">Según horarios publicados</p>
+  {% else %}
+    <p class="hours-unavailable"><span class="hours-dot" aria-hidden="true"></span> Horarios no disponibles</p>
+  {% endif %}
+</div>

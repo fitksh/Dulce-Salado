@@ -4,13 +4,14 @@ from decimal import Decimal
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.options import IncorrectLookupParameters
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.forms.models import BaseInlineFormSet
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.urls import path
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_GET
 
-from .models import BusinessSettings, Category, Product
+from .models import BusinessSettings, Category, OpeningInterval, Product
 
 
 class ProductAdminForm(forms.ModelForm):
@@ -85,8 +86,30 @@ def csv_decimal(value):
     return format(value, "f").replace(".", ",") if value is not None else ""
 
 
+class OpeningIntervalFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        intervals = sorted(
+            (form.cleaned_data["weekday"], form.cleaned_data["opens_at"], form.cleaned_data["closes_at"])
+            for form in self.forms if form.cleaned_data and not form.cleaned_data.get("DELETE")
+        )
+        for previous, current in zip(intervals, intervals[1:]):
+            if previous[0] == current[0] and current[1] < previous[2]:
+                raise ValidationError("Los intervalos de un mismo día no pueden superponerse.")
+
+
+class OpeningIntervalInline(admin.TabularInline):
+    model = OpeningInterval
+    formset = OpeningIntervalFormSet
+    extra = 1
+
+
 @admin.register(BusinessSettings)
 class BusinessSettingsAdmin(admin.ModelAdmin):
+    inlines = [OpeningIntervalInline]
+
     def has_add_permission(self, request):
         return super().has_add_permission(request) and not BusinessSettings.objects.exists()
 
