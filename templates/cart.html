@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Tu carrito{% endblock %}
 {% block content %}
-  <section class="intro"><p class="eyebrow">Tu selección</p><h1>Revisá tu carrito.</h1><p class="intro-copy">Cantidades y precios estimados. Se verifican con el catálogo vigente cada vez que revisás el carrito.</p></section>
+  <section class="intro"><h1>Revisá tu carrito.</h1><p class="intro-copy">Cantidades y precios estimados. Se verifican con el catálogo vigente cada vez que revisás el carrito.</p></section>
   <div id="cart-app" data-refresh-url="{% url 'cart_refresh' %}" data-review-url="{% url 'cart_review' %}" data-whatsapp-url="{% url 'cart_whatsapp' %}">
     <form id="cart-token" hidden>{% csrf_token %}</form>
     <div class="cart-toolbar"><a class="button secondary" href="{% url 'home' %}">Seguir viendo productos</a><button type="button" class="secondary" id="cart-clear">Vaciar carrito</button></div>

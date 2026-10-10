@@ -50,6 +50,12 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     for (const width of [360, 390, 430, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      const header = await page.locator(".header-inner").evaluate(node => {
+        const brand = node.querySelector(".brand").getBoundingClientRect();
+        const cart = node.querySelector(".cart-link").getBoundingClientRect();
+        return { sameRow: Math.abs((brand.top + brand.bottom) / 2 - (cart.top + cart.bottom) / 2) < 2, contained: cart.right <= node.getBoundingClientRect().right + 1 };
+      });
+      assert.equal(header.sameRow && header.contained, true);
       const targets = await page.locator("button, input:not([type=hidden]), select, .button, .chip").evaluateAll(nodes => nodes.filter(n => n.getBoundingClientRect().height > 0).map(n => ({ tag: n.tagName, height: n.getBoundingClientRect().height })));
       assert.equal(targets.every(target => target.height >= 44), true, JSON.stringify(targets));
       await page.screenshot({ path: `.qa/screenshots/catalog-${width}.png`, fullPage: true });

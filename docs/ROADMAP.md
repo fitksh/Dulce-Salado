@@ -18,3 +18,15 @@ Completar una fase significa código integrado en `main`, comprobaciones ejecuta
 Completar secuencialmente el MVP según la solicitud de desarrollo autónomo del 2026-10-10. Las decisiones de unidades, incrementos, mayorista opcional y centavos están autorizadas y registradas en `EXECUTION_STATUS.md`.
 
 MVP completado el 2026-10-10. Próximo paso: pruebas locales del dueño siguiendo README y QA.md, con productos/precios y WhatsApp reales. Infraestructura de producción permanece fuera de alcance.
+
+## Etapa complementaria UX/UI autorizada el 2026-10-10
+
+Conservar diseño y MVP. Ejecutar secuencialmente, sin ampliar precios, carrito, WhatsApp o infraestructura fuera de lo solicitado.
+
+- [x] Tarea 1 — Logo provisto, header compacto, iconos de carrito/Instagram y eliminación de dos textos; 15 tests afectados y 11 comprobaciones Chromium OK.
+- [ ] Tarea 2 — Búsqueda por descripción con prioridad, categorías móviles, controles táctiles, condiciones discretas y placeholder.
+- [ ] Tarea 3 — Scroll estable del carrito, mensajes consistentes y confirmaciones nativas Admin.
+- [ ] Tarea 4 — Exportar CSV completo/filtrado desde Admin con permisos y protección de fórmulas.
+- [ ] Tarea 5 — Configuración comercial única, dirección y Cómo llegar.
+- [ ] Tarea 6 — Intervalos semanales, validaciones y estado abierto/cerrado actualizado localmente.
+- [ ] Tarea 7 — QA completo, regresiones, accesibilidad y cierre documental/publicación.

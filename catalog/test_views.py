@@ -65,3 +65,10 @@ class CatalogViewTests(TestCase):
     def test_currency_format(self):
         self.assertEqual(ars("0.10"), "$ 0,10")
         self.assertEqual(ars("1000000.05"), "$ 1.000.000,05")
+
+    def test_brand_navigation_and_requested_texts(self):
+        response = self.client.get("/")
+        self.assertContains(response, '/static/img/logo.webp')
+        self.assertContains(response, 'href="https://www.instagram.com/_dulceysalado1/"')
+        self.assertNotContains(response, "Todo para tus ideas")
+        self.assertNotContains(self.client.get(reverse("cart")), "Tu selección")
