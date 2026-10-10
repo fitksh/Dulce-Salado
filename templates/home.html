@@ -1,19 +1,65 @@
-{% load static %}
-<!doctype html>
-<html lang="es-AR">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#da4d0a">
-  <title>Dulce y Salado — Catálogo en preparación</title>
-  <link rel="stylesheet" href="{% static 'css/site.css' %}">
-</head>
-<body>
-  <main class="container">
-    <p class="eyebrow">Dulce y Salado</p>
-    <h1>Catálogo en preparación</h1>
-    <p>Próximamente vas a poder consultar nuestros productos y preparar tu pedido por WhatsApp.</p>
-    <p class="note">Esta pantalla es temporal: todavía no hay catálogo ni carrito implementados.</p>
-  </main>
-</body>
-</html>
+{% extends "base.html" %}
+{% load catalog_format %}
+{% block title %}Catálogo{% endblock %}
+{% block content %}
+  <section class="intro" aria-labelledby="catalog-title">
+    <p class="eyebrow">Todo para tus ideas</p>
+    <h1 id="catalog-title">Encontrá lo que necesitás.</h1>
+    <p class="intro-copy">Consultá nuestros productos y precios. La disponibilidad y las condiciones se confirman con el comercio.</p>
+  </section>
+  <form method="get" class="search-form" role="search">
+    <label for="catalog-search">Buscar por nombre o marca</label>
+    <div class="search-controls">
+      <input type="search" id="catalog-search" name="q" value="{{ query }}" placeholder="¿Qué estás buscando?" maxlength="180">
+      {% if selected_category %}<input type="hidden" name="categoria" value="{{ selected_category.slug }}">{% endif %}
+      <button type="submit">Buscar</button>
+    </div>
+  </form>
+  <nav class="categories" aria-label="Filtrar por categoría">
+    <a class="chip{% if not selected_category %} selected{% endif %}" href="?q={{ query|urlencode }}" {% if not selected_category %}aria-current="page"{% endif %}>Todos</a>
+    {% for category in categories %}
+      <a class="chip{% if selected_category.pk == category.pk %} selected{% endif %}" href="?categoria={{ category.slug|urlencode }}&amp;q={{ query|urlencode }}" {% if selected_category.pk == category.pk %}aria-current="page"{% endif %}>{{ category.name }}</a>
+    {% endfor %}
+  </nav>
+  <div class="section-heading">
+    <h2>{% if selected_category %}{{ selected_category.name }}{% else %}Nuestros productos{% endif %}</h2>
+    <p>{{ page.paginator.count }} producto{{ page.paginator.count|pluralize:"s" }}{% if query %} para “{{ query }}”{% endif %}</p>
+  </div>
+  <div class="product-grid">
+    {% for product in page %}
+      <article class="product-card" aria-labelledby="product-{{ product.pk }}">
+        <div class="product-image">
+          {% if product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.name }}{% if product.brand %}, {{ product.brand }}{% endif %}" width="600" height="450" loading="lazy" decoding="async">
+          {% else %}
+            <span class="image-placeholder" aria-label="Producto sin imagen"><span aria-hidden="true">d+s</span>Sin imagen</span>
+          {% endif %}
+        </div>
+        <div class="product-info">
+          <p class="product-category">{{ product.category.name }}</p>
+          <h3 id="product-{{ product.pk }}">{{ product.name }}</h3>
+          {% if product.brand %}<p class="product-brand">{{ product.brand }}</p>{% endif %}
+          {% if product.description %}<p class="product-description">{{ product.description }}</p>{% endif %}
+          <dl class="prices">
+            <div><dt>Minorista</dt><dd>{{ product.retail_price|ars }} <span>/ {{ product.sale_unit }}</span></dd></div>
+            {% if product.wholesale_price is not None %}<div><dt>Mayorista</dt><dd>{{ product.wholesale_price|ars }} <span>/ {{ product.sale_unit }}</span></dd></div>{% endif %}
+          </dl>
+          {% if product.wholesale_price is not None %}<p class="wholesale-note">{% if product.wholesale_condition %}{{ product.wholesale_condition }}. {% endif %}Sujeto a confirmación comercial.</p>{% endif %}
+        </div>
+      </article>
+    {% empty %}
+      <div class="empty-state">
+        <h3>{% if query or selected_category %}No encontramos productos{% else %}Estamos preparando nuestro catálogo{% endif %}</h3>
+        <p>{% if query or selected_category %}Probá otra búsqueda o revisá todas las categorías.{% else %}Los productos estarán disponibles cuando el comercio los publique.{% endif %}</p>
+        {% if query or selected_category %}<a class="button secondary" href="{% url 'home' %}">Ver todos los productos</a>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+  {% if page.has_other_pages %}
+    <nav class="pagination" aria-label="Páginas del catálogo">
+      {% if page.has_previous %}<a class="button secondary" href="?page={{ page.previous_page_number }}&amp;q={{ query|urlencode }}{% if selected_category %}&amp;categoria={{ selected_category.slug|urlencode }}{% endif %}">Anterior</a>{% endif %}
+      <span>Página {{ page.number }} de {{ page.paginator.num_pages }}</span>
+      {% if page.has_next %}<a class="button secondary" href="?page={{ page.next_page_number }}&amp;q={{ query|urlencode }}{% if selected_category %}&amp;categoria={{ selected_category.slug|urlencode }}{% endif %}">Siguiente</a>{% endif %}
+    </nav>
+  {% endif %}
+{% endblock %}

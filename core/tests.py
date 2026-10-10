@@ -7,7 +7,7 @@ from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
 
-class HomePageTests(SimpleTestCase):
+class HomePageTests(TestCase):
     def test_home_renders(self):
         response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)

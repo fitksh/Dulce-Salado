@@ -3,11 +3,11 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 
-from core.views import home
+from catalog.views import catalog_list
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", home, name="home"),
+    path("", catalog_list, name="home"),
 ]
 
 if settings.DEBUG:

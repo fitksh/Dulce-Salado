@@ -1,0 +1,27 @@
+{% load static %}
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ad3c0c">
+  <title>{% block title %}Catálogo{% endblock %} · Dulce y Salado</title>
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  {% block scripts %}{% endblock %}
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <header class="site-header"><div class="container header-inner">
+    <a class="brand" href="{% url 'home' %}" aria-label="Dulce y Salado, inicio">
+      <span class="brand-mark" aria-hidden="true">d<span>+</span>s</span>
+      <span>Dulce y Salado<small>Repostería · Dietética · Cotillón</small></span>
+    </a>
+    {% block header_actions %}{% endblock %}
+  </div></header>
+  <main id="contenido" class="container" tabindex="-1">{% block content %}{% endblock %}</main>
+  <footer class="container site-footer">
+    <p>Dulce y Salado <span aria-hidden="true">·</span> Precios en pesos argentinos (ARS).</p>
+    <p>Precios estimados. Consultá disponibilidad y condiciones con el comercio.</p>
+  </footer>
+</body>
+</html>
