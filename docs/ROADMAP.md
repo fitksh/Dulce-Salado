@@ -8,7 +8,7 @@ Trabajar secuencialmente y actualizar el estado sólo al terminar y verificar ca
 - [x] Fase 3 — Catálogo público mobile-first, búsqueda, categorías y estados vacíos; 27 tests/check/Ruff OK. QA visual final en fase 6.
 - [x] Fase 4 — Carrito local, cantidades/tarifa, refresco de datos y cálculos Decimal; 34 tests Django y 4 Node/check/Ruff OK.
 - [x] Fase 5 — Revisión y aviso obligatorio, mensaje completo wa.me, validación final y bloqueo sin teléfono; 39 tests Django y 4 Node/check/Ruff OK, sin envío real.
-- [ ] Fase 6 — QA local verificado: 42 tests Django, 4 Node y 11 comprobaciones Chromium; axe sin infracciones en vistas verificadas. Pendiente publicación y CI final con navegador. Pruebas de teléfono/lector real detalladas en QA.md.
+- [x] Fase 6 — QA verificado localmente y en CI: 42 tests Django, 4 Node y 11 comprobaciones Chromium; axe sin infracciones en vistas verificadas. Publicado en main; CI success run 38086302160. Pruebas comerciales de teléfono/lector real detalladas en QA.md.
 - [ ] Fase futura — VPS, dominio, HTTPS, proxy estáticos/media, backups y despliegue; fuera del alcance actual.
 
 ## Criterios de avance
@@ -16,3 +16,5 @@ Completar una fase significa código integrado en `main`, comprobaciones ejecuta
 
 ## Continuación autorizada
 Completar secuencialmente el MVP según la solicitud de desarrollo autónomo del 2026-10-10. Las decisiones de unidades, incrementos, mayorista opcional y centavos están autorizadas y registradas en `EXECUTION_STATUS.md`.
+
+MVP completado el 2026-10-10. Próximo paso: pruebas locales del dueño siguiendo README y QA.md, con productos/precios y WhatsApp reales. Infraestructura de producción permanece fuera de alcance.

@@ -35,6 +35,8 @@ El servidor `tests/browser_server.py` crea una base PostgreSQL con nombre `dulce
 
 Las peticiones a `wa.me` se interceptan dentro de Playwright: se comprueba URL/texto completo sin enviar un mensaje. La salida no elimina el carrito. CI repite Django, Ruff, migraciones, Node y navegador, y conserva capturas como artifact. El estado de los runs publicados se registra en `EXECUTION_STATUS.md`.
 
+CI ampliada verificada con resultado success para el commit `abc3727`, [run 38086302160](https://github.com/fitksh/Dulce-Salado/actions/runs/38086302160), incluidos tests de navegador y guardado de capturas.
+
 ## Validación manual pendiente del dueño
 
 1. Configurar el WhatsApp real y cargar categorías/productos/precios comerciales reales.

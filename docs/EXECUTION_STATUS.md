@@ -3,7 +3,7 @@
 Fecha de inicio: 2026-10-10. Trabajo autorizado secuencial en `main` hasta completar el MVP.
 
 ## Tarea actual
-Fase 6: QA local completado; pendiente publicar y comprobar CI ampliada de navegador.
+MVP LISTO PARA PRUEBAS LOCALES. Fases 0–6 completadas; implementación publicada en main y CI ampliada verificada.
 
 ## Decisiones autorizadas
 - kg, unidad y paquete; incrementos iniciales 0,1 kg y 1 unidad/paquete. Sin conversión de gramos.
@@ -20,7 +20,7 @@ Fase 6: QA local completado; pendiente publicar y comprobar CI ampliada de naveg
 - Carrito finalizado: localStorage guarda ID/cantidad/tarifa, unidad y hash de revisión, nunca importes; refresco POST con CSRF devuelve HTML y calcula Decimal. Cantidades/selección editables, quitar/vaciar, persistencia y sincronización entre pestañas.
 - Cambios de precio informados; mayorista ausente, producto retirado o cambio de unidad bloquean total hasta corregir. Durante consultas/fallos no se muestran totales anteriores.
 - WhatsApp finalizado: diálogo nativo, aviso exacto, cancelar/continuar, mensaje completo y copiable. Última validación al continuar; si cambió catálogo exige nueva revisión. Número opcional por entorno; sin configurar no navega.
-- QA final e instrucciones locales completados. Pendiente: publicación/CI final; configuración comercial y prueba de teléfono real a cargo del dueño.
+- QA final, instrucciones locales, publicación y CI completados. Configuración comercial y prueba de teléfono real a cargo del dueño, según QA.md.
 
 ## Archivos de la tarea
 Auditoría: configuración, tests core, Docker ignores y documentación. Modelos: `catalog/models.py`, `catalog/admin.py`, `catalog/apps.py`, `catalog/tests.py`, `catalog/migrations/0001_initial.py`, settings y especificación.
@@ -43,12 +43,16 @@ Auditoría: configuración, tests core, Docker ignores y documentación. Modelos
 - Base comercial comprobada vacía. Servidor QA detenido y base descartable eliminada (consulta de nombres QA sin filas). WhatsApp interceptado, sin envío.
 - Correcciones QA: contraste y contenedor de imágenes; foco inicial en título para leer el aviso; cancelar durante la revalidación invalida la respuesta pendiente; ocultar importes ante almacenamiento inválido. Tests extra de orientación/metadata/transparencia y suma de subtotales redondeados.
 - Archivos fase 6: tests/browser_server.py y browser.spec.cjs, test_images/test_cart, CSS/JS/template revisión, README, QA/arquitectura/estado/roadmap y workflow. Playwright 1.64.0/axe 4.13.0 sólo para desarrollo en .qa ignorado por Git/Docker.
+- Imagen Docker final reconstruida y servicios web/db levantados; migrate sin pendientes y check OK. HTTP catálogo/carrito 200. Main y origin/main sincronizados, sin archivos locales sensibles en Git.
+- CI ampliada completada con success: `https://github.com/fitksh/Dulce-Salado/actions/runs/38086302160`, commit `abc3727adba1664856877541c540146949da272c`. Todos los pasos, incluido QA de navegador, correctos.
 
 ## Publicación
-Último commit publicado: `14e1863` (WhatsApp), CI success run `38085641568`. Carrito `8a904e7`: CI success run `38085464137`; catálogo `1486025`: CI success, run `38085214330`; imágenes `a639373`: CI success, run `38084993979`; modelos `1813f7b`: CI success, run `38084873987`; auditoría `50ef9b0`: CI success, run `38084761552`. Cada commit siguiente incluye el avance verificado y el identificador del commit anterior; el HEAD exacto se consulta con `git log -1`.
+Último commit funcional publicado y verificado: `abc3727adba1664856877541c540146949da272c` (QA final), CI success run `38086302160`. WhatsApp `14e1863`: CI success run `38085641568`; carrito `8a904e7`: CI success run `38085464137`; catálogo `1486025`: CI success run `38085214330`; imágenes `a639373`: CI success run `38084993979`; modelos `1813f7b`: CI success run `38084873987`; auditoría `50ef9b0`: CI success run `38084761552`.
+
+El cierre documental es el commit que contiene este estado. Su identificador exacto se obtiene con `git log -1 --format=%H`; su run CI se consulta en GitHub Actions. No se intenta incluir el hash de un commit dentro de sí mismo.
 
 ## Bloqueos
 Ninguno de implementación. El número real de WhatsApp deberá configurarlo el dueño.
 
 ## Próxima tarea exacta
-Publicar QA final, verificar el run CI que incluye navegador y marcar fase 6 sólo cuando sea correcto.
+El dueño configura WHATSAPP_PHONE en .env, crea su administrador y carga categorías/productos reales siguiendo README. Luego prueba carrito/WhatsApp en su teléfono y lector de pantalla según QA.md. No hay tareas de implementación pendientes del MVP; no avanzar a despliegue sin nueva autorización.
