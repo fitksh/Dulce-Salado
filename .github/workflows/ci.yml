@@ -44,3 +44,28 @@ jobs:
         with:
           node-version: '24'
       - run: node --test tests/*.test.cjs
+      - name: Instalar herramientas QA aisladas
+        run: npm install --prefix .qa --no-save --no-package-lock playwright@1.64.0 @axe-core/playwright@4.13.0
+      - name: Instalar Chromium de pruebas
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.qa/browsers
+        run: node .qa/node_modules/playwright/cli.js install --with-deps chromium
+      - name: QA de navegador con base descartable
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.qa/browsers
+        run: |
+          python tests/browser_server.py > /tmp/dulce-salado-qa.log 2>&1 &
+          qa_pid=$!
+          trap 'kill "$qa_pid"; wait "$qa_pid" || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8001/ > /dev/null; then break; fi
+            sleep 1
+          done
+          node --test tests/browser.spec.cjs
+      - name: Capturas QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-screenshots
+          path: .qa/screenshots
+          if-no-files-found: ignore

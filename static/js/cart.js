@@ -9,7 +9,7 @@
   function count() { document.querySelectorAll("[data-cart-count]").forEach(node => { node.textContent = String(items.length); }); }
   function load() {
     try { items = core.read(window.localStorage); storageFailed = false; }
-    catch (error) { storageFailed = true; announce(error instanceof SyntaxError ? "El carrito guardado no se pudo leer. Vaciá el carrito para restablecerlo." : error.message); }
+    catch (error) { items = []; storageFailed = true; announce(error instanceof SyntaxError ? "El carrito guardado no se pudo leer. Vaciá el carrito para restablecerlo." : error.name === "SecurityError" ? "Habilitá el almacenamiento local de este navegador para guardar el carrito." : error.message); }
     count();
   }
   function persist() {
@@ -19,7 +19,8 @@
   }
   async function refresh() {
     if (app) { const dialog = document.getElementById("cart-review-dialog"); if (dialog.open) dialog.close(); }
-    if (!app || storageFailed) { if (app) document.getElementById("cart-loading").hidden = true; return; }
+    if (!app) return;
+    if (storageFailed) { ++serial; document.getElementById("cart-loading").hidden = true; document.getElementById("cart-contents").replaceChildren(); return; }
     const requestNumber = ++serial;
     const contents = document.getElementById("cart-contents");
     const loading = document.getElementById("cart-loading");
@@ -39,6 +40,7 @@
       contents.innerHTML = html;
       items = JSON.parse(contents.querySelector("#cart-current-items").textContent);
       persist();
+      if (storageFailed) contents.querySelector("#cart-review")?.setAttribute("disabled", "");
       contents.hidden = false;
       if (focusId) document.getElementById(focusId)?.focus({ preventScroll: true });
     } catch (error) {
@@ -68,8 +70,8 @@
     const reviewContents = document.getElementById("cart-review-contents");
     async function review(accepted = false) {
       if (storageFailed || reviewing) return;
-      reviewing = true;
       const requestNumber = ++serial;
+      reviewing = true;
       const data = new FormData();
       data.set("items", JSON.stringify(items));
       data.set("csrfmiddlewaretoken", document.querySelector("#cart-token input").value);
@@ -87,11 +89,12 @@
         if (ready && !storageFailed) { window.location.assign(ready.href); return; }
         if (!dialog.open) dialog.showModal();
         if (storageFailed) document.getElementById("review-continue").disabled = true;
-        document.getElementById("review-cancel").focus();
+        document.getElementById("review-title").focus({ preventScroll: true });
+        dialog.scrollTop = 0;
       } catch (error) { if (requestNumber === serial) { if (dialog.open) dialog.close(); announce(error.message); } }
-      finally { reviewing = false; }
+      finally { if (requestNumber === serial) reviewing = false; }
     }
-    dialog.addEventListener("close", () => { if (!reviewing) refresh(); });
+    dialog.addEventListener("close", () => { reviewing = false; ++serial; refresh(); });
     dialog.addEventListener("click", async event => {
       if (event.target.closest("#review-cancel")) dialog.close();
       if (event.target.closest("#review-continue")) review(true);

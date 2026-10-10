@@ -3,7 +3,7 @@
 Fecha de inicio: 2026-10-10. Trabajo autorizado secuencial en `main` hasta completar el MVP.
 
 ## Tarea actual
-Fase 5 completada: revisión, aviso y enlace WhatsApp. Siguiente: QA de integración/accesibilidad.
+Fase 6: QA local completado; pendiente publicar y comprobar CI ampliada de navegador.
 
 ## Decisiones autorizadas
 - kg, unidad y paquete; incrementos iniciales 0,1 kg y 1 unidad/paquete. Sin conversión de gramos.
@@ -20,7 +20,7 @@ Fase 5 completada: revisión, aviso y enlace WhatsApp. Siguiente: QA de integrac
 - Carrito finalizado: localStorage guarda ID/cantidad/tarifa, unidad y hash de revisión, nunca importes; refresco POST con CSRF devuelve HTML y calcula Decimal. Cantidades/selección editables, quitar/vaciar, persistencia y sincronización entre pestañas.
 - Cambios de precio informados; mayorista ausente, producto retirado o cambio de unidad bloquean total hasta corregir. Durante consultas/fallos no se muestran totales anteriores.
 - WhatsApp finalizado: diálogo nativo, aviso exacto, cancelar/continuar, mensaje completo y copiable. Última validación al continuar; si cambió catálogo exige nueva revisión. Número opcional por entorno; sin configurar no navega.
-- Pendientes: QA final visual y accesibilidad, instrucciones completas de uso local.
+- QA final e instrucciones locales completados. Pendiente: publicación/CI final; configuración comercial y prueba de teléfono real a cargo del dueño.
 
 ## Archivos de la tarea
 Auditoría: configuración, tests core, Docker ignores y documentación. Modelos: `catalog/models.py`, `catalog/admin.py`, `catalog/apps.py`, `catalog/tests.py`, `catalog/migrations/0001_initial.py`, settings y especificación.
@@ -39,12 +39,16 @@ Auditoría: configuración, tests core, Docker ignores y documentación. Modelos
 - Carrito en Docker: 34 tests Django OK, 4 tests Node OK, check/Ruff OK y sin migraciones pendientes. CI ampliada a migraciones/Node. Archivos: cart.py, vistas/rutas, templates, JS cart-core/cart, CSS, tests y CI.
 - WhatsApp en Docker: 39 tests Django OK, 4 Node OK, check/Ruff OK y sin migraciones pendientes. Tests verifican texto completo codificado, marcas opcionales, redondeo y cambios antes de salida. No se envió ningún mensaje ni se visitó un teléfono de prueba.
 - Archivos fase 5: whatsapp.py/test_whatsapp.py, vistas/rutas/settings, .env.example, templates carrito/revisión, JS y CSS.
+- QA final: 42 tests Django, 4 Node y 11 comprobaciones Chromium OK; checks/Ruff OK y sin migraciones pendientes. Cero infracciones axe en vistas verificadas. Capturas 360/390/430/1280 px inspeccionadas, sin scroll horizontal y controles de 44 px.
+- Base comercial comprobada vacía. Servidor QA detenido y base descartable eliminada (consulta de nombres QA sin filas). WhatsApp interceptado, sin envío.
+- Correcciones QA: contraste y contenedor de imágenes; foco inicial en título para leer el aviso; cancelar durante la revalidación invalida la respuesta pendiente; ocultar importes ante almacenamiento inválido. Tests extra de orientación/metadata/transparencia y suma de subtotales redondeados.
+- Archivos fase 6: tests/browser_server.py y browser.spec.cjs, test_images/test_cart, CSS/JS/template revisión, README, QA/arquitectura/estado/roadmap y workflow. Playwright 1.64.0/axe 4.13.0 sólo para desarrollo en .qa ignorado por Git/Docker.
 
 ## Publicación
-Último commit publicado: `8a904e7` (carrito). Catálogo `1486025`: CI success, run `38085214330`; imágenes `a639373`: CI success, run `38084993979`; modelos `1813f7b`: CI success, run `38084873987`; auditoría `50ef9b0`: CI success, run `38084761552`. Cada commit siguiente incluye el avance verificado y el identificador del commit anterior; el HEAD exacto se consulta con `git log -1`.
+Último commit publicado: `14e1863` (WhatsApp), CI success run `38085641568`. Carrito `8a904e7`: CI success run `38085464137`; catálogo `1486025`: CI success, run `38085214330`; imágenes `a639373`: CI success, run `38084993979`; modelos `1813f7b`: CI success, run `38084873987`; auditoría `50ef9b0`: CI success, run `38084761552`. Cada commit siguiente incluye el avance verificado y el identificador del commit anterior; el HEAD exacto se consulta con `git log -1`.
 
 ## Bloqueos
 Ninguno de implementación. El número real de WhatsApp deberá configurarlo el dueño.
 
 ## Próxima tarea exacta
-Publicar WhatsApp y ejecutar pruebas completas de navegador con datos aislados de test, accesibilidad y QA móvil. Completar README para uso local.
+Publicar QA final, verificar el run CI que incluye navegador y marcar fase 6 sólo cuando sea correcto.

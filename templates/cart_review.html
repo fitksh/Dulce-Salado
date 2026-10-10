@@ -15,7 +15,7 @@
 {% if not whatsapp_configured %}<p class="notice">El comercio todavía no habilitó su número de WhatsApp en el catálogo.</p>{% endif %}
 <p class="muted">WhatsApp abrirá con el texto preparado. Vos decidís enviarlo; el sitio no confirma ni registra pedidos.</p>
 <div class="dialog-actions">
-  <button type="button" class="secondary" id="review-cancel" autofocus>Volver al carrito</button>
+  <button type="button" class="secondary" id="review-cancel">Volver al carrito</button>
   <button type="button" id="review-continue" {% if not cart.valid or not whatsapp_configured %}disabled{% endif %}>Continuar a WhatsApp</button>
 </div>
 {% if ready_url %}<a id="whatsapp-ready" href="{{ ready_url }}" rel="noreferrer">Abrir WhatsApp con el mensaje preparado</a>{% endif %}

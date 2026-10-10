@@ -47,6 +47,25 @@ class ProductImageTests(TestCase):
         self.assertEqual(Product.objects.count(), 0)
         self.assertEqual(list(Path(self.directory.name).rglob("*")), [])
 
+    def test_exif_orientation_is_applied_and_metadata_removed(self):
+        output = BytesIO()
+        image = Image.new("RGB", (40, 20), "orange")
+        exif = Image.Exif()
+        exif[274] = 6
+        exif[315] = "Private test metadata"
+        image.save(output, "JPEG", exif=exif)
+        product = self.product(SimpleUploadedFile("photo.jpg", output.getvalue()))
+        with Image.open(product.image.path) as optimized:
+            self.assertEqual(optimized.size, (20, 40))
+            self.assertFalse(optimized.getexif())
+
+    def test_transparency_is_preserved(self):
+        output = BytesIO()
+        Image.new("RGBA", (10, 10), (255, 0, 0, 0)).save(output, "PNG")
+        product = self.product(SimpleUploadedFile("transparent.png", output.getvalue()))
+        with Image.open(product.image.path) as optimized:
+            self.assertEqual(optimized.getpixel((0, 0))[3], 0)
+
     def test_size_dimensions_and_format_limits(self):
         for file in (
             SimpleUploadedFile("large.png", b"x" * (MAX_IMAGE_BYTES + 1)),

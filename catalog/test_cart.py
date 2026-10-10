@@ -30,6 +30,12 @@ class CartTests(TestCase):
         self.assertTrue(cart["notices"])
         self.assertNotIn("price", cart["items"][0])
 
+    def test_total_sums_individually_rounded_subtotals(self):
+        other = Product.objects.create(category=self.category, name="Otro test", sale_unit="kg", quantity_step="0.1", retail_price="10.25")
+        other.refresh_from_db()
+        cart = calculate_cart([self.item(), self.item(id=other.pk, revision=product_revision(other))])
+        self.assertEqual(cart["total"], Decimal("2.06"))
+
     def test_missing_wholesale_inactive_and_deleted_prevent_total(self):
         self.product.wholesale_price = None
         self.product.save()

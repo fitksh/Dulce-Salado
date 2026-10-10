@@ -8,7 +8,7 @@ Trabajar secuencialmente y actualizar el estado sólo al terminar y verificar ca
 - [x] Fase 3 — Catálogo público mobile-first, búsqueda, categorías y estados vacíos; 27 tests/check/Ruff OK. QA visual final en fase 6.
 - [x] Fase 4 — Carrito local, cantidades/tarifa, refresco de datos y cálculos Decimal; 34 tests Django y 4 Node/check/Ruff OK.
 - [x] Fase 5 — Revisión y aviso obligatorio, mensaje completo wa.me, validación final y bloqueo sin teléfono; 39 tests Django y 4 Node/check/Ruff OK, sin envío real.
-- [ ] Fase 6 — QA móvil, corrección de accesibilidad, optimización de imágenes y pruebas finales.
+- [ ] Fase 6 — QA local verificado: 42 tests Django, 4 Node y 11 comprobaciones Chromium; axe sin infracciones en vistas verificadas. Pendiente publicación y CI final con navegador. Pruebas de teléfono/lector real detalladas en QA.md.
 - [ ] Fase futura — VPS, dominio, HTTPS, proxy estáticos/media, backups y despliegue; fuera del alcance actual.
 
 ## Criterios de avance
