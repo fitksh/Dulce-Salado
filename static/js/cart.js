@@ -158,7 +158,11 @@
       } catch (error) { if (requestNumber === serial) { if (dialog.open) dialog.close(); announce(error.message); } }
       finally { if (requestNumber === serial) reviewing = false; }
     }
-    dialog.addEventListener("close", () => { reviewing = false; ++serial; refresh(); });
+    dialog.addEventListener("close", () => {
+      reviewing = false; ++serial;
+      document.getElementById("cart-review")?.focus({ preventScroll: true });
+      refresh();
+    });
     dialog.addEventListener("click", async event => {
       if (event.target.closest("#review-cancel")) dialog.close();
       if (event.target.closest("#review-continue")) review(true);

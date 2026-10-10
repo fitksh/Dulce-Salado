@@ -235,9 +235,11 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await page.locator("#review-title").evaluate(node => node === document.activeElement), true);
     await accessible();
     await page.screenshot({ path: ".qa/screenshots/review-mobile.png", fullPage: true });
+    const afterClose = page.waitForResponse(response => response.url().endsWith("/carrito/recalcular/"));
     await page.keyboard.press("Escape");
     await page.getByRole("dialog").waitFor({ state: "hidden" });
-    await page.waitForFunction(() => !document.getElementById("cart-review")?.disabled);
+    await afterClose;
+    await page.waitForFunction(() => document.activeElement?.id === "cart-review" && !document.getElementById("cart-review")?.disabled);
     assert.equal(await page.evaluate(() => document.activeElement?.id), "cart-review");
     await page.locator("#cart-review").click();
     await page.getByRole("dialog").waitFor();
