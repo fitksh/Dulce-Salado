@@ -1,0 +1,33 @@
+{% load catalog_format l10n %}
+{{ cart.items|json_script:"cart-current-items" }}
+{% if cart.notices %}<div class="notice" role="status"><p>Información actualizada</p><ul>{% for notice in cart.notices %}<li>{{ notice }}</li>{% endfor %}</ul></div>{% endif %}
+{% if cart.rows %}
+  <div class="cart-layout"><div class="cart-items">
+    {% for row in cart.rows %}
+      <article class="cart-item" data-id="{{ row.entry.id }}" {% if row.product %}data-unit="{{ row.product.sale_unit }}"{% endif %} aria-labelledby="cart-product-{{ row.entry.id }}">
+        <div class="cart-item-heading"><h2 id="cart-product-{{ row.entry.id }}">{% if row.product %}{{ row.product.name }}{% else %}Producto no disponible ({{ row.entry.id }}){% endif %}</h2><button type="button" class="secondary remove-item" aria-label="Quitar {% if row.product %}{{ row.product.name }}{% else %}producto {{ row.entry.id }}{% endif %}">Quitar</button></div>
+        {% if row.product %}
+          {% if row.product.brand %}<p class="product-brand">{{ row.product.brand }}</p>{% endif %}
+          <p>Precio {% if row.entry.price_type == 'wholesale' %}mayorista{% else %}minorista{% endif %}: {% if row.price is not None %}{{ row.price|ars }} / {{ row.product.sale_unit }}{% else %}no disponible{% endif %}</p>
+          {% if row.entry.price_type == 'wholesale' %}<p class="wholesale-note">{{ row.product.wholesale_condition }} Mayorista sujeto a confirmación comercial.</p>{% endif %}
+          <div class="product-controls">
+            <div><label for="cart-quantity-{{ row.entry.id }}">Cantidad ({{ row.product.sale_unit }})</label><input id="cart-quantity-{{ row.entry.id }}" class="cart-quantity" type="number" inputmode="decimal" min="{{ row.product.quantity_step|unlocalize }}" step="{{ row.product.quantity_step|unlocalize }}" max="9999999.99" value="{{ row.quantity_value }}" required></div>
+            <div><label for="cart-price-{{ row.entry.id }}">Tipo de precio</label><select id="cart-price-{{ row.entry.id }}" class="cart-price">
+              {% if row.entry.price_type == 'wholesale' and row.product.wholesale_price is None %}<option value="wholesale" selected disabled>Mayorista no disponible</option>{% endif %}
+              <option value="retail" {% if row.entry.price_type == 'retail' %}selected{% endif %}>Minorista</option>
+              {% if row.product.wholesale_price is not None %}<option value="wholesale" {% if row.entry.price_type == 'wholesale' %}selected{% endif %}>Mayorista</option>{% endif %}
+            </select></div>
+          </div>
+          {% if row.subtotal is not None %}<p class="subtotal">Subtotal estimado: <strong>{{ row.subtotal|ars }}</strong></p>{% endif %}
+        {% endif %}
+        {% if row.errors %}<ul class="notice error" role="alert">{% for error in row.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+      </article>
+    {% endfor %}
+  </div><aside class="cart-summary" aria-labelledby="summary-title">
+    <h2 id="summary-title">Total estimado</h2>
+    {% if cart.total is not None %}<p class="total">{{ cart.total|ars }}</p>{% else %}<p>Corregí los artículos indicados para calcular el total.</p>{% endif %}
+    <p>Disponibilidad y precios sujetos a confirmación.</p>
+  </aside></div>
+{% else %}
+  <div class="empty-state"><h2>Tu carrito está vacío</h2><p>Buscá productos en el catálogo para empezar.</p><a class="button" href="{% url 'home' %}">Explorar catálogo</a></div>
+{% endif %}

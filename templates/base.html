@@ -7,6 +7,8 @@
   <meta name="theme-color" content="#ad3c0c">
   <title>{% block title %}Catálogo{% endblock %} · Dulce y Salado</title>
   <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  <script src="{% static 'js/cart-core.js' %}" defer></script>
+  <script src="{% static 'js/cart.js' %}" defer></script>
   {% block scripts %}{% endblock %}
 </head>
 <body>
@@ -16,9 +18,14 @@
       <span class="brand-mark" aria-hidden="true">d<span>+</span>s</span>
       <span>Dulce y Salado<small>Repostería · Dietética · Cotillón</small></span>
     </a>
+    <a class="button secondary cart-link" href="{% url 'cart' %}">Carrito <span data-cart-count aria-label="productos diferentes">0</span></a>
     {% block header_actions %}{% endblock %}
   </div></header>
-  <main id="contenido" class="container" tabindex="-1">{% block content %}{% endblock %}</main>
+  <main id="contenido" class="container" tabindex="-1">
+    <p id="cart-feedback" class="feedback" role="status" aria-live="polite" hidden></p>
+    <noscript><p class="notice">Para armar y guardar el carrito en este navegador necesitás activar JavaScript.</p></noscript>
+    {% block content %}{% endblock %}
+  </main>
   <footer class="container site-footer">
     <p>Dulce y Salado <span aria-hidden="true">·</span> Precios en pesos argentinos (ARS).</p>
     <p>Precios estimados. Consultá disponibilidad y condiciones con el comercio.</p>

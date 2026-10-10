@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load catalog_format %}
+{% load catalog_format l10n %}
 {% block title %}Catálogo{% endblock %}
 {% block content %}
   <section class="intro" aria-labelledby="catalog-title">
@@ -45,6 +45,17 @@
             {% if product.wholesale_price is not None %}<div><dt>Mayorista</dt><dd>{{ product.wholesale_price|ars }} <span>/ {{ product.sale_unit }}</span></dd></div>{% endif %}
           </dl>
           {% if product.wholesale_price is not None %}<p class="wholesale-note">{% if product.wholesale_condition %}{{ product.wholesale_condition }}. {% endif %}Sujeto a confirmación comercial.</p>{% endif %}
+          <form class="add-product" data-id="{{ product.pk }}" data-revision="{{ product.cart_revision }}" data-unit="{{ product.sale_unit }}">
+            <div class="product-controls">
+              <div><label for="quantity-{{ product.pk }}">Cantidad ({{ product.sale_unit }})</label>
+                <input id="quantity-{{ product.pk }}" name="quantity" type="number" inputmode="decimal" min="{{ product.quantity_step|unlocalize }}" step="{{ product.quantity_step|unlocalize }}" max="9999999.99" value="{{ product.quantity_step|unlocalize }}" required>
+              </div>
+              <div><label for="price-{{ product.pk }}">Tipo de precio</label>
+                <select id="price-{{ product.pk }}" name="price_type"><option value="retail" selected>Minorista</option>{% if product.wholesale_price is not None %}<option value="wholesale">Mayorista</option>{% endif %}</select>
+              </div>
+            </div>
+            <button type="submit">Agregar al carrito</button>
+          </form>
         </div>
       </article>
     {% empty %}

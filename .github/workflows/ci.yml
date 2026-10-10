@@ -39,3 +39,8 @@ jobs:
       - run: ruff check .
       - run: python manage.py check
       - run: python manage.py test
+      - run: python manage.py makemigrations --check --dry-run
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test tests/*.test.cjs
