@@ -13,33 +13,53 @@
     feedback.textContent = message; feedback.hidden = false;
     if (kind === "success") feedbackTimer = setTimeout(() => { feedback.hidden = true; }, 8000);
   }
-  function renderCart(contents, html, submitted) {
+  function renderCart(contents, html, submitted, pendingFocus) {
     const focused = document.activeElement;
+    const focusId = focused?.id || (focused === document.body ? pendingFocus : null);
     const scrollTop = window.scrollY;
     const next = document.createElement("template");
     next.innerHTML = html;
-    // Reutilizar controles del mismo producto/unidad evita perder edición y foco.
-    next.content.querySelectorAll(".cart-item").forEach(row => {
-      const previous = contents.querySelector(`.cart-item[data-id="${row.dataset.id}"]`);
-      if (!previous || previous.dataset.unit !== row.dataset.unit) return;
-      row.querySelectorAll("input, select, button").forEach(control => {
-        const selector = control.id ? `#${control.id}` : control.dataset.direction ? `[data-direction="${control.dataset.direction}"]` : ".remove-item";
-        const old = previous.querySelector(selector);
-        if (!old) return;
-        if (control.tagName === "INPUT") {
-          const dirty = old === focused && old.value !== submitted.find(item => String(item.id) === row.dataset.id)?.quantity;
-          if (!dirty) old.value = control.value;
-          old.min = control.min; old.step = control.step;
-          old.removeAttribute("aria-invalid");
-        } else if (control.tagName === "SELECT") {
-          old.innerHTML = control.innerHTML; old.value = control.value;
-        }
-        control.replaceWith(old);
+    const oldList = contents.querySelector(".cart-items");
+    const newList = next.content.querySelector(".cart-items");
+    if (oldList && newList) {
+      const rows = Array.from(newList.children);
+      const ids = new Set(rows.map(row => row.dataset.id));
+      Array.from(oldList.children).forEach(row => { if (!ids.has(row.dataset.id)) row.remove(); });
+      rows.forEach((row, index) => {
+        let previous = oldList.querySelector(`.cart-item[data-id="${row.dataset.id}"]`);
+        if (!previous) { oldList.insertBefore(row, oldList.children[index] || null); return; }
+        const controls = previous.querySelector(".product-controls");
+        const freshControls = row.querySelector(".product-controls");
+        if (controls && freshControls) {
+          // El contenedor sigue conectado: desmontar un input enfocado dispara blur/change nativo.
+          freshControls.querySelectorAll("input, select").forEach(control => {
+            const old = controls.querySelector(`#${control.id}`);
+            if (control.tagName === "INPUT") {
+              const dirty = previous.dataset.unit === row.dataset.unit && old === focused && old.value !== submitted.find(item => String(item.id) === row.dataset.id)?.quantity;
+              if (!dirty) old.value = control.value;
+              old.min = control.min; old.step = control.step; old.inputMode = control.inputMode;
+              old.removeAttribute("aria-invalid");
+            } else { old.innerHTML = control.innerHTML; old.value = control.value; }
+            controls.querySelector(`label[for="${control.id}"]`).textContent = freshControls.querySelector(`label[for="${control.id}"]`).textContent;
+          });
+          controls.querySelector(".quantity-error").hidden = true;
+          Array.from(previous.childNodes).forEach(node => { if (node !== controls) node.remove(); });
+          let after = false;
+          Array.from(row.childNodes).forEach(node => {
+            if (node === freshControls) { after = true; return; }
+            if (after) previous.append(node); else previous.insertBefore(node, controls);
+          });
+          previous.dataset.unit = row.dataset.unit;
+        } else { previous.replaceWith(row); previous = row; }
+        if (oldList.children[index] !== previous) oldList.insertBefore(previous, oldList.children[index] || null);
       });
-    });
-    contents.replaceChildren(next.content);
+      contents.querySelector(".cart-summary").innerHTML = next.content.querySelector(".cart-summary").innerHTML;
+      contents.querySelector("#cart-current-items").textContent = next.content.querySelector("#cart-current-items").textContent;
+      contents.querySelector("#cart-notices").replaceChildren(...next.content.querySelector("#cart-notices").childNodes);
+    } else { contents.replaceChildren(next.content); }
     window.QuantityControls.init(contents);
     if (focused?.isConnected && contents.contains(focused)) focused.focus({ preventScroll: true });
+    else if (focusId) contents.querySelector(`#${focusId}`)?.focus({ preventScroll: true });
     window.scrollTo(window.scrollX, scrollTop);
   }
   function count() { document.querySelectorAll("[data-cart-count]").forEach(node => { node.textContent = String(items.length); }); }
@@ -62,6 +82,7 @@
     const loading = document.getElementById("cart-loading");
     const requestError = document.getElementById("cart-request-error");
     const submitted = items.map(item => ({ ...item }));
+    const pendingFocus = contents.contains(document.activeElement) ? document.activeElement.id : null;
     loading.textContent = "Consultando el catálogo vigente…";
     requestError.hidden = true;
     contents.classList.add("is-unverified");
@@ -75,7 +96,7 @@
       const html = await response.text();
       if (requestNumber !== serial) return;
       if (!response.ok) throw new Error("No se pudo verificar el carrito. Revisá los datos o volvé a intentarlo.");
-      renderCart(contents, html, submitted);
+      renderCart(contents, html, submitted, pendingFocus);
       items = JSON.parse(contents.querySelector("#cart-current-items").textContent);
       persist();
       if (storageFailed) contents.querySelector("#cart-review")?.setAttribute("disabled", "");

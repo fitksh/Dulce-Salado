@@ -1,6 +1,6 @@
 {% load catalog_format l10n %}
 {{ cart.items|json_script:"cart-current-items" }}
-{% if cart.notices %}<div class="notice warning" role="status"><p>Información actualizada</p><ul>{% for notice in cart.notices %}<li>{{ notice }}</li>{% endfor %}</ul></div>{% endif %}
+<div id="cart-notices">{% if cart.notices %}<div class="notice warning" role="status"><p>Información actualizada</p><ul>{% for notice in cart.notices %}<li>{{ notice }}</li>{% endfor %}</ul></div>{% endif %}</div>
 {% if cart.rows %}
   <div class="cart-layout"><div class="cart-items">
     {% for row in cart.rows %}

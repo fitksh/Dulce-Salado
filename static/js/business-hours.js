@@ -22,7 +22,8 @@
   const data = JSON.parse(source.textContent);
   function update() {
     const status = currentStatus(data);
-    root.document.getElementById("business-status-text").textContent = status.label;
+    const label = root.document.getElementById("business-status-text");
+    if (label.textContent !== status.label) label.textContent = status.label;
     root.document.getElementById("business-status-dot").classList.toggle("open", status.open);
   }
   update();

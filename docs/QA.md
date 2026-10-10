@@ -27,7 +27,7 @@ La primera ejecución de navegador detectó contraste insuficiente en el marcado
 | Mensaje completo | Codificación URL, marca opcional, cantidades/unidades/tarifa, subtotales/total, mensaje largo sin truncar |
 | Admin e imágenes | Auth/permisos, creación de modelos, tipo real, tamaño/dimensiones, WebP, orientación, transparencia, metadata y limpieza |
 | Uso móvil/teclado | Anchuras móviles, foco inicial del diálogo, Escape, etiquetas/foco visible y axe; lector real pendiente |
-| Sin pedidos/stock | Sólo Category/Product y modelos estándar Django; carrito local y cálculos stateless |
+| Sin pedidos/stock | Category/Product, configuración comercial e intervalos; carrito local y cálculos stateless sin modelos de pedidos |
 
 ## Aislamiento y CI
 
@@ -42,6 +42,28 @@ CI ampliada verificada con resultado success para el commit `abc3727`, [run 3808
 1. Configurar el WhatsApp real y cargar categorías/productos/precios comerciales reales.
 2. Probar en Android/iOS real, con teclado virtual y TalkBack/VoiceOver; verificar lectura, foco y retorno desde WhatsApp.
 3. Verificar que el número pertenece al comercio y que WhatsApp móvil/web precarga el mensaje. Para texto largo, probar copiar el mensaje completo.
-4. Validar nombre/colores con el logo original cuando esté disponible.
+4. Validar presentación del logo provisto y datos comerciales configurados.
 
 Estas comprobaciones comerciales/dispositivo real no se sustituyen por axe ni por simulación de anchura. Despliegue, TLS y backups de producción están fuera del MVP. No hay cuentas de clientes ni persistencia de pedidos.
+
+## Etapa complementaria UX/UI — QA final
+
+Historial MVP anterior conservado. Verificaciones actuales: 60 tests Django, 7 Node y 16 comprobaciones Chromium (15 escenarios), check/Ruff OK y makemigrations sin cambios. PostgreSQL y Python 3.12/Django 5.2.18 en Docker; migraciones 0003 BusinessSettings y 0004 OpeningInterval aplicadas. Ninguna dependencia nueva de runtime.
+
+| Mejora | Evidencia ejecutada |
+| --- | --- |
+| Logo/header/Instagram | WebP 150×150 de fuente provista; enlaces accesibles, header en una fila y sin overflow a 360/390/430/1280 px |
+| Búsqueda y categorías | Orden nombre/marca/descripción, filtros/paginación Django; formulario GET móvil con búsqueda conservada también sin JS |
+| Cantidades/condiciones/placeholder | Botones 44×44, decimales exactos, mínimo e inválidos; mismo comportamiento en catálogo/carrito; condición específica conservada |
+| Feedback y Admin | Éxito verde con Ver carrito/contador, axe tras agregar; creación/edición de productos/categorías con un mensaje nativo de éxito |
+| Scroll/concurrencia | Carrito de 12 artículos, edición por debajo de 2000 px; mismo input y foco, diferencia de scroll menor de 3 px durante/después; teclado, respuestas fuera de orden y recuperación de red con controles visibles/importes ocultos |
+| CSV | Permisos, 111 productos filtrados incluyendo página no visible, búsqueda/filtros, BOM, ;, coma decimal, comillas/saltos de línea y protección de fórmulas; descarga real filtrada en navegador |
+| Cómo llegar | Ausencia de dirección sin enlace, singleton/permiso Admin, URL codificada/exacta validada, navegación Maps interceptada y capturas de las cuatro anchuras |
+| Horarios | Configuración inédita/borrador neutra, semana vacía explícitamente cerrada, 2/3 intervalos, límites, zona Buenos Aires, superposiciones y cambios/borrados en Admin; details con teclado/sin JS; reloj simulado pasa de cerrado a abierto sin fetch periódico |
+| Regresión MVP | Precios/tarifa manual, localStorage, cambios de unidad/producto, sincronización, diálogo/aviso completo, revalidación, cancelación y WhatsApp interceptado sin envío |
+
+Cero infracciones axe WCAG A/AA en catálogo, confirmación de agregado, carrito/revisión/vacío, Cómo llegar y desplegable horario. Las listas de avisos mantienen su semántica. El reloj anuncia sólo cambios de estado. Las fixtures comerciales de QA viven exclusivamente en la base/media descartables.
+
+CI de tareas 1–6 success: runs 38093591790, 38093785080, 38094129519, 38094267809, 38094437168 y 38094790574. CI del cierre se registra tras publicar en EXECUTION_STATUS; no se presume su resultado.
+
+Pendientes manuales del dueño: configurar dirección real y enlace Maps exacto opcional; completar/publicar horario semanal; confirmar WhatsApp real y catálogo. En teléfono Android/iOS probar teclado virtual, −/+, retorno de Maps/WhatsApp y lector TalkBack/VoiceOver. Abrir CSV en su Excel es-AR y revisar acentos, columnas, decimales y textos protegidos. Confirmar dirección/horarios y reloj del dispositivo; no hay feriados/excepciones.

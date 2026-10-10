@@ -176,6 +176,47 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       assert.equal(await input.evaluate(node => node === window.qaQuantityNode && node === document.activeElement), true);
       assert.equal(Number(await input.inputValue()), 2);
       assert.match(await scrolled.locator(".total").innerText(), /46,13/);
+      await scrolled.unrouteAll({ behavior: "wait" });
+      const increase = scrolled.locator(".cart-item").nth(8).locator('[data-direction="1"]');
+      await increase.evaluate(node => { node.focus({ preventScroll: true }); window.qaIncreaseNode = node; });
+      await increase.press("Enter");
+      await scrolled.locator(".total").filter({ hasText: "$ 47,13" }).waitFor();
+      assert.equal(await increase.evaluate(node => node === window.qaIncreaseNode && node === document.activeElement), true);
+      const pending = [];
+      let firstArrived, secondArrived;
+      const firstReady = new Promise(resolve => { firstArrived = resolve; });
+      const secondReady = new Promise(resolve => { secondArrived = resolve; });
+      await scrolled.route("**/carrito/recalcular/", async route => {
+        const response = await route.fetch();
+        let send;
+        const gate = new Promise(resolve => { send = resolve; });
+        pending.push({ send });
+        if (pending.length === 1) firstArrived(); else secondArrived();
+        await gate;
+        await route.fulfill({ response });
+      });
+      try {
+        await input.fill("4"); await input.dispatchEvent("change"); await firstReady;
+        await input.fill("5"); await input.dispatchEvent("change"); await secondReady;
+        pending[1].send();
+        await scrolled.locator(".total").filter({ hasText: "$ 49,13" }).waitFor();
+        const stale = scrolled.waitForResponse(response => response.url().endsWith("/carrito/recalcular/"));
+        pending[0].send(); await stale;
+        await scrolled.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        assert.match(await scrolled.locator(".total").innerText(), /49,13/);
+        assert.equal(Number(await input.inputValue()), 5);
+        assert.equal(await scrolled.locator("#cart-review").isEnabled(), true);
+      } finally { pending.forEach(request => request.send()); await scrolled.unrouteAll({ behavior: "wait" }); }
+      await scrolled.route("**/carrito/recalcular/", route => route.abort());
+      await input.fill("6"); await input.dispatchEvent("change");
+      await scrolled.getByText(/Los importes no se muestran/).waitFor();
+      assert.equal(await input.isVisible(), true);
+      assert.equal(await input.evaluate(node => node === window.qaQuantityNode), true);
+      assert.equal(await scrolled.locator(".total").isVisible(), false);
+      assert.equal(await scrolled.locator("#cart-review").isDisabled(), true);
+      await scrolled.unrouteAll({ behavior: "wait" });
+      await scrolled.getByRole("button", { name: "Reintentar" }).click();
+      await scrolled.locator(".total").filter({ hasText: "$ 50,13" }).waitFor();
     } finally { unblock(); await isolated.close(); }
   });
 
@@ -196,6 +237,8 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.screenshot({ path: ".qa/screenshots/review-mobile.png", fullPage: true });
     await page.keyboard.press("Escape");
     await page.getByRole("dialog").waitFor({ state: "hidden" });
+    await page.waitForFunction(() => !document.getElementById("cart-review")?.disabled);
+    assert.equal(await page.evaluate(() => document.activeElement?.id), "cart-review");
     await page.locator("#cart-review").click();
     await page.getByRole("dialog").waitFor();
     await editPrices("200.50", "90.50");
