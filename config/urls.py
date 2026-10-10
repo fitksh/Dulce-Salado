@@ -3,11 +3,19 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 
-from catalog.views import cart_page, cart_refresh, cart_review, cart_whatsapp, catalog_list
+from catalog.views import (
+    cart_page,
+    cart_refresh,
+    cart_review,
+    cart_whatsapp,
+    catalog_list,
+    directions_page,
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", catalog_list, name="home"),
+    path("como-llegar/", directions_page, name="directions"),
     path("carrito/", cart_page, name="cart"),
     path("carrito/recalcular/", cart_refresh, name="cart_refresh"),
     path("carrito/revisar/", cart_review, name="cart_review"),

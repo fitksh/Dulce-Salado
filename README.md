@@ -98,3 +98,6 @@ No usar `down -v` para conservar base e imágenes. Los volúmenes `postgres_data
 # Exportar catálogo desde Admin
 
 En el listado de productos, «Exportar CSV» descarga todos los productos del conjunto actual, incluidas páginas no visibles. Conserva búsqueda y filtros por categoría, unidad y activo. Sin filtros incluye activos e inactivos. Requiere usuario staff con permiso de ver o cambiar productos. Archivo UTF-8 con BOM y separador `;`, importes con coma decimal para Excel es-AR. Los textos que podrían ejecutarse como fórmulas llevan un apóstrofo protector. No existe importación.
+
+## Dirección y Cómo llegar
+En Admin → Catalog → Configuración comercial, crear una única configuración con la dirección real. El enlace exacto de Google Maps es opcional: pegar un enlace HTTPS compartido por Maps o dejarlo vacío para buscar la dirección. Luego editar ese mismo registro. La página pública `/como-llegar/` está enlazada desde el footer. Si falta dirección muestra un aviso sin destino ficticio. Migración nueva: `catalog.0003_business_settings`; ejecutar `docker compose exec web python manage.py migrate` al actualizar.

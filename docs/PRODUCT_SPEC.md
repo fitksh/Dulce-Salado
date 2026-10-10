@@ -69,3 +69,6 @@ Ofrecer “Volver al carrito” y “Continuar a WhatsApp”.
 
 ## 11. Configuración comercial pendiente
 El dueño debe configurar el número real de WhatsApp por entorno y cargar productos/precios reales en Admin. Denominación inicial: Dulce y Salado. Mayorista sin precio no se ofrece. Los subtotales se redondean a dos decimales con mitad hacia arriba y el total suma esos subtotales, con formato ARS es-AR.
+
+## 12. Mejoras complementarias autorizadas
+Exportación CSV completa/filtrada desde Admin con permisos de ver/cambiar productos. BusinessSettings central único: dirección comercial y enlace exacto opcional de Google Maps, editables con permisos del modelo. /como-llegar/ muestra dirección y enlace; sin dirección informa ausencia y no ofrece ubicación. No se cargan datos comerciales ficticios.

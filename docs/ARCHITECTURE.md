@@ -29,3 +29,6 @@ VPS, dominio, proxy Nginx, TLS, logging centralizado, backup externo, despliegue
 
 ## Convenciones
 Aplicación `core` para comprobaciones de la base. `catalog` concentra Category/Product, administración, catálogo y cálculos stateless del carrito/WhatsApp. No crear una app `orders` o `users` para clientes.
+
+## Configuración comercial complementaria
+BusinessSettings vive en catalog, con PK 1 y constraint para impedir registros múltiples. Admin no permite segunda alta ni borrado. Dirección/enlace Maps se leen sin servicios externos; la vista construye una búsqueda codificada cuando no hay enlace exacto. [Maps URLs oficial](https://developers.google.com/maps/documentation/urls/get-started) define el enlace universal con api=1 sin API key. Sin dirección no se muestra enlace. Exportación CSV utiliza biblioteca estándar y queryset de ChangeList sin paginar, con permisos Admin y protección de fórmulas en textos.

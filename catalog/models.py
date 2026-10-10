@@ -1,4 +1,5 @@
 from decimal import Decimal
+from urllib.parse import urlencode, urlsplit
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
@@ -89,3 +90,35 @@ class Product(models.Model):
         if previous and previous != self.image.name:
             storage = self._meta.get_field("image").storage
             transaction.on_commit(lambda: storage.delete(previous))
+
+
+class BusinessSettings(models.Model):
+    id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    address = models.CharField("dirección comercial", max_length=300, blank=True)
+    maps_url = models.URLField(
+        "enlace exacto de Google Maps", max_length=500, blank=True,
+        help_text="Opcional: enlace HTTPS compartido desde Google Maps. Sin enlace se busca la dirección.",
+    )
+
+    class Meta:
+        verbose_name = "configuración comercial"
+        verbose_name_plural = "configuración comercial"
+        constraints = [models.CheckConstraint(condition=models.Q(pk=1), name="business_settings_single_row")]
+
+    def clean(self):
+        super().clean()
+        if self.maps_url:
+            url = urlsplit(self.maps_url)
+            google = url.hostname in {"google.com", "www.google.com", "google.com.ar", "www.google.com.ar"} and url.path.startswith("/maps")
+            shared = url.hostname == "maps.app.goo.gl" or (url.hostname == "goo.gl" and url.path.startswith("/maps/"))
+            if url.scheme != "https" or url.username or url.password or not (google or shared or url.hostname == "maps.google.com"):
+                raise ValidationError({"maps_url": "Ingresá un enlace HTTPS de Google Maps."})
+
+    @property
+    def location_url(self):
+        if not self.address.strip():
+            return ""
+        return self.maps_url or "https://www.google.com/maps/search/?" + urlencode({"api": "1", "query": self.address.strip()})
+
+    def __str__(self):
+        return "Datos de Dulce y Salado"

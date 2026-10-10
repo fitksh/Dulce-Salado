@@ -10,7 +10,7 @@ from django.urls import path
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_GET
 
-from .models import Category, Product
+from .models import BusinessSettings, Category, Product
 
 
 class ProductAdminForm(forms.ModelForm):
@@ -83,3 +83,12 @@ def csv_text(value):
 
 def csv_decimal(value):
     return format(value, "f").replace(".", ",") if value is not None else ""
+
+
+@admin.register(BusinessSettings)
+class BusinessSettingsAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        return super().has_add_permission(request) and not BusinessSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False

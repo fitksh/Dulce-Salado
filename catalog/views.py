@@ -8,7 +8,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from .cart import calculate_cart, parse_items, product_revision
-from .models import Category, Product
+from .models import BusinessSettings, Category, Product
 from .whatsapp import PRICE_WARNING, whatsapp_message, whatsapp_url
 
 
@@ -38,6 +38,10 @@ def catalog_list(request):
 
 def cart_page(request):
     return render(request, "cart.html")
+
+
+def directions_page(request):
+    return render(request, "directions.html", {"business": BusinessSettings.objects.first()})
 
 
 @require_POST

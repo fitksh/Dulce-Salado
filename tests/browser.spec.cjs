@@ -307,4 +307,32 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await blockedPage.locator("#cart-review").count(), 0);
     await blocked.close();
   });
+
+  await t.test("Cómo llegar sin dirección y configuración única desde Admin", async () => {
+    await page.getByRole("link", { name: "Cómo llegar", exact: true }).click();
+    await page.getByText(/La dirección del comercio todavía no está disponible/).waitFor();
+    assert.equal(await page.getByRole("link", { name: "Abrir en Google Maps" }).count(), 0);
+    await accessible();
+    const address = "Dirección descartable de QA, no comercial";
+    await admin.goto(`${base}/admin/catalog/businesssettings/add/`);
+    await admin.locator("#id_address").fill(address);
+    await admin.locator('input[name="_save"]').click();
+    await admin.locator(".messagelist .success").waitFor();
+    await page.reload();
+    assert.equal(await page.locator("address").innerText(), address);
+    const maps = page.getByRole("link", { name: "Abrir en Google Maps" });
+    const link = new URL(await maps.getAttribute("href"));
+    assert.equal(link.searchParams.get("query"), address);
+    assert.equal(link.searchParams.get("api"), "1");
+    for (const width of [360, 390, 430, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      await page.screenshot({ path: `.qa/screenshots/directions-${width}.png`, fullPage: true });
+    }
+    await accessible();
+    await page.route(/^https:\/\/www\.google\.com\/maps\//, route => route.fulfill({ contentType: "text/html", body: "<h1>Mapa interceptado de QA</h1>" }));
+    await maps.click();
+    await page.getByRole("heading", { name: "Mapa interceptado de QA" }).waitFor();
+    await page.goto(`${base}/como-llegar/`);
+  });
 });
