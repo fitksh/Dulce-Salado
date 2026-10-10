@@ -4,7 +4,7 @@ Trabajar secuencialmente y actualizar el estado sólo al terminar y verificar ca
 
 - [x] Fase 0 — Definir alcance, decisiones técnicas y límites del MVP.
 - [x] Fase 1 — Esqueleto y auditoría verificados en Docker Python 3.12/PostgreSQL: 7 tests, checks y Ruff OK; migraciones base aplicadas. CI se comprueba después de publicar.
-- [ ] Fase 2 — Modelar Category/Product, migraciones, Django Admin, validación y subida/optimización de imagen única. Resolver antes unidades e incrementos.
+- [x] Fase 2 — Category/Product, migraciones, Admin con permisos e imagen única validada/optimizada. Verificado en Docker: 20 tests, checks y Ruff OK. Unidades e incrementos autorizados documentados.
 - [ ] Fase 3 — Catálogo público responsive, búsqueda por nombre/marca, filtros de categorías y estados vacíos.
 - [ ] Fase 4 — Carrito local: cantidades, selector tipo de precio, `localStorage`, actualización de precios y totales.
 - [ ] Fase 5 — Revisión, aviso obligatorio, mensaje `wa.me`, pruebas de flujo sin envío automático.

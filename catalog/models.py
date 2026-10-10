@@ -2,7 +2,9 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
-from django.db import models
+from django.db import models, transaction
+
+from .images import optimize_product_image, product_image_path, validate_product_image
 
 
 class Category(models.Model):
@@ -45,6 +47,10 @@ class Product(models.Model):
         validators=[MinValueValidator(Decimal("0"))],
     )
     wholesale_condition = models.CharField("condición mayorista", max_length=300, blank=True)
+    image = models.ImageField(
+        "imagen", upload_to=product_image_path, blank=True, validators=[validate_product_image],
+        help_text="JPEG, PNG o WebP; máximo 5 MB, 6000 px por lado y 16 MP. Se guarda como WebP hasta 1200 px, sin metadatos.",
+    )
     is_active = models.BooleanField("activo", default=True)
     created_at = models.DateTimeField("creado", auto_now_add=True)
     updated_at = models.DateTimeField("actualizado", auto_now=True)
@@ -71,3 +77,15 @@ class Product(models.Model):
 
     def __str__(self):
         return f"{self.name} — {self.brand}" if self.brand else self.name
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None and "image" not in update_fields:
+            return super().save(*args, **kwargs)
+        previous = type(self).objects.filter(pk=self.pk).values_list("image", flat=True).first() if self.pk else None
+        if self.image and not self.image._committed:
+            self.image = optimize_product_image(self.image)
+        super().save(*args, **kwargs)
+        if previous and previous != self.image.name:
+            storage = self._meta.get_field("image").storage
+            transaction.on_commit(lambda: storage.delete(previous))

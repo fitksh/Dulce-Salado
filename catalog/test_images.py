@@ -1,0 +1,83 @@
+import tempfile
+from io import BytesIO
+from pathlib import Path
+
+from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
+from PIL import Image
+
+from .admin import ProductAdminForm
+from .images import MAX_IMAGE_BYTES, validate_product_image
+from .models import Category, Product
+
+
+def upload(size=(40, 30), format="PNG", name="untrusted-name.png"):
+    output = BytesIO()
+    image = Image.new("RGB", size, "orange")
+    image.save(output, format=format)
+    return SimpleUploadedFile(name, output.getvalue(), content_type="application/octet-stream")
+
+
+class ProductImageTests(TestCase):
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.settings_override = override_settings(MEDIA_ROOT=self.directory.name)
+        self.settings_override.enable()
+        self.addCleanup(self.settings_override.disable)
+        self.category = Category.objects.create(name="Test", slug="test")
+
+    def product(self, image):
+        return Product.objects.create(category=self.category, name="Test", retail_price="10", image=image)
+
+    def test_real_format_is_checked_and_filename_is_generated(self):
+        product = self.product(upload(size=(1800, 900), name="misleading.txt"))
+        self.assertTrue(product.image.name.startswith("products/"))
+        self.assertTrue(product.image.name.endswith(".webp"))
+        self.assertNotIn("misleading", product.image.name)
+        with Image.open(product.image.path) as image:
+            self.assertEqual(image.format, "WEBP")
+            self.assertEqual(image.size, (1200, 600))
+            self.assertFalse(image.getexif())
+
+    def test_invalid_file_is_not_written(self):
+        with self.assertRaises(ValidationError):
+            self.product(SimpleUploadedFile("fake.png", b"not an image", content_type="image/png"))
+        self.assertEqual(Product.objects.count(), 0)
+        self.assertEqual(list(Path(self.directory.name).rglob("*")), [])
+
+    def test_size_dimensions_and_format_limits(self):
+        for file in (
+            SimpleUploadedFile("large.png", b"x" * (MAX_IMAGE_BYTES + 1)),
+            upload(size=(6001, 1)), upload(format="GIF"),
+        ):
+            with self.subTest(name=file.name), self.assertRaises(ValidationError):
+                validate_product_image(file)
+
+    def test_admin_rejects_invalid_upload(self):
+        form = ProductAdminForm(data={
+            "category": self.category.pk, "name": "Test", "sale_unit": "unidad", "retail_price": "10",
+        }, files={"image": SimpleUploadedFile("fake.png", b"invalid")})
+        self.assertFalse(form.is_valid())
+        self.assertIn("image", form.errors)
+
+    def test_replace_clear_and_delete_remove_old_files_after_commit(self):
+        product = self.product(upload())
+        old = product.image.path
+        with self.captureOnCommitCallbacks(execute=True):
+            product.image = upload()
+            product.save()
+        self.assertFalse(Path(old).exists())
+        self.assertTrue(Path(product.image.path).exists())
+        old = product.image.path
+        with self.captureOnCommitCallbacks(execute=True):
+            product.image = ""
+            product.save()
+        self.assertFalse(Path(old).exists())
+        product.image = upload()
+        product.save()
+        old = product.image.path
+        with self.captureOnCommitCallbacks(execute=True):
+            Product.objects.filter(pk=product.pk).delete()
+        self.assertFalse(Path(old).exists())
