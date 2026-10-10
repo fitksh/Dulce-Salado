@@ -37,7 +37,14 @@
     result.push(selection({ ...item, quantity: quantityText(sum) }));
     return result;
   }
-  const api = { STORAGE_KEY, hundredths, quantityText, read, write, add };
+  function adjustQuantity(value, step, direction) {
+    const amount = hundredths(value), increment = hundredths(step);
+    if (amount < increment || increment <= 0 || amount % increment !== 0) throw new Error(`Ingresá una cantidad positiva, múltiplo de ${step}.`);
+    const result = Math.max(increment, amount + (direction > 0 ? increment : -increment));
+    if (result > 999999999) throw new Error("La cantidad supera el máximo permitido.");
+    return quantityText(result);
+  }
+  const api = { STORAGE_KEY, hundredths, quantityText, read, write, add, adjustQuantity };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.CartCore = api;
 })(typeof window === "undefined" ? globalThis : window);

@@ -38,6 +38,7 @@
       if (requestNumber !== serial) return;
       if (!response.ok) throw new Error("No se pudo verificar el carrito. Revisá los datos o volvé a intentarlo.");
       contents.innerHTML = html;
+      window.QuantityControls.init(contents);
       items = JSON.parse(contents.querySelector("#cart-current-items").textContent);
       persist();
       if (storageFailed) contents.querySelector("#cart-review")?.setAttribute("disabled", "");

@@ -2,7 +2,7 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Case, IntegerField, Q, Value, When
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
@@ -21,7 +21,13 @@ def catalog_list(request):
     if selected_category:
         products = products.filter(category=selected_category)
     if query:
-        products = products.filter(Q(name__icontains=query) | Q(brand__icontains=query))
+        products = products.filter(
+            Q(name__icontains=query) | Q(brand__icontains=query) | Q(description__icontains=query)
+        ).annotate(search_rank=Case(
+            When(name__icontains=query, then=Value(0)),
+            When(brand__icontains=query, then=Value(1)),
+            default=Value(2), output_field=IntegerField(),
+        )).order_by("search_rank", "name", "pk")
     page = Paginator(products, 24).get_page(request.GET.get("page"))
     for product in page:
         product.cart_revision = product_revision(product)

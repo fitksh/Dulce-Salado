@@ -58,6 +58,8 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       assert.equal(header.sameRow && header.contained, true);
       const targets = await page.locator("button, input:not([type=hidden]), select, .button, .chip").evaluateAll(nodes => nodes.filter(n => n.getBoundingClientRect().height > 0).map(n => ({ tag: n.tagName, height: n.getBoundingClientRect().height })));
       assert.equal(targets.every(target => target.height >= 44), true, JSON.stringify(targets));
+      const steppers = await page.locator(".quantity-adjust").evaluateAll(nodes => nodes.map(n => n.getBoundingClientRect().width));
+      assert.equal(steppers.every(width => width >= 44), true);
       await page.screenshot({ path: `.qa/screenshots/catalog-${width}.png`, fullPage: true });
     }
     await accessible();
@@ -65,9 +67,33 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.locator("#catalog-search").fill("QA Marca");
     await page.getByRole("button", { name: "Buscar", exact: true }).click();
     assert.equal(await page.locator(".product-card").count(), 1);
-    await page.getByRole("link", { name: "QA Cotillón (test)", exact: true }).click();
+    await page.locator("#category-filter").selectOption("qa-cotillon");
+    await page.getByRole("button", { name: "Filtrar", exact: true }).click();
     await page.getByRole("heading", { name: "No encontramos productos" }).waitFor();
+    assert.equal(await page.locator("#catalog-search").inputValue(), "QA Marca");
     await page.goto(base);
+  });
+
+  await t.test("categorías funcionan sin JavaScript y botones respetan decimales/mínimo", async () => {
+    const plain = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 360, height: 844 } });
+    const plainPage = await plain.newPage();
+    await plainPage.goto(`${base}/?q=QA`);
+    await plainPage.locator("#category-filter").selectOption("qa-cotillon");
+    await plainPage.getByRole("button", { name: "Filtrar", exact: true }).click();
+    assert.equal(await plainPage.locator(".product-card").count(), 1);
+    assert.equal(await plainPage.locator("#catalog-search").inputValue(), "QA");
+    assert.equal(await plainPage.locator("#category-filter").inputValue(), "qa-cotillon");
+    await plain.close();
+    const card = page.locator(".product-card").first();
+    await card.getByRole("button", { name: /Reducir cantidad/ }).click();
+    assert.equal(await card.locator('input[name="quantity"]').inputValue(), "0.10");
+    await card.getByRole("button", { name: /Aumentar cantidad/ }).click();
+    await card.getByRole("button", { name: /Aumentar cantidad/ }).click();
+    assert.equal(await card.locator('input[name="quantity"]').inputValue(), "0.30");
+    await card.locator('input[name="quantity"]').fill("0.15");
+    await card.getByRole("button", { name: /Aumentar cantidad/ }).click();
+    await card.getByRole("alert").filter({ hasText: /múltiplo/ }).waitFor();
+    await card.locator('input[name="quantity"]').fill("0.10");
   });
 
   await t.test("cantidad, mayorista manual y persistencia al cerrar pestaña", async () => {
@@ -86,6 +112,10 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.goto(`${base}/carrito/`);
     await waitCart("$ 27,15");
     await accessible();
+    await page.getByRole("button", { name: /Aumentar cantidad/ }).click();
+    await waitCart("$ 36,20");
+    await page.getByRole("button", { name: /Reducir cantidad/ }).click();
+    await waitCart("$ 27,15");
     await page.screenshot({ path: ".qa/screenshots/cart-mobile.png", fullPage: true });
     await setQuantity("0.5");
     await waitCart("$ 45,25");

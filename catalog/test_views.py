@@ -46,6 +46,21 @@ class CatalogViewTests(TestCase):
         Product.objects.all().delete()
         self.assertContains(self.client.get("/"), "Estamos preparando nuestro catálogo")
 
+    def test_search_ranks_name_brand_and_description_with_filters(self):
+        by_description = Product.objects.create(category=self.category, name="A", description="CaCaO", retail_price=1)
+        by_brand = Product.objects.create(category=self.category, name="B", brand="CACAO", description="cacao", retail_price=1)
+        by_name = Product.objects.create(category=self.category, name="Cacao Z", brand="cacao", retail_price=1)
+        Product.objects.create(category=self.category, name="Cacao oculto", is_active=False, retail_price=1)
+        other = Category.objects.create(name="Otra", slug="otra")
+        Product.objects.create(category=other, name="Cacao otra categoría", retail_price=1)
+        response = self.client.get("/", {"q": "cAcAo", "categoria": self.category.slug})
+        self.assertEqual(list(response.context["page"]), [by_name, by_brand, by_description])
+        self.assertContains(response, 'name="q" value="cAcAo"')
+        self.assertContains(response, 'value="reposteria" selected')
+        self.assertContains(response, "Todas las categorías")
+        self.assertNotContains(response, "Sujeto a confirmación comercial.")
+        self.assertNotContains(response, "d+s")
+
     def test_pagination_preserves_filters(self):
         Product.objects.bulk_create([
             Product(category=self.category, name=f"Chocolate {i:02}", retail_price=1)

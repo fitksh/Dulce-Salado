@@ -24,7 +24,7 @@ MVP completado el 2026-10-10. Próximo paso: pruebas locales del dueño siguiend
 Conservar diseño y MVP. Ejecutar secuencialmente, sin ampliar precios, carrito, WhatsApp o infraestructura fuera de lo solicitado.
 
 - [x] Tarea 1 — Logo provisto, header compacto, iconos de carrito/Instagram y eliminación de dos textos; 15 tests afectados y 11 comprobaciones Chromium OK.
-- [ ] Tarea 2 — Búsqueda por descripción con prioridad, categorías móviles, controles táctiles, condiciones discretas y placeholder.
+- [x] Tarea 2 — Búsqueda por descripción con prioridad, categorías móviles, controles táctiles, condiciones discretas y placeholder; 17 tests afectados, 5 Node y 12 comprobaciones Chromium OK.
 - [ ] Tarea 3 — Scroll estable del carrito, mensajes consistentes y confirmaciones nativas Admin.
 - [ ] Tarea 4 — Exportar CSV completo/filtrado desde Admin con permisos y protección de fórmulas.
 - [ ] Tarea 5 — Configuración comercial única, dirección y Cómo llegar.

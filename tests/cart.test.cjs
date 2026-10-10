@@ -12,6 +12,14 @@ test("quantities add exactly and respect increments", () => {
 test("adding another price type requires explicit cart review", () => {
   assert.throws(() => cart.add([item], { ...item, price_type: "wholesale" }, "0.1"));
 });
+test("stepper uses exact increments, a minimum and clear invalid input errors", () => {
+  assert.equal(cart.adjustQuantity("0.20", "0.10", 1), "0.30");
+  assert.equal(cart.adjustQuantity("0,30", "0.10", -1), "0.20");
+  assert.equal(cart.adjustQuantity("0.10", "0.10", -1), "0.10");
+  assert.equal(cart.adjustQuantity("2", "2", 1), "4.00");
+  for (const value of ["", "0", "0.15", "-1", "NaN"]) assert.throws(() => cart.adjustQuantity(value, "0.10", 1));
+  assert.throws(() => cart.adjustQuantity("9999999.99", "0.01", 1));
+});
 test("storage survives reload and drops all prices", () => {
   let stored;
   const storage = { setItem: (key, value) => { stored = value; }, getItem: () => stored };

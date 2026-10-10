@@ -1,0 +1,10 @@
+{% load l10n %}
+<div class="quantity-control">
+  <label for="{{ input_id_prefix }}{{ product.pk }}">Cantidad ({{ product.sale_unit }})</label>
+  <div class="quantity-stepper">
+    <button type="button" class="secondary quantity-adjust" data-direction="-1" aria-label="Reducir cantidad de {{ product.name }}" hidden>−</button>
+    <input id="{{ input_id_prefix }}{{ product.pk }}" name="quantity" class="{{ input_class }}" type="number" inputmode="{% if product.sale_unit == 'kg' %}decimal{% else %}numeric{% endif %}" min="{{ product.quantity_step|unlocalize }}" step="{{ product.quantity_step|unlocalize }}" max="9999999.99" value="{{ quantity }}" required aria-describedby="{{ input_id_prefix }}error-{{ product.pk }}">
+    <button type="button" class="secondary quantity-adjust" data-direction="1" aria-label="Aumentar cantidad de {{ product.name }}" hidden>+</button>
+  </div>
+  <p id="{{ input_id_prefix }}error-{{ product.pk }}" class="notice error quantity-error" role="alert" hidden></p>
+</div>

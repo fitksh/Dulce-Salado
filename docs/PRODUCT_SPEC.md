@@ -11,7 +11,7 @@ Reducir consultas manuales de precios y facilitar pedidos de productos y cantida
 - Administrador del comercio: gestiona categorías y productos con Django Admin.
 
 ## 4. Alcance del MVP
-- Catálogo público de productos activos, categorías activas, fotos, búsqueda por nombre y marca.
+- Catálogo público de productos activos, categorías activas, fotos, búsqueda por nombre, marca y descripción (prioridad en ese orden).
 - Productos con nombre, categoría, marca opcional, descripción opcional, una imagen opcional, unidad de venta, incremento válido de cantidad, precio minorista y mayorista cuando corresponda, observación de condiciones mayoristas, estado activo.
 - Precio minorista seleccionado por defecto. Visitante puede elegir precio mayorista manualmente cuando exista; no se validan automáticamente condiciones.
 - Cantidad editable respetando unidad/incremento; cálculo de subtotales y total estimado con aritmética decimal o unidades enteras, sin errores de coma flotante de dinero.

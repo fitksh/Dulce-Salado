@@ -7,15 +7,23 @@
     <p class="intro-copy">Consultá nuestros productos y precios. La disponibilidad y las condiciones se confirman con el comercio.</p>
   </section>
   <form method="get" class="search-form" role="search">
-    <label for="catalog-search">Buscar por nombre o marca</label>
+    <label for="catalog-search">Buscar por nombre, marca o descripción</label>
     <div class="search-controls">
       <input type="search" id="catalog-search" name="q" value="{{ query }}" placeholder="¿Qué estás buscando?" maxlength="180">
       {% if selected_category %}<input type="hidden" name="categoria" value="{{ selected_category.slug }}">{% endif %}
       <button type="submit">Buscar</button>
     </div>
   </form>
+  <form method="get" class="category-select">
+    <label for="category-filter">Categoría</label>
+    <input type="hidden" name="q" value="{{ query }}">
+    <div class="search-controls"><select id="category-filter" name="categoria">
+      <option value="">Todas las categorías</option>
+      {% for category in categories %}<option value="{{ category.slug }}" {% if selected_category.pk == category.pk %}selected{% endif %}>{{ category.name }}</option>{% endfor %}
+    </select><button type="submit" class="secondary">Filtrar</button></div>
+  </form>
   <nav class="categories" aria-label="Filtrar por categoría">
-    <a class="chip{% if not selected_category %} selected{% endif %}" href="?q={{ query|urlencode }}" {% if not selected_category %}aria-current="page"{% endif %}>Todos</a>
+    <a class="chip{% if not selected_category %} selected{% endif %}" href="?q={{ query|urlencode }}" {% if not selected_category %}aria-current="page"{% endif %}>Todas las categorías</a>
     {% for category in categories %}
       <a class="chip{% if selected_category.pk == category.pk %} selected{% endif %}" href="?categoria={{ category.slug|urlencode }}&amp;q={{ query|urlencode }}" {% if selected_category.pk == category.pk %}aria-current="page"{% endif %}>{{ category.name }}</a>
     {% endfor %}
@@ -31,7 +39,7 @@
           {% if product.image %}
             <img src="{{ product.image.url }}" alt="{{ product.name }}{% if product.brand %}, {{ product.brand }}{% endif %}" width="600" height="450" loading="lazy" decoding="async">
           {% else %}
-            <span class="image-placeholder" aria-label="Producto sin imagen"><span aria-hidden="true">d+s</span>Sin imagen</span>
+            <span class="image-placeholder">Sin imagen</span>
           {% endif %}
         </div>
         <div class="product-info">
@@ -43,12 +51,10 @@
             <div><dt>Minorista</dt><dd>{{ product.retail_price|ars }} <span>/ {{ product.sale_unit }}</span></dd></div>
             {% if product.wholesale_price is not None %}<div><dt>Mayorista</dt><dd>{{ product.wholesale_price|ars }} <span>/ {{ product.sale_unit }}</span></dd></div>{% endif %}
           </dl>
-          {% if product.wholesale_price is not None %}<p class="wholesale-note">{% if product.wholesale_condition %}{{ product.wholesale_condition }}. {% endif %}Sujeto a confirmación comercial.</p>{% endif %}
+          {% if product.wholesale_price is not None and product.wholesale_condition %}<p class="wholesale-note">{{ product.wholesale_condition }}</p>{% endif %}
           <form class="add-product" data-id="{{ product.pk }}" data-revision="{{ product.cart_revision }}" data-unit="{{ product.sale_unit }}">
             <div class="product-controls">
-              <div><label for="quantity-{{ product.pk }}">Cantidad ({{ product.sale_unit }})</label>
-                <input id="quantity-{{ product.pk }}" name="quantity" type="number" inputmode="decimal" min="{{ product.quantity_step|unlocalize }}" step="{{ product.quantity_step|unlocalize }}" max="9999999.99" value="{{ product.quantity_step|unlocalize }}" required>
-              </div>
+              {% include "includes/quantity_control.html" with product=product input_id_prefix="quantity-" quantity=product.quantity_step|unlocalize input_class="" %}
               <div><label for="price-{{ product.pk }}">Tipo de precio</label>
                 <select id="price-{{ product.pk }}" name="price_type"><option value="retail" selected>Minorista</option>{% if product.wholesale_price is not None %}<option value="wholesale">Mayorista</option>{% endif %}</select>
               </div>
