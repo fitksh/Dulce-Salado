@@ -70,7 +70,7 @@ Nueva iteración completada y publicada en main. Datos comerciales conservados, 
 ## Exportación PDF y ajustes puntuales
 
 - [x] Tarea 1 — Ubicación en header y responsive desde 320 px.
-- [ ] Tarea 2 — PDF Admin con/sin fotos, filtros/permisos y revisión visual.
+- [x] Tarea 2 — PDF Admin con/sin fotos, filtros/permisos y revisión visual.
 - [ ] Tarea 3 — Papelera accesible, comportamiento existente.
 - [ ] Tarea 4 — Foto/columna desktop, móvil y recálculos conservados.
 - [ ] Tarea 5 — QA completa, PDFs de ejemplo, documentación y CI.

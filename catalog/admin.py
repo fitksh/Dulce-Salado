@@ -12,6 +12,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_GET
 
 from .models import BusinessSettings, Category, OpeningInterval, Product
+from .pdf import build_catalog_pdf
 
 
 class ProductAdminForm(forms.ModelForm):
@@ -51,14 +52,24 @@ class ProductAdmin(admin.ModelAdmin):
     change_list_template = "admin/catalog/product/change_list.html"
 
     def get_urls(self):
-        return [path("exportar-csv/", self.admin_site.admin_view(self.export_csv), name="catalog_product_export_csv")] + super().get_urls()
+        return [
+            path("exportar-csv/", self.admin_site.admin_view(self.export_csv), name="catalog_product_export_csv"),
+            path("exportar-pdf-con-imagenes/", self.admin_site.admin_view(self.export_pdf),
+                 {"include_images": True}, name="catalog_product_export_pdf_images"),
+            path("exportar-pdf-sin-imagenes/", self.admin_site.admin_view(self.export_pdf),
+                 {"include_images": False}, name="catalog_product_export_pdf_plain"),
+        ] + super().get_urls()
+
+    def export_queryset(self, request):
+        if not self.has_view_or_change_permission(request):
+            raise PermissionDenied
+        # ChangeList aplica los mismos filtros, búsqueda y orden, sin limitar a una página.
+        return self.get_changelist_instance(request).queryset
 
     @method_decorator(require_GET)
     def export_csv(self, request):
-        if not self.has_view_or_change_permission(request):
-            raise PermissionDenied
         try:
-            products = self.get_changelist_instance(request).queryset
+            products = self.export_queryset(request)
         except IncorrectLookupParameters:
             return HttpResponseBadRequest("Filtros de exportación inválidos.")
         response = HttpResponse(content_type="text/csv; charset=utf-8")
@@ -73,6 +84,17 @@ class ProductAdmin(admin.ModelAdmin):
                 csv_decimal(product.retail_price), csv_decimal(product.wholesale_price),
                 csv_text(product.wholesale_condition), "Sí" if product.is_active else "No",
             ])
+        return response
+
+    @method_decorator(require_GET)
+    def export_pdf(self, request, *, include_images):
+        try:
+            products = self.export_queryset(request)
+        except IncorrectLookupParameters:
+            return HttpResponseBadRequest("Filtros de exportación inválidos.")
+        response = HttpResponse(build_catalog_pdf(products.iterator(), include_images=include_images), content_type="application/pdf")
+        variant = "con-imagenes" if include_images else "sin-imagenes"
+        response["Content-Disposition"] = f'attachment; filename="dulce-y-salado-productos-{variant}.pdf"'
         return response
 
 
