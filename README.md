@@ -2,7 +2,7 @@
 
 Catálogo comercial mobile-first de repostería, dietética y cotillón. Catálogo público, carrito local y mensaje WhatsApp con precios estimados. El comercio confirma disponibilidad y condiciones; el sitio no registra pedidos ni gestiona stock, pagos o envíos.
 
-**Estado:** MVP, dos iteraciones UX/UI y correcciones visuales puntuales implementados; verificación y commits en [EXECUTION_STATUS](docs/EXECUTION_STATUS.md). Cargar y revisar información comercial real mediante Django Admin.
+**Estado:** MVP, mejoras UX/UI y exportación PDF Admin implementados; verificación y commits en [EXECUTION_STATUS](docs/EXECUTION_STATUS.md). Cargar y revisar información comercial real mediante Django Admin.
 
 ## Inicio local en Windows (PowerShell)
 
@@ -156,3 +156,12 @@ Son precios y marcas ficticios en ARS. Repetir el alta no duplica ni sobrescribe
 La limpieza sólo borra altas propias sin modificaciones ni nombres duplicados. `MEDIA_ROOT/.seed_demo_catalog.json`, dentro del volumen de media ignorado por Git, registra PK, fecha de creación y huella de datos. Conservá este manifiesto junto con la base: si falta, está corrupto o no corresponde a los registros, el comando conserva los productos o aborta. Los demos editados se conservan y deben revisarse manualmente en Admin. No usa el prefijo como permiso de borrado. Las escrituras de productos son transaccionales; el archivo se reemplaza atómicamente. Una interrupción entre archivo y commit puede dejar identidad dudosa, que se conserva por seguridad. No hay nuevos modelos, migraciones ni dependencias.
 
 Capturas de QA en `.qa/screenshots`: `photo-*`, `expanded-*`, `catalog-viewport-*`, `hours-*`, `directions-*` y `footer-*`. Las capturas `live-*` corresponden al entorno comercial local inspeccionado sólo en lectura. Actualizar con los comandos de instalación existente anteriores; no hay migraciones nuevas.
+
+## Probar exportación PDF y ajustes del carrito
+
+1. Reconstruir con `docker compose up --build -d` y hacer Ctrl+F5. No hay migraciones nuevas por esta iteración. En este entorno Docker ya está actualizado.
+2. Entrar a Admin → Catálogo → Productos. Aplicar búsqueda/categoría/unidad/activo y, si corresponde, orden por columnas. Pulsar «PDF con imágenes» y luego «PDF sin imágenes». Las descargas incluyen todas las páginas del conjunto filtrado, igual que CSV. Para excluir demos o inactivos, aplicar los filtros/búsqueda necesarios; no se ocultan automáticamente.
+3. Abrir ambos PDFs y revisar nombres, acentos, ARS, imágenes completas, salto de páginas y vista previa de impresión A4. Una búsqueda sin resultados genera un PDF válido con el aviso de conjunto vacío. Fotos ilegibles no impiden descargar los otros datos. No son pedidos ni listas de stock.
+4. En catálogo/carrito, probar Catálogo/Ubicación/Carrito a 320/360/390/430 y 800/1280 px. Agregar un producto con foto: en escritorio muestra 132 px y datos a la derecha; en móvil, 56 px junto al nombre. Sin foto no queda hueco. Abrir foto, cerrar con Escape, cambiar cantidad/tarifa, comprobar total vigente y quitar un artículo por papelera/teclado.
+
+Verificación local: 88 Django, 7 Node y 25 Chromium, check/Ruff y control de migraciones correctos. Se inspeccionaron todas las páginas de los dos ejemplos PDF ficticios y capturas responsive, también con fotografía comercial sólo en lectura. Los ejemplos usan modelos sin guardar y media temporal. Pendientes manuales: visor/impresora propios, zoom real del navegador y teléfono/lector reales; no se ha realizado una impresión física ni enviado WhatsApp.

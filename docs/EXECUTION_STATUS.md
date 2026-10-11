@@ -3,7 +3,7 @@
 Fecha de inicio: 2026-10-10. Trabajo autorizado secuencial en `main` hasta completar el MVP.
 
 ## Tarea actual
-CORRECCIONES VISUALES COMPLETADAS Y PUBLICADAS. Cuatro ajustes y QA final verificados: 63 Django, 7 Node y 22 Chromium, checks/Ruff/migraciones OK. CI success de la QA final run 38105183767. Historial previo y datos comerciales conservados; próximo paso, pruebas locales del dueño según README/QA.
+EXPORTACIÓN PDF Y AJUSTES: cuatro tareas implementadas/publicadas, QA local completa (88 Django, 7 Node y 25 Chromium, check/Ruff/migraciones OK). Falta publicar la QA ampliada y verificar su CI para cerrar esta iteración. Historial previo y datos comerciales conservados; próximos pasos en README/QA.
 
 ## Decisiones autorizadas
 - kg, unidad y paquete; incrementos iniciales 0,1 kg y 1 unidad/paquete. Sin conversión de gramos.
@@ -274,3 +274,9 @@ Tarea 3 validada: papelera SVG inline decorativa, botón naranja secundario 44×
 Tarea 3 publicada: 47318ac; CI completa success [38153081153](https://github.com/fitksh/Dulce-Salado/actions/runs/38153081153).
 
 Tarea 4 validada: CSS únicamente, foto 132 px y contenido entero a la derecha desde 800; controles apilados hasta 1099 en filas con foto, sin columna cuando falta. DOM y renderCart intactos; móvil 56 px conservado. 11 Django, 7 Node y 25 Chromium OK, check correcto. Geometría de todos los campos, nombres largos, fotografía retirada tras Admin y visor después de recálculo correctos en 320/360/390/430/768/800/1280. Capturas 320/800/1280, nombres largos 800/1280 y sin foto 1280 inspeccionadas. Sin overflow ni infracciones axe; foco/scroll/concurrencia y precios vigentes de la regresión completos. Próxima tarea: QA completa/documentación final, sin más cambios de producto previstos.
+
+Tarea 4 publicada: 29cb11b; CI completa success [38153331043](https://github.com/fitksh/Dulce-Salado/actions/runs/38153331043).
+
+Tarea 5 QA local completa: 88 Django, 7 Node y 25 Chromium correctos; check/Ruff OK y makemigrations sin cambios. Se añadió comprobación de nombre sin espacios de 180 letras y texto completo de 300 repeticiones PDF. Primera aserción de continuidad se corrigió para excluir encabezados/pies intercalados por extracción entre páginas; los datos no estaban truncados. Suite completa final ejecutada en Docker reconstruido, sin omisiones PDF. Navegador añade espacio 640 y foco/identidad/scroll durante/después de recálculo desktop; las capturas de foco y fotografías reales 320/800/1280 inspeccionadas. PDF de tres páginas por variante ya renderizado e inspeccionado íntegramente.
+
+Entorno local actualizado (Django 5.2.18, Pillow 12.3.0, ReportLab 5.0.1), rutas públicas HTTP 200. Huellas de registros/fotos idénticas antes/después de reconstrucción y lectura pública: 51 productos existentes, 3 categorías, 1 configuración y 12 intervalos; ningún seed ejecutado en base comercial. QA detenida/base descartada, consulta sin filas. Cambios previos del usuario en CSS/home intactos fuera del staging. README/QA/arquitectura/UX y roadmap registran uso, evidencia y límites manuales. Falta publicar QA y comprobar su CI para marcar el cierre completo.

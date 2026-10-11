@@ -354,7 +354,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await page.locator(".cart-item .wholesale-note").count(), 1);
     assert.equal(await page.locator("#cart-clear, .cart-toolbar").count(), 0);
     assert.equal(await page.locator("#cart-reset").isVisible(), false);
-    for (const width of [320, 360, 390, 430, 768, 800, 1280]) {
+    for (const width of [320, 360, 390, 430, 640, 768, 800, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       const thumbnail = page.locator(".cart-thumbnail").first();
@@ -529,6 +529,24 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       await scrolled.unrouteAll({ behavior: "wait" });
       await scrolled.getByRole("button", { name: "Reintentar" }).click();
       await scrolled.locator(".total").filter({ hasText: "$ 50,13" }).waitFor();
+      await scrolled.setViewportSize({ width: 1280, height: 844 });
+      await input.evaluate(node => { node.scrollIntoView({ block: "center" }); node.focus({ preventScroll: true }); });
+      const desktopScroll = await scrolled.evaluate(() => scrollY);
+      assert.ok(desktopScroll > 1000);
+      let desktopArrived, desktopRelease;
+      const desktopRequested = new Promise(resolve => { desktopArrived = resolve; });
+      const desktopGate = new Promise(resolve => { desktopRelease = resolve; });
+      await scrolled.route("**/carrito/recalcular/", async route => { desktopArrived(); await desktopGate; await route.continue(); });
+      try {
+        await input.fill("7"); await input.dispatchEvent("change"); await desktopRequested;
+        assert.equal(await input.evaluate(node => node === window.qaQuantityNode && node === document.activeElement), true);
+        assert.ok(Math.abs(await scrolled.evaluate(() => scrollY) - desktopScroll) < 3);
+        desktopRelease();
+        await scrolled.locator(".total").filter({ hasText: "$ 51,13" }).waitFor();
+        assert.equal(await input.evaluate(node => node === window.qaQuantityNode && node === document.activeElement), true);
+        assert.ok(Math.abs(await scrolled.evaluate(() => scrollY) - desktopScroll) < 3);
+        await scrolled.screenshot({ path: ".qa/screenshots/cart-desktop-scroll.png" });
+      } finally { desktopRelease(); await scrolled.unrouteAll({ behavior: "wait" }); }
     } finally { unblock(); await isolated.close(); }
   });
 

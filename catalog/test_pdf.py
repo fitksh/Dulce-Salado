@@ -185,6 +185,7 @@ class ProductPDFTests(TestCase):
     @skipUnless(POPPLER, "Instalar poppler-utils para inspeccionar contenido/paginación PDF")
     def test_oversized_description_splits_across_pages_without_truncation(self):
         self.allow()
+        self.product.name = "Ñ" * 180
         self.product.description = "Descripción larga con acentos, ñ y <texto>. " * 300 + "FIN DESCRIPCIÓN LARGA"
         self.product.save()
         for url in self.urls:
@@ -192,7 +193,13 @@ class ProductPDFTests(TestCase):
             text = self.text(data)
             pages = [page for page in text.split("\f") if page.strip()]
             self.assertGreater(len(pages), 2)
-            self.assertIn("FIN DESCRIPCIÓN LARGA", " ".join(text.split()))
+            body_lines = [line for page in pages for line in page.splitlines()
+                          if line not in ("Dulce y Salado", "Catálogo de productos")
+                          and not line.startswith(("Precios estimativos en ARS", "Página "))]
+            normalized = " ".join(" ".join(body_lines).split())
+            self.assertIn("FIN DESCRIPCIÓN LARGA", normalized)
+            self.assertEqual(normalized.count("Descripción larga con acentos, ñ y <texto>."), 300)
+            self.assertIn(self.product.name, "".join(text.split()))
             self.assertIn("Estado: Inactivo", text)
             for number, page in enumerate(pages, 1):
                 self.assertIn("Dulce y Salado", page)

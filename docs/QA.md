@@ -147,3 +147,27 @@ Capturas inspeccionadas: catálogo comercial a las cinco anchuras, carrito móvi
 Entorno Docker reconstruido conservando volúmenes/.env. Tres páginas principales HTTP 200 y ruta anterior 301. Base comercial: 6 productos, 3 categorías, 12 intervalos; huella de todos los registros iguales antes/después de actualizar y de las comprobaciones en lectura. El seed no se ejecutó allí y no existe manifiesto comercial. QA detenido, consulta de bases QA sin filas. CI de las seis tareas funcionales success; CI ampliada se registra al publicar en EXECUTION_STATUS.
 
 Próximo paso manual: Ctrl+F5, teléfono Android/iOS y lector; cargar dirección completa desde Admin, verificar datos y abrir/retornar de aplicaciones externas. Seed opcional sólo mediante instrucciones README y DEBUG; conservar manifiesto para limpieza, demos editados requieren revisión manual. No hay cambios de modelos, dependencias, migraciones ni reglas comerciales.
+
+## Exportación PDF y ajustes puntuales — QA 2026-10-11
+
+88 tests Django, 7 Node y 25 comprobaciones Chromium correctos. check/Ruff OK y makemigrations sin cambios. Docker actualizado con Django 5.2.18, Pillow 12.3.0 y ReportLab 5.0.1. Poppler instalado exclusivamente para inspección QA local/CI; no forma parte del Dockerfile ni de la ejecución del sitio.
+
+| Área | Evidencia |
+| --- | --- |
+| Header | 320/360/390/430/768/800/1280: tres enlaces en una fila, logo 64, objetivos ≥44, aria-current, regiones sin overflow; horarios/reloj/cierres sin cambios |
+| PDF Admin | Anónimo/no staff redirigidos, staff sin permisos 403, view/change permitidos; GET y POST/PUT 405; attachment application/pdf válido, filtros inválidos 400, botones mantienen parámetros |
+| Datos/orden | Search nombre/marca, categoría/unidad/activo, orden descendente y página no visible: 111 registros exactamente en orden de CSV/ChangeList; incluye inactivos y [DEMO] cuando corresponde |
+| Documento | A4, Unicode/accentos/ñ, ARS y campos opcionales, estado inactivo, pie numerado/nota comercial; vacío con mensaje explícito, 180 letras sin espacios y descripción de 300 repeticiones completos |
+| Fotos PDF | Sólo variante con fotos, horizontal/vertical/cuadrada en dimensiones proporcionales hasta 240 px; imágenes uniformes distintas no colisionan; original sin modificar; ausente/faltante/corrupta no aborta |
+| Paginación | Registros normales permanecen juntos, descripción mayor que la hoja se divide sin truncar; encabezado/pie por página. La comprobación de texto descarta el marco repetido antes de verificar continuidad |
+| Papelera | SVG inline decorativo, aria-label contextual y fallback, área 44×44; Enter elimina sólo el elegido, restante/storage/contador/aviso y accesibilidad conservados |
+| Carrito | Bajo 800 foto 56 px y composición móvil; desde 800 foto 132 y todos los campos a la derecha, sin foto no hay hueco; nombre largo, imagen quitada en Admin, visor tras recálculo |
+| Regresión | Misma identidad del input/foco y scroll (<3 px de diferencia) durante/después de recálculo en móvil y escritorio; respuestas fuera de orden/red/storage, tarifas manuales, precios actuales, revisión/WhatsApp, CSV y Admin correctos |
+
+Dos PDFs ficticios generados por tests/pdf_examples.py sin consultas ni escrituras de base: .qa/pdfs/catalogo-con-imagenes.pdf (55.191 bytes) y catalogo-sin-imagenes.pdf (45.447 bytes), tres páginas cada uno. Renderizados a PNG con pdftoppm; las seis páginas finales inspeccionadas: fotos completas/proporcionales, etiquetas sin solapar, texto legible y márgenes/separadores/pie correctos. Las fotos/archivos de estos ejemplos sólo viven en media temporal/.qa ignorada; el servicio de exportación no guarda PDFs.
+
+Capturas inspeccionadas de carrito 320/800/1280, nombre largo 800/1280, sin foto 1280 y foco/scroll desktop. Lectura del entorno comercial: header en seis anchuras y carrito con fotografía vertical real en siete (incluida 640 como espacio reducido), axe WCAG A/AA sin infracciones; capturas live-pdf-* 320/800/1280 revisadas. Zoom nativo a 200% permanece como comprobación manual: reducir viewport no sustituye probar el control de zoom real del navegador.
+
+Actualización Docker y consultas/recálculos públicos en contexto de navegador descartable mantienen idénticas las huellas de TODOS los registros comerciales y archivos de fotos, comprobadas antes/después: 51 productos existentes, 3 categorías, 1 configuración y 12 intervalos. No se ejecutó seed en la base comercial. GET /, /carrito/ y /ubicacion/ HTTP 200; QA detenida y consulta de bases QA sin filas. Cambios locales anteriores del propietario (panel horarios 260 px y rango sin Mostrando) se conservan y excluyen de commits.
+
+Pruebas manuales concretas: entrar a Admin, aplicar filtros/orden y descargar ambos PDFs; comparar con CSV y revisar vista previa A4/visor/impresora propios. Probar nombres/descripciones comerciales y tiempos con un catálogo más grande. En móvil real/lector, papelera por teclado/voz y visor; en escritorio, zoom 200%, cantidad/tarifa/foco/scroll. No se ha hecho impresión física ni envío de WhatsApp. No hay modelos/migraciones/reglas/infraestructura nuevas; sólo la dependencia PDF directa autorizada. Resultados CI de las tareas y cierre en EXECUTION_STATUS.
