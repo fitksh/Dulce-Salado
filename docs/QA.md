@@ -127,3 +127,23 @@ Entorno local actualizado, tres páginas públicas HTTP 200, servidor/base QA el
 QA final publicada con CI completa success: `69902fb`, [run 38105183767](https://github.com/fitksh/Dulce-Salado/actions/runs/38105183767). Las 63 Django, 7 Node y 22 Chromium, check/Ruff/control de migraciones pasan también en CI. Iteración completada; cierre documental posterior registra este resultado y se verifica al publicar. No quedan correcciones de implementación pendientes. Capturas reales comerciales y mapa cargado inspeccionados a cinco anchuras; datos preservados.
 
 Regresión final de orientación horizontal: modal a 844×300/390, sin scroll ni parte de la imagen fuera del dialog. Se reserva altura para cierre/padding dentro de 90dvh. Fallo geométrico previo reproducido (foto y=297, borde y=285), corrección verificada y capturas image-landscape-300/390 inspeccionadas; fotografía real vertical también cabe completa. 10 Django afectados, 7 Node, 22 Chromium/check/Ruff/migraciones OK. El cierre documental 144e079 tuvo CI success run 38105345534. CI propia del ajuste se consulta tras publicar; no quedan pendientes de implementación.
+
+## Nueva iteración UX/UI y demos — 2026-10-11
+
+Suite completa: 78 Django, 7 Node y 24 comprobaciones Chromium (23 escenarios) correctas; check/Ruff sin incidencias y makemigrations sin cambios. Axe WCAG A/AA sin infracciones en los estados revisados. Cinco anchuras 360/390/430/768/1280 y límite 800 px. La suite mantiene todas las regresiones de precios/decimales, CSV/Admin, controles/foco/scroll, almacenamiento, horarios, copia y WhatsApp.
+
+| Área | Evidencia nueva |
+| --- | --- |
+| Header/horarios | Logo 64 px, Catálogo/Carrito iguales y juntos, aria-current, tres regiones, controles ≥44 px, seis bordes entre días, reloj/cierres sin cambios |
+| Ubicación | URL principal nueva, 301 anterior, info centrada, Admin intacto, mismo iframe y políticas; cinco anchuras/axe y mapa real visible en lectura |
+| Carrito | Título oculto, sin toolbar, foto actual 56 px contain y visor compartido; apertura tras recálculo, Escape/cierre/foco, cinco anchuras/nombre largo, imagen eliminada en QA no deja placeholder/columna |
+| Almacenamiento | Corrupto conserva dato hasta clic Restablecer, no borra otras claves; JSON null/esquemas inválidos/duplicados identificados; bloqueo de lectura/escritura informa y no ofrece restablecimiento ni revisión |
+| Catálogo | 45 fixtures explícitos en Admin de base descartable, cuatro páginas 12/12/12/9, 45 IDs distintos, rangos, Anterior/Siguiente y q; 15 por categoría en dos páginas 12/3, categoría y q conservados; GET sin JS, páginas inválidas/vacío/única en Django |
+| Revisión | Título oculto mantiene foco/nombre; aviso íntegro y textarea/copia/cancelación/fallback/validación externa probados sin envíos |
+| Seed | 10 tests de comando explícitos con base/media temporales: 45/15, datos válidos, simulación, DEBUG, idempotencia/ediciones, categorías ambiguas, rollback y limpieza por procedencia, archivos perdidos/corruptos y PK reutilizada |
+
+Capturas inspeccionadas: catálogo comercial a las cinco anchuras, carrito móvil/escritorio/nombre largo, revisión, horarios/tablet, ubicación móvil/escritorio con mapa real, catálogo demo y paginación en cinco anchuras. Chromium no ejecuta el seed como fixture: lee el dataset estático y crea sus productos explícitamente mediante Admin aislado.
+
+Entorno Docker reconstruido conservando volúmenes/.env. Tres páginas principales HTTP 200 y ruta anterior 301. Base comercial: 6 productos, 3 categorías, 12 intervalos; huella de todos los registros iguales antes/después de actualizar y de las comprobaciones en lectura. El seed no se ejecutó allí y no existe manifiesto comercial. QA detenido, consulta de bases QA sin filas. CI de las seis tareas funcionales success; CI ampliada se registra al publicar en EXECUTION_STATUS.
+
+Próximo paso manual: Ctrl+F5, teléfono Android/iOS y lector; cargar dirección completa desde Admin, verificar datos y abrir/retornar de aplicaciones externas. Seed opcional sólo mediante instrucciones README y DEBUG; conservar manifiesto para limpieza, demos editados requieren revisión manual. No hay cambios de modelos, dependencias, migraciones ni reglas comerciales.

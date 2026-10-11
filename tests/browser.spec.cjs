@@ -717,6 +717,17 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await blockedPage.getByRole("heading", { name: "Tu carrito está vacío" }).waitFor();
     assert.equal(await blockedPage.locator("#cart-review").count(), 0);
     await blocked.close();
+    const unreadable = await browser.newContext();
+    await unreadable.addInitScript(() => {
+      Storage.prototype.getItem = function () { throw new DOMException("Test storage blocked", "SecurityError"); };
+    });
+    const unreadablePage = await unreadable.newPage();
+    unreadablePage.on("pageerror", error => errors.push(error.message));
+    await unreadablePage.goto(`${base}/carrito/`);
+    await unreadablePage.locator("#cart-storage-error").filter({ hasText: /Habilitá el almacenamiento local/ }).waitFor();
+    assert.equal(await unreadablePage.locator("#cart-reset").isVisible(), false);
+    assert.equal(await unreadablePage.locator("#cart-review").count(), 0);
+    await unreadable.close();
   });
 
   await t.test("Ubicación sin dirección y configuración única desde Admin", async () => {
@@ -843,6 +854,128 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await plainPage.goto(`${base}/ubicacion/`);
     await plainPage.locator(".hours-panel summary").click();
     assert.equal(await plainPage.locator(".weekly-hours").isVisible(), true);
+    await plain.close();
+    assert.deepEqual(errors, []);
+  });
+
+  await t.test("carrito con nombre largo, foto vigente y ausencia de foto sin espacio extra", async () => {
+    await page.goto(`${base}/?q=QA%20Velas`);
+    const id = await page.locator(".add-product").getAttribute("data-id");
+    const name = "QA Velas decorativas para cumpleaños con colores surtidos y presentación de prueba ".repeat(2).trim();
+    await admin.goto(`${base}/admin/catalog/product/${id}/change/`);
+    await admin.locator("#id_name").fill(name);
+    await admin.locator('input[name="_save"]').click();
+    await admin.locator(".messagelist .success").waitFor();
+    await page.reload();
+    await page.getByRole("button", { name: "Agregar al carrito" }).click();
+    await page.goto(`${base}/carrito/`);
+    await waitCart("$ 25,10");
+    for (const width of [360, 390, 430, 768, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      const layout = await page.locator(".cart-item-heading").evaluate(node => {
+        const name = node.querySelector("h2").getBoundingClientRect();
+        const remove = node.querySelector("button").getBoundingClientRect();
+        const photo = node.querySelector(".cart-thumbnail").getBoundingClientRect();
+        return { separated: photo.right <= name.left && name.right <= remove.left, fits: document.documentElement.scrollWidth <= innerWidth };
+      });
+      assert.ok(layout.separated && layout.fits);
+      await page.locator(".cart-thumbnail").click();
+      await page.keyboard.press("Escape");
+      await page.screenshot({ path: `.qa/screenshots/cart-long-name-${width}.png`, fullPage: true });
+      await accessible();
+    }
+    await page.getByRole("button", { name: /Aumentar cantidad/ }).click();
+    await waitCart("$ 50,20");
+    await page.locator(".cart-thumbnail").click();
+    await page.getByRole("button", { name: "Cerrar imagen" }).click();
+    assert.equal(await page.locator(".cart-thumbnail").evaluate(node => node === document.activeElement), true);
+    assert.equal(await page.evaluate(() => /image|media|\.webp/.test(localStorage.getItem("dulce-salado.cart.v1"))), false);
+    await admin.goto(`${base}/admin/catalog/product/${id}/change/`);
+    await admin.locator('input[name="image-clear"]').check();
+    await admin.locator('input[name="_save"]').click();
+    await admin.locator(".messagelist .success").waitFor();
+    await page.reload();
+    await waitCart("$ 50,20");
+    assert.equal(await page.locator(".cart-thumbnail, .cart-item .image-placeholder").count(), 0);
+    const aligned = await page.locator(".cart-item").evaluate(node => Math.abs(node.querySelector("h2").getBoundingClientRect().left - node.querySelector(".product-controls").getBoundingClientRect().left) < 1);
+    assert.equal(aligned, true);
+    await page.getByRole("button", { name: /Quitar QA Velas/ }).click();
+    await page.getByRole("heading", { name: "Tu carrito está vacío" }).waitFor();
+    assert.deepEqual(errors, []);
+  });
+
+  await t.test("45 fixtures demo: cuatro páginas, filtros y GET sin JavaScript", async () => {
+    // Altas explícitas sólo en la base descartable del servidor QA, mediante Admin.
+    // No ejecuta seed_demo_catalog automáticamente como fixture de navegador.
+    const groups = JSON.parse(readFileSync("catalog/management/demo_products.json", "utf8"));
+    await admin.goto(`${base}/admin/catalog/category/add/`);
+    const token = await admin.locator('#category_form input[name="csrfmiddlewaretoken"]').inputValue();
+    const slugs = {};
+    for (const category of Object.keys(groups)) {
+      const slug = category.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      slugs[category] = slug;
+      const result = await context.request.post(`${base}/admin/catalog/category/add/`, {
+        form: { csrfmiddlewaretoken: token, name: category, slug, sort_order: "0", is_active: "on", _save: "Guardar" },
+      });
+      assert.equal(result.url(), `${base}/admin/catalog/category/`);
+    }
+    await admin.goto(`${base}/admin/catalog/product/add/`);
+    for (const [category, rows] of Object.entries(groups)) {
+      const [id] = await admin.locator("#id_category").selectOption({ label: category });
+      for (const [name, unit, step, retail, wholesale, condition] of rows) {
+        const result = await context.request.post(`${base}/admin/catalog/product/add/`, {
+          form: { csrfmiddlewaretoken: token, category: id, name: `[DEMO] ${name}`, brand: `Marca Demo ${category}`,
+            description: "Producto ficticio para pruebas aisladas.", sale_unit: unit, quantity_step: step,
+            retail_price: retail, wholesale_price: wholesale || "", wholesale_condition: condition, is_active: "on", _save: "Guardar" },
+        });
+        assert.equal(result.url(), `${base}/admin/catalog/product/`);
+      }
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`${base}/?q=${encodeURIComponent("[DEMO]")}`);
+    const seen = [];
+    for (const [number, start, end] of [[1, 1, 12], [2, 13, 24], [3, 25, 36], [4, 37, 45]]) {
+      await page.getByText(`Mostrando ${start}–${end} de 45 productos`, { exact: false }).waitFor();
+      assert.equal(await page.locator(".product-card").count(), end - start + 1);
+      await page.getByText(`Página ${number} de 4`, { exact: true }).waitFor();
+      seen.push(...await page.locator(".product-card").evaluateAll(nodes => nodes.map(node => node.getAttribute("aria-labelledby"))));
+      if (number < 4) {
+        await page.getByRole("link", { name: "Siguiente", exact: true }).click();
+        await page.waitForURL(url => url.searchParams.get("page") === String(number + 1));
+        assert.equal(new URL(page.url()).searchParams.get("q"), "[DEMO]");
+      }
+    }
+    assert.equal(new Set(seen).size, 45);
+    assert.equal(await page.getByRole("link", { name: "Siguiente", exact: true }).count(), 0);
+    await page.getByRole("link", { name: "Anterior", exact: true }).click();
+    await page.waitForURL(url => url.searchParams.get("page") === "3");
+    for (const width of [360, 390, 430, 768, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto(`${base}/?q=${encodeURIComponent("[DEMO]")}`);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      const targets = await page.locator(".pagination a").evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().height));
+      assert.ok(targets.every(height => height >= 44));
+      await page.screenshot({ path: `.qa/screenshots/demo-catalog-${width}.png`, fullPage: true });
+      await page.locator(".pagination").screenshot({ path: `.qa/screenshots/demo-pagination-${width}.png` });
+      await accessible();
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+    for (const slug of Object.values(slugs)) {
+      await page.goto(`${base}/?q=${encodeURIComponent("[DEMO]")}&categoria=${slug}`);
+      await page.getByText("Mostrando 1–12 de 15 productos", { exact: false }).waitFor();
+      await page.getByRole("link", { name: "Siguiente", exact: true }).click();
+      await page.waitForURL(url => url.searchParams.get("page") === "2");
+      assert.equal(new URL(page.url()).searchParams.get("categoria"), slug);
+      assert.equal(new URL(page.url()).searchParams.get("q"), "[DEMO]");
+      assert.equal(await page.locator(".product-card").count(), 3);
+      await page.getByText("Mostrando 13–15 de 15 productos", { exact: false }).waitFor();
+    }
+    const plain = await browser.newContext({ javaScriptEnabled: false });
+    const plainPage = await plain.newPage();
+    await plainPage.goto(`${base}/?q=${encodeURIComponent("[DEMO]")}&categoria=reposteria`);
+    await plainPage.getByRole("link", { name: "Siguiente", exact: true }).click();
+    await plainPage.getByText("Mostrando 13–15 de 15 productos", { exact: false }).waitFor();
+    assert.equal(new URL(plainPage.url()).searchParams.get("q"), "[DEMO]");
     await plain.close();
     assert.deepEqual(errors, []);
   });

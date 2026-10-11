@@ -8,7 +8,7 @@ Tomar como referencia el logotipo provisto del comercio: naranja como color prin
 
 ## Vistas previstas
 - `/`: buscador accesible, selector nativo de categorías con formulario GET en móvil y chips desde 800 px (espacio suficiente para controles y grilla). Búsqueda conservada sin JavaScript. Grilla de tarjetas adaptativas según espacio.
-- `/carrito/`: artículos, cantidades, elección minorista/mayorista, subtotales, total estimado, eliminar y vaciar.
+- `/carrito/`: artículos, cantidades, elección minorista/mayorista, subtotales, total estimado y Quitar individual. Restablecer sólo ante storage corrupto.
 - Confirmación de salida: aviso sobre estimación de precios, stock sin confirmar y mayoristas sujetos a revisión; cancelar o continuar a WhatsApp.
 - `/admin/`: Django Admin sin interfaz hecha a medida.
 
@@ -58,8 +58,16 @@ Esta solicitud sustituye exclusivamente la disposición de header/footer/fotos/d
 
 - Tarjetas: marco constante de 210 px con fondo neutro, enlace de altura definida en Flex y fotografía contain centrada. Nunca depender de una fila Grid automática que crezca con el tamaño intrínseco de la foto. Una única imagen optimizada, lazy/async y archivos originales intactos.
 - Ampliación: sólo fotografía y × de cierre ≥44 px. Dialog tiene nombre genérico y descripción oculta; alt conserva identificación del producto para lectores. Sin encabezado, marca, descripción o texto comercial visible. Botón/Escape/exterior y retorno del foco; enlace nativo sin JS.
-- Header: Grid en tres regiones desde 800 px (marca, horarios y carrito); columna centrada bajo 800 px. Panel horario absoluto centrado en su control, limitado al viewport; no mueve el contenido al abrir. Horarios/colores/iconos/textos conservados.
+- Header: Grid en tres regiones desde 800 px (marca, horarios y navegación Catálogo/Carrito); columna centrada bajo 800 px con ambas acciones juntas y equilibradas. Logo de 64 px, aria-current y controles ≥44 px. Panel horario absoluto centrado en su control, limitado al viewport; seis separadores neutros entre días, sin separar intervalos. Horarios/colores/iconos/textos conservados.
 - Ubicación: una región con h1 Ubicación, address/botón centrados desde Admin e iframe existente. Dos columnas 1:2 desde 800 px; una columna bajo ese ancho. Sin título introductorio ni subtítulos decorativos. Sin dirección, aviso claro sin enlace falso. URL/políticas del iframe intactas. URL principal /ubicacion/, redirección 301 desde /como-llegar/.
 - Footer: enlaces/iconos, nombre y aviso centrados en todas las resoluciones; mismos destinos y área táctil.
 
 Aceptación verificada en 360/390/430/768/1280 y límite de header 800 px, con capturas/mediciones reales y axe. No hay nuevas dependencias/modelos/migraciones.
+
+## Nueva iteración — composición actual
+
+Sustituye las indicaciones históricas de títulos y toolbar: Nuestros productos, Categoría móvil, Revisá tu carrito y Antes de abrir WhatsApp permanecen accesibles con visually-hidden, sin espacio visual reservado. El placeholder es «Buscar productos, marcas y más...». Catálogo de 12 por página con rango real «Mostrando 1–12 de 45 productos», filtros GET y navegación Anterior/Página/Siguiente; vacío coherente y controles ocultos si no hay más páginas.
+
+El carrito comienza con los artículos; no hay Seguir viendo productos ni Vaciar. Fotos actuales de 56 px contain junto al nombre, Quitar a la derecha; sin foto no se reserva una columna ni se muestra placeholder. Usa el mismo dialog de catálogo, sólo imagen/×, con delegación para HTML recalculado. El título oculto de revisión sigue nombrando el diálogo y recibiendo foco; se retira sólo el párrafo redundante de texto largo. Aviso obligatorio, mensaje/copiar y apertura manual permanecen íntegros.
+
+Los productos [DEMO] y sus marcas/precios son ficticios; se incorporan únicamente por el comando manual documentado en README, nunca durante navegación o arranque.

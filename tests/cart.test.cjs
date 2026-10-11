@@ -28,6 +28,9 @@ test("storage survives reload and drops all prices", () => {
   assert.equal(stored.includes("999"), false);
 });
 test("corrupt storage and duplicate IDs are rejected without clearing it", () => {
-  assert.throws(() => cart.read({ getItem: () => "invalid" }));
-  assert.throws(() => cart.read({ getItem: () => JSON.stringify({ version: 1, items: [item, item] }) }));
+  for (const value of ["invalid", "null", "{}", JSON.stringify({ version: 1, items: [item, item] }), JSON.stringify({ version: 1, items: [{ ...item, id: -1 }] })]) {
+    assert.throws(() => cart.read({ getItem: () => value }), { name: "CartDataError" });
+  }
+  const blocked = new DOMException("Blocked", "SecurityError");
+  assert.throws(() => cart.read({ getItem() { throw blocked; } }), error => error === blocked);
 });

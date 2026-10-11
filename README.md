@@ -46,12 +46,14 @@ Sólo se publican productos activos en categorías activas. Las categorías con 
 ## Probar el carrito y WhatsApp
 
 - Buscar por nombre, marca o descripción (prioridad en ese orden) y filtrar categorías. En móvil, el selector aplica el filtro automáticamente conservando búsqueda; sin JavaScript usar Filtrar. Editar cantidad o usar −/+; minorista aparece por defecto. Tocar una foto para ampliarla; cerrar por botón, Escape o fondo.
-- Agregar al carrito, cerrar/reabrir la pestaña y entrar a `/carrito/`. Modificar cantidades/tarifa, quitar productos y vaciar.
+- Agregar al carrito, cerrar/reabrir la pestaña y entrar a `/carrito/`. Modificar cantidades/tarifa y quitar productos individualmente. Las fotos pequeñas también se amplían. Catálogo y Carrito permanecen accesibles en el header.
 - Cambiar un precio en Admin y volver al carrito: debe mostrar el dato vigente e informar el cambio. Desactivar un producto, quitar mayorista o cambiar unidad: debe exigir corrección.
 - Elegir **Revisar y preparar WhatsApp**, leer el aviso y comprobar el mensaje completo. **Volver al carrito** o Escape cancela; **Continuar a WhatsApp** revalida y abre otro contexto, conservando la pestaña del carrito. Si el navegador bloquea la apertura, usar **Abrir WhatsApp con el mensaje preparado**. Ante cambios/errores se cierra la pestaña provisional y se requiere revisión.
 - El sitio no envía: el envío se hace desde WhatsApp. No se vacía automáticamente el carrito. Ante mensaje largo, copiar el texto completo desde la revisión.
 
 El carrito guarda selecciones y referencias en `localStorage`, nunca importes como autoridad. Al abrir, revisar y continuar se calculan importes actuales en Django con Decimal y redondeo a dos decimales (mitad hacia arriba); el total suma subtotales redondeados. Sin almacenamiento local o sin JavaScript, el carrito requiere habilitarlos; el catálogo sigue disponible.
+
+Ante datos guardados corruptos aparece **Restablecer carrito**: requiere clic y elimina únicamente la clave propia, conservando otros datos del navegador. No se ofrece para almacenamiento bloqueado ni para un carrito válido. El catálogo muestra rangos de resultados y páginas de 12, con filtros conservados en los enlaces Anterior/Siguiente.
 
 Los avisos flotantes aparecen arriba incluso con scroll, sin mover contenido ni foco. Éxitos/información duran cinco segundos; errores/advertencias ocho, con pausa por puntero/foco y cierre manual. Al agregar ofrecen Ver carrito. Los errores bloqueantes conservan la explicación junto al campo/producto hasta corregirlos.
 
