@@ -26,7 +26,7 @@
   </nav>
   <div class="section-heading">
     <h1 id="catalog-title" class="visually-hidden">Nuestros productos</h1>
-    <p>Mostrando {% if page.paginator.count %}{{ page.start_index }}–{{ page.end_index }} de{% else %}0 de{% endif %} {{ page.paginator.count }} producto{{ page.paginator.count|pluralize:"s" }}{% if query %} para “{{ query }}”{% endif %}</p>
+    <p>{% if page.paginator.count %}{{ page.start_index }}–{{ page.end_index }} de{% else %}0 de{% endif %} {{ page.paginator.count }} producto{{ page.paginator.count|pluralize:"s" }}{% if query %} para “{{ query }}”{% endif %}</p>
   </div>
   <div class="product-grid">
     {% for product in page %}
