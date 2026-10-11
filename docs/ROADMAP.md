@@ -58,7 +58,7 @@ Correcciones visuales completadas y publicadas; capturas reales inspeccionadas, 
 ## Nueva iteración UX/UI y datos de prueba
 
 - [x] Tarea 1 — Logo de 64 px, navegación agrupada y separadores semanales; Django y Chromium correctos.
-- [ ] Tarea 2 — Ubicación, redirección permanente e información centrada.
+- [x] Tarea 2 — Ubicación, redirección permanente e información centrada.
 - [ ] Tarea 3 — Carrito compacto, miniaturas y recuperación contextual.
 - [ ] Tarea 4 — Catálogo compacto y paginación de 12 productos.
 - [ ] Tarea 5 — Limpieza visual de revisión WhatsApp.

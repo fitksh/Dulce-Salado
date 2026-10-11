@@ -34,7 +34,7 @@ label { font-weight: 600; }
 .footer-links { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 1.2rem; }
 .footer-links > a { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; }
 .business-card { display: grid; margin-top: 1.25rem; background: white; border: 1px solid var(--line); border-radius: .8rem; overflow: hidden; }
-.business-address { padding: 1.2rem; min-width: 0; align-self: center; }
+.business-address { padding: 1.2rem; min-width: 0; align-self: center; text-align: center; }
 .business-address h1 { font-size: 1.4rem; letter-spacing: normal; margin: 0; }
 .location-map { min-width: 0; border-top: 1px solid var(--line); overflow: hidden; }
 .location-map iframe { display: block; border: 0; width: 100%; height: clamp(280px, 55vw, 460px); }

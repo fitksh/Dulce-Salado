@@ -15,7 +15,7 @@ class BusinessSettingsTests(TestCase):
         response = self.client.get(reverse("directions"))
         self.assertContains(response, "todavía no está disponible")
         self.assertNotContains(response, "Abrir en Google Maps")
-        self.assertContains(response, '<h1 id="directions-title">Dirección</h1>')
+        self.assertContains(response, '<h1 id="directions-title">Ubicación</h1>')
         self.assertNotContains(response, '<h1>Cómo llegar</h1>')
         business = BusinessSettings.objects.create()
         for address in ("", "   "):
@@ -25,7 +25,11 @@ class BusinessSettingsTests(TestCase):
             response = self.client.get(reverse("directions"))
             self.assertContains(response, "todavía no está disponible")
             self.assertNotContains(response, "Abrir en Google Maps")
-        self.assertContains(self.client.get("/"), 'href="/como-llegar/"')
+        self.assertContains(self.client.get("/"), 'href="/ubicacion/"')
+
+    def test_legacy_location_redirect_is_permanent(self):
+        self.assertEqual(reverse("directions"), "/ubicacion/")
+        self.assertRedirects(self.client.get("/como-llegar/"), "/ubicacion/", status_code=301)
 
     def test_address_and_maps_search_are_encoded_and_escaped(self):
         business = BusinessSettings.objects.create(address='Dirección de test 123, Córdoba & "Centro"')

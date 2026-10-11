@@ -1,4 +1,4 @@
-﻿# Dulce y Salado
+# Dulce y Salado
 
 Catálogo comercial mobile-first de repostería, dietética y cotillón. Catálogo público, carrito local y mensaje WhatsApp con precios estimados. El comercio confirma disponibilidad y condiciones; el sitio no registra pedidos ni gestiona stock, pagos o envíos.
 
@@ -102,8 +102,8 @@ No usar `down -v` para conservar base e imágenes. Los volúmenes `postgres_data
 
 En el listado de productos, «Exportar CSV» descarga todos los productos del conjunto actual, incluidas páginas no visibles. Conserva búsqueda y filtros por categoría, unidad y activo. Sin filtros incluye activos e inactivos. Requiere usuario staff con permiso de ver o cambiar productos. Archivo UTF-8 con BOM y separador `;`, importes con coma decimal para Excel es-AR. Los textos que podrían ejecutarse como fórmulas llevan un apóstrofo protector. No existe importación.
 
-## Dirección y Cómo llegar
-En Admin → Catálogo → Configuración comercial, crear una única configuración con la dirección real. El enlace exacto de Google Maps es opcional: pegar un enlace HTTPS compartido por Maps o dejarlo vacío para buscar la dirección. Luego editar ese mismo registro. La página pública `/como-llegar/` está enlazada desde el footer. Si falta dirección muestra un aviso sin destino ficticio. Migración nueva: `catalog.0003_business_settings`; ejecutar `docker compose exec web python manage.py migrate` al actualizar.
+## Ubicación
+En Admin → Catálogo → Configuración comercial, crear una única configuración con la dirección real. El enlace exacto de Google Maps es opcional: pegar un enlace HTTPS compartido por Maps o dejarlo vacío para buscar la dirección. Luego editar ese mismo registro. La página pública `/ubicacion/` está enlazada desde el footer. Si falta dirección muestra un aviso sin destino ficticio. Migración nueva: `catalog.0003_business_settings`; ejecutar `docker compose exec web python manage.py migrate` al actualizar.
 
 La segunda iteración incorpora además el iframe fijo de Google Maps provisto por el dueño, también en móvil. Está en `templates/directions.html` y deberá actualizarse si cambia la ubicación; editar dirección/enlace Admin no modifica esa URL. Si Maps no carga, la dirección y el botón siguen funcionando. Sin configuración editable se conserva el aviso; el iframe fijo del comercio permanece disponible. No requiere API key ni Google Maps JavaScript API.
 
@@ -123,12 +123,12 @@ docker compose exec web python manage.py migrate
 docker compose exec web python manage.py check
 ```
 
-Conservar `.env` y los volúmenes existentes. Revisar `/`, `/carrito/`, `/como-llegar/` y Admin. Configurar dirección/enlace exacto y horario semanal en Configuración comercial; WhatsApp sigue en `.env`. Los datos comerciales no se generan automáticamente. Ver [QA](docs/QA.md) para pruebas reales de teléfono, accesibilidad, Maps y CSV en Excel.
+Conservar `.env` y los volúmenes existentes. Revisar `/`, `/carrito/`, `/ubicacion/` y Admin. Configurar dirección/enlace exacto y horario semanal en Configuración comercial; WhatsApp sigue en `.env`. Los datos comerciales no se generan automáticamente. Ver [QA](docs/QA.md) para pruebas reales de teléfono, accesibilidad, Maps y CSV en Excel.
 
 ## Correcciones visuales puntuales
 
 Las tarjetas muestran la fotografía completa en un marco neutro de 210 px, con proporción original y centrada. La ampliación sólo muestra imagen y ×; mantiene etiquetas accesibles, Escape, cierre exterior/foco y enlace sin JavaScript.
 
-Header desde 800 px: marca, horarios y carrito en una fila. Bajo 800 px: una columna centrada en ese orden. El panel horario flota sin mover contenido. Cómo llegar integra Dirección, botón y mapa en una sola región: dos columnas desde 800 px y una por debajo. El footer queda centrado en todas las pantallas. Datos, enlaces, reglas comerciales y flujo de carrito/WhatsApp conservados.
+Header desde 800 px: marca, horarios y navegación Catálogo/Carrito en una fila. Bajo 800 px: tres regiones centradas, con ambos enlaces juntos. Logo de 64 px. El panel horario flota sin mover contenido. Ubicación integra información centrada, botón y mapa en una sola región: dos columnas desde 800 px y una por debajo. El footer queda centrado en todas las pantallas. `/como-llegar/` redirige permanentemente a `/ubicacion/`. La dirección completa, por ejemplo «Viedma, Río Grande 1814», se carga manualmente en Admin; no se agrega ni modifica automáticamente.
 
 Capturas de QA en `.qa/screenshots`: `photo-*`, `expanded-*`, `catalog-viewport-*`, `hours-*`, `directions-*` y `footer-*`. Las capturas `live-*` corresponden al entorno comercial local inspeccionado sólo en lectura. Actualizar con los comandos de instalación existente anteriores; no hay migraciones nuevas.

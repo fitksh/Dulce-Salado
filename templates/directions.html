@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Cómo llegar{% endblock %}
+{% block title %}Ubicación{% endblock %}
 {% block content %}
   <section class="business-card" aria-labelledby="directions-title">
     <div class="business-address">
-      <h1 id="directions-title">Dirección</h1>
+      <h1 id="directions-title">Ubicación</h1>
       {% if business.location_url %}
         <address>{{ business.address }}</address>
         <a class="button" href="{{ business.location_url }}" rel="noreferrer">Abrir en Google Maps</a>

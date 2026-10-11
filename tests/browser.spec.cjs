@@ -715,8 +715,8 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await blocked.close();
   });
 
-  await t.test("Cómo llegar sin dirección y configuración única desde Admin", async () => {
-    await page.getByRole("link", { name: "Cómo llegar", exact: true }).click();
+  await t.test("Ubicación sin dirección y configuración única desde Admin", async () => {
+    await page.getByRole("link", { name: "Ubicación", exact: true }).click();
     await page.getByText(/La dirección del comercio todavía no está disponible/).waitFor();
     assert.equal(await page.getByRole("link", { name: "Abrir en Google Maps" }).count(), 0);
     await accessible();
@@ -733,7 +733,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(link.searchParams.get("api"), "1");
     const iframe = page.locator(".location-map iframe");
     assert.equal(await page.getByRole("heading", { name: "Cómo llegar", exact: true }).count(), 0);
-    assert.equal(await page.getByRole("heading", { name: "Dirección", level: 1 }).count(), 1);
+    assert.equal(await page.getByRole("heading", { name: "Ubicación", level: 1 }).count(), 1);
     assert.equal(await page.locator(".business-card .business-address address").count(), 1);
     assert.equal(await page.locator(".business-card .location-map iframe").count(), 1);
     await page.frameLocator(".location-map iframe").getByRole("button", { name: "Interactuar con mapa de QA" }).click();
@@ -748,6 +748,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       const map = await iframe.boundingBox();
       const info = await page.locator(".business-address").boundingBox();
+      assert.equal(await page.locator(".business-address").evaluate(node => getComputedStyle(node).textAlign), "center");
       const region = await page.locator(".business-card").boundingBox();
       assert.ok(map.x >= region.x && map.x + map.width <= region.x + region.width);
       if (width >= 800) {
@@ -763,7 +764,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.route(/^https:\/\/www\.google\.com\/maps\//, route => route.fulfill({ contentType: "text/html", body: "<h1>Mapa interceptado de QA</h1>" }));
     await maps.click();
     await page.getByRole("heading", { name: "Mapa interceptado de QA" }).waitFor();
-    await page.goto(`${base}/como-llegar/`);
+    await page.goto(`${base}/ubicacion/`);
   });
 
   await t.test("horario partido, validación Admin, desplegable y reloj local sin peticiones", async () => {
@@ -835,7 +836,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     const plain = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 360, height: 844 } });
     const plainPage = await plain.newPage();
     await plain.route("https://www.google.com/maps/embed?*", route => route.abort());
-    await plainPage.goto(`${base}/como-llegar/`);
+    await plainPage.goto(`${base}/ubicacion/`);
     await plainPage.locator(".hours-panel summary").click();
     assert.equal(await plainPage.locator(".weekly-hours").isVisible(), true);
     await plain.close();

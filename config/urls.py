@@ -2,6 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
+from django.views.generic import RedirectView
 
 from catalog.views import (
     cart_page,
@@ -15,7 +16,8 @@ from catalog.views import (
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", catalog_list, name="home"),
-    path("como-llegar/", directions_page, name="directions"),
+    path("ubicacion/", directions_page, name="directions"),
+    path("como-llegar/", RedirectView.as_view(pattern_name="directions", permanent=True)),
     path("carrito/", cart_page, name="cart"),
     path("carrito/recalcular/", cart_refresh, name="cart_refresh"),
     path("carrito/revisar/", cart_review, name="cart_review"),

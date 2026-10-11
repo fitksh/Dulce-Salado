@@ -220,3 +220,7 @@ QA adicional de orientación horizontal: a 844×300 el modal conservaba altura d
 ## Nueva iteración UX/UI y datos de prueba — 2026-10-11
 
 Tarea 1 validada: logo CSS de 64 px sin modificar el archivo; navegación Catálogo/Carrito agrupada con aria-current y columnas equilibradas. Marca, horarios y acciones en fila desde 800 px y tres regiones centradas en móvil. Separadores únicamente entre los siete días. 11 Django afectados, 22 Chromium y Ruff correctos; cinco anchuras más límite 800 px, axe y capturas móvil/escritorio inspeccionadas. Archivos: base.html, site.css, test_views.py y browser.spec.cjs. Datos y horarios conservados. Próxima tarea: Ubicación y redirección permanente.
+
+Tarea 1 publicada: 35b186067cc994b74d3ed399b5dc0b2acc079f8a; CI success 38114948120.
+
+Tarea 2 validada: /ubicacion/ utiliza la vista existente; /como-llegar/ redirige 301. Texto Ubicación y columna informativa centrada; dirección exclusivamente Admin, iframe exacto intacto. 18 Django y 22 Chromium correctos; redirección, cinco anchuras, axe y captura móvil inspeccionada. Se corrigieron los selectores de pruebas que aún buscaban los textos anteriores. README/spec/UX actualizados sin modificar datos. Próxima tarea: simplificar carrito y reutilizar visor de fotos.
