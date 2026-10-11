@@ -50,5 +50,5 @@ Segunda iteración completada y publicada en main. Sin nuevas dependencias/model
 - [x] Tarea 1 — Miniaturas completas y modal sólo foto/cierre; 10 Django, 22 Chromium y Ruff OK; cinco anchuras/axe y capturas inspeccionadas.
 - [x] Tarea 2 — Header en fila de tres regiones en escritorio y columna en móvil; 16 Django, 7 Node y 22 Chromium OK.
 - [x] Tarea 3 — Dirección, botón y mapa en una región responsive; 16 Django, 22 Chromium y Ruff OK.
-- [ ] Tarea 4 — Footer centrado en todas las pantallas.
+- [x] Tarea 4 — Footer centrado en todas las pantallas; 10 Django y 22 Chromium OK, cinco capturas inspeccionadas.
 - [ ] Tarea 5 — QA completa, capturas, documentación y publicación final.

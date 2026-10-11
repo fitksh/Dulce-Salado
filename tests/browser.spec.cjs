@@ -78,6 +78,21 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       assert.equal(steppers.every(width => width >= 44), true);
       await page.screenshot({ path: `.qa/screenshots/catalog-${width}.png`, fullPage: true });
       await page.screenshot({ path: `.qa/screenshots/catalog-viewport-${width}.png` });
+      const footer = page.locator(".site-footer");
+      const alignment = await footer.evaluate(node => {
+        const links = [...node.querySelectorAll(".footer-links > a")].map(link => link.getBoundingClientRect());
+        const left = Math.min(...links.map(r => r.left)), right = Math.max(...links.map(r => r.right));
+        const bounds = node.getBoundingClientRect();
+        return { text: getComputedStyle(node).textAlign, nav: getComputedStyle(node.querySelector("nav")).justifyContent,
+          center: Math.abs((left + right) / 2 - (bounds.left + bounds.right) / 2), touch: links.every(r => r.height >= 44),
+          icons: node.querySelectorAll(".footer-links > a > svg").length };
+      });
+      assert.equal(alignment.text, "center");
+      assert.equal(alignment.nav, "center");
+      assert.ok(alignment.center < 2 && alignment.touch);
+      assert.equal(alignment.icons, 2);
+      await footer.screenshot({ path: `.qa/screenshots/footer-${width}.png` });
+      await page.evaluate(() => scrollTo(0, 0));
     }
     await accessible();
     await page.setViewportSize({ width: 390, height: 844 });
