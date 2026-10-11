@@ -85,3 +85,7 @@ Los productos [DEMO] y sus marcas/precios son ficticios; se incorporan únicamen
 ## Nuevas variantes PDF del Admin
 
 PDF tabla compacta y PDF tabla con imágenes se agregan junto al CSV y ambas listas, sin reemplazarlas. A4 horizontal blanco, filas flexibles y encabezados repetidos, tipografía oscura de 9 pt, márgenes y separadores finos; no categoría. Compacta usa abreviaturas monetarias claras. Con imágenes conserva los ocho encabezados completos, miniaturas contain de unos 51 px y avisos discretos cuando faltan; texto completo, ARS, inactivos y nota/página en las dos tablas.
+
+## Fotografías cuadradas del catálogo — disposición vigente
+
+Sustituye el marco histórico de 210 px: cada tarjeta reserva proporción 1:1, incluida Sin imagen. Miniatura cover/center, sin distorsión y sin bandas; recorta extremos no cuadrados. Visor siempre contain con foto completa, accesible por clic/teclado y enlace nativo sin JS; carrito/PDF también completos. Se contrastaron fotografías comerciales, incluyendo envases; su identificación central sigue visible. Etiquetas junto al borde pueden ocultarse en miniatura: abrir el visor y preferir fotos fuente cuadradas, bien encuadradas. Sin cambios físicos, modelos o editor.

@@ -40,6 +40,7 @@ def test_photo(size):
     drawing.rectangle((12, 12, 65, 65), fill="#ad3c0c")
     drawing.rectangle((width - 66, height - 66, width - 13, height - 13), fill="#68384c")
     drawing.text((25, height // 2), f"QA {width} x {height}", fill="#292324", font_size=24)
+    drawing.text((18, height - 45), "ETIQUETA JUNTO AL BORDE", fill="#292324", font_size=16)
     image = BytesIO()
     photo.save(image, "PNG")
     return SimpleUploadedFile("qa.png", image.getvalue())

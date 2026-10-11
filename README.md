@@ -137,7 +137,7 @@ Conservar `.env` y los volúmenes existentes. Revisar `/`, `/carrito/`, `/ubicac
 
 ## Correcciones visuales puntuales
 
-Las tarjetas muestran la fotografía completa en un marco neutro de 210 px, con proporción original y centrada. La ampliación sólo muestra imagen y ×; mantiene etiquetas accesibles, Escape, cierre exterior/foco y enlace sin JavaScript.
+Las tarjetas usan ahora un marco cuadrado 1:1 y fotografía centrada con `object-fit: cover`: llena el área sin deformarla, pero recorta los extremos de fotos no cuadradas. Al abrir la imagen, el visor mantiene `contain` y muestra la fotografía completa; también se conserva contain en el carrito y los PDF. Conviene cargar fotos fuente cuadradas, bien centradas y con etiquetas lejos del borde. La ampliación sólo muestra imagen y ×; mantiene etiquetas accesibles, Escape, cierre exterior/foco y enlace sin JavaScript.
 
 Header desde 800 px: marca, horarios y navegación Catálogo/Carrito en una fila. Bajo 800 px: tres regiones centradas, con ambos enlaces juntos. Logo de 64 px. El panel horario flota sin mover contenido. Ubicación integra información centrada, botón y mapa en una sola región: dos columnas desde 800 px y una por debajo. El footer queda centrado en todas las pantallas. `/como-llegar/` redirige permanentemente a `/ubicacion/`. La dirección completa, por ejemplo «Viedma, Río Grande 1814», se carga manualmente en Admin; no se agrega ni modifica automáticamente.
 

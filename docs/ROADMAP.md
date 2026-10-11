@@ -81,7 +81,7 @@ Exportación PDF y ajustes completados/publicados en main, cinco tareas con CI s
 
 - [x] Tarea 1 — PDF tabla compacta; 17 PDF/CSV, 25 Chromium y revisión de seis páginas correctos.
 - [x] Tarea 2 — PDF tabla con imágenes; 19 PDF/CSV, 25 Chromium y siete páginas inspeccionadas.
-- [ ] Tarea 3 — Marcos cuadrados y fotografías del catálogo.
+- [x] Tarea 3 — Marcos cuadrados; 24 Django, 25 Chromium y cinco anchuras/fotos reales inspeccionadas.
 - [ ] Tarea 4 — Importación CSV y validaciones de altas.
 - [ ] Tarea 5 — Vista previa, confirmación y documentación.
 - [ ] Tarea 6 — QA completa y publicación final.

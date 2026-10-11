@@ -134,7 +134,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
           await img.decode();
           const frame = img.closest(".product-image").getBoundingClientRect();
           const link = img.parentElement.getBoundingClientRect(), box = img.getBoundingClientRect();
-          const scale = Math.min(box.width / img.naturalWidth, box.height / img.naturalHeight);
+          const scale = Math.max(box.width / img.naturalWidth, box.height / img.naturalHeight);
           const paintedWidth = img.naturalWidth * scale, paintedHeight = img.naturalHeight * scale;
           return { height: frame.height, linkHeight: link.height, imageHeight: box.height,
             fits: box.left >= frame.left && box.right <= frame.right && box.top >= frame.top && box.bottom <= frame.bottom,
@@ -142,12 +142,12 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
             centered: getComputedStyle(img).objectPosition === "50% 50%",
             paintedWidth, paintedHeight, width: frame.width };
         });
-        assert.equal(dimensions.height, 210);
-        assert.equal(dimensions.linkHeight, 210);
-        assert.equal(dimensions.imageHeight, 210);
+        assert.ok(Math.abs(dimensions.height - dimensions.width) < .1);
+        assert.equal(dimensions.linkHeight, dimensions.height);
+        assert.equal(dimensions.imageHeight, dimensions.height);
         assert.equal(dimensions.fits && dimensions.centered, true);
-        assert.equal(dimensions.fit, "contain");
-        assert.ok(dimensions.paintedWidth <= dimensions.width && dimensions.paintedHeight <= 210);
+        assert.equal(dimensions.fit, "cover");
+        assert.ok(dimensions.paintedWidth >= dimensions.width - .1 && dimensions.paintedHeight >= dimensions.height - .1);
         ratios.push(dimensions.ratio);
         await photo.screenshot({ path: `.qa/screenshots/photo-${width}-${ratios.length}.png` });
         await photo.click();
@@ -168,6 +168,10 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
         assert.equal(await photo.evaluate(node => node === document.activeElement), true);
       }
       assert.deepEqual(ratios, [1.5, 1, 0.5]);
+      const frames = await page.locator(".product-image").evaluateAll(nodes => nodes.map(node => {
+        const r = node.getBoundingClientRect(); return { width: r.width, height: r.height };
+      }));
+      assert.ok(frames.every(frame => Math.abs(frame.width - frame.height) < .1 && Math.abs(frame.width - frames[0].width) < .1));
     }
     assert.equal(await page.locator(".product-card").filter({ has: page.locator(".image-placeholder") }).locator(".product-image-open").count(), 0);
     await trigger.focus();
