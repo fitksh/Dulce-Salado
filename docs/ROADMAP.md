@@ -73,4 +73,6 @@ Nueva iteración completada y publicada en main. Datos comerciales conservados, 
 - [x] Tarea 2 — PDF Admin con/sin fotos, filtros/permisos y revisión visual.
 - [x] Tarea 3 — Papelera accesible, comportamiento existente.
 - [x] Tarea 4 — Foto/columna desktop, móvil y recálculos conservados.
-- [ ] Tarea 5 — QA completa, PDFs de ejemplo, documentación y CI.
+- [x] Tarea 5 — QA completa, PDFs de ejemplo, documentación y CI.
+
+Exportación PDF y ajustes completados/publicados en main, cinco tareas con CI success. 88 Django, 7 Node, 25 Chromium, check/Ruff y migraciones correctos; dos PDFs ficticios A4 inspeccionados en todas sus páginas. Entorno local actualizado y registros/fotos conservados. Próximo paso: Admin/filtros/ambas descargas y pruebas locales de carrito responsive, visor/impresora, zoom y teléfono/lector según README/QA. Sin modelos/migraciones ni trabajo de fases futuras.

@@ -3,7 +3,7 @@
 Fecha de inicio: 2026-10-10. Trabajo autorizado secuencial en `main` hasta completar el MVP.
 
 ## Tarea actual
-EXPORTACIÓN PDF Y AJUSTES: cuatro tareas implementadas/publicadas, QA local completa (88 Django, 7 Node y 25 Chromium, check/Ruff/migraciones OK). Falta publicar la QA ampliada y verificar su CI para cerrar esta iteración. Historial previo y datos comerciales conservados; próximos pasos en README/QA.
+EXPORTACIÓN PDF Y AJUSTES COMPLETADOS — LISTO PARA PRUEBAS LOCALES. Cinco tareas implementadas/publicadas y CI success. QA: 88 Django, 7 Node y 25 Chromium, check/Ruff/migraciones correctos; dos PDFs ficticios A4 inspeccionados en sus seis páginas. Datos comerciales/fotos y cambios previos del usuario conservados. Entorno local actualizado; pruebas manuales concretas en README/QA.
 
 ## Decisiones autorizadas
 - kg, unidad y paquete; incrementos iniciales 0,1 kg y 1 unidad/paquete. Sin conversión de gramos.
@@ -280,3 +280,11 @@ Tarea 4 publicada: 29cb11b; CI completa success [38153331043](https://github.com
 Tarea 5 QA local completa: 88 Django, 7 Node y 25 Chromium correctos; check/Ruff OK y makemigrations sin cambios. Se añadió comprobación de nombre sin espacios de 180 letras y texto completo de 300 repeticiones PDF. Primera aserción de continuidad se corrigió para excluir encabezados/pies intercalados por extracción entre páginas; los datos no estaban truncados. Suite completa final ejecutada en Docker reconstruido, sin omisiones PDF. Navegador añade espacio 640 y foco/identidad/scroll durante/después de recálculo desktop; las capturas de foco y fotografías reales 320/800/1280 inspeccionadas. PDF de tres páginas por variante ya renderizado e inspeccionado íntegramente.
 
 Entorno local actualizado (Django 5.2.18, Pillow 12.3.0, ReportLab 5.0.1), rutas públicas HTTP 200. Huellas de registros/fotos idénticas antes/después de reconstrucción y lectura pública: 51 productos existentes, 3 categorías, 1 configuración y 12 intervalos; ningún seed ejecutado en base comercial. QA detenida/base descartada, consulta sin filas. Cambios previos del usuario en CSS/home intactos fuera del staging. README/QA/arquitectura/UX y roadmap registran uso, evidencia y límites manuales. Falta publicar QA y comprobar su CI para marcar el cierre completo.
+
+## Cierre de exportación PDF y ajustes
+
+Tarea 5 publicada: 4df24c2; CI completa success [38154032727](https://github.com/fitksh/Dulce-Salado/actions/runs/38154032727), incluyendo lectura PDF/Unicode/paginación/fotos y las 25 comprobaciones Chromium. Las cinco tareas tienen CI success: header 7734888/38151819941; PDF 6a837cd/38152861704; papelera 47318ac/38153081153; desktop 29cb11b/38153331043; QA 4df24c2/38154032727. Todas están marcadas completas en ROADMAP.
+
+Archivos cambiados: base/CSS y pruebas header; catalog/pdf.py, admin.py, test_pdf.py, requirements, template Admin y workflow; cart_contents/test_cart, browser.spec/pdf_examples y README/arquitectura/UX/QA/estado/roadmap. ReportLab es la única biblioteca PDF directa nueva; Pillow existente se usa sólo sobre copias temporales. No se altera código de precios/WhatsApp/storage/renderCart, modelos/migraciones, imágenes comerciales ni fases futuras. Exportaciones exclusivamente Admin autenticado, GET, conjunto filtrado completo y archivos en memoria.
+
+Resultado: ambas variantes PDF legibles/proporcionales, productos sin foto/inactivos/demos/vacío/texto extenso conservados; header con Ubicación, papelera accesible y foto desktop 132 px, móvil 56 px. Sin fallos de implementación conocidos. Próximo paso: Ctrl+F5, Admin → Productos → filtros/orden → ambas descargas; comparar CSV/PDF, revisar impresión A4 y carrito con/sin foto, cantidades/tarifas/papelera. Límites manuales: impresora/visor propios, zoom nativo 200%, teléfono/lector real y datos comerciales exactos; no hubo impresión física ni envío WhatsApp. Este cierre documental conserva el historial y su propia publicación/CI se verifica tras generar el commit.
