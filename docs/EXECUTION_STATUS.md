@@ -230,3 +230,7 @@ Tarea 3 validada: título oculto accesible y toolbar retirado; Quitar y CTA vac�
 Tarea 2 publicada: ba15ef147560a7805fadb7d908af2c5fc0c02d9d; CI success 38115123725. Tarea 3 publicada: d7da4e8424bcf88f20cc5c8e7dceb368884b8c8e; CI en curso al continuar.
 
 Tarea 4 validada: placeholder solicitado, h1/label Categoría accesibles ocultos y rango real de resultados. Paginator existente de 12, GET/filtros/orden conservados. 13 Django y 22 Chromium correctos, Ruff OK; dataset aislado de 45 verifica cuatro rangos, desempate por PK, ausencia de duplicados, páginas inválidas/vacío/única y filtros. Navegador confirma navegación sin JS y visor de carrito después de recálculo. Captura compacta móvil inspeccionada; axe correcto. Archivos: views.py/home.html/test_views.py. Próxima tarea: limpieza visual de WhatsApp.
+
+Tarea 3 CI success 38115244713. Tarea 4 publicada: bdf1661cb37eae5674a850b37f2a2b2a69c69544; CI en curso.
+
+Tarea 5 validada: review-title oculto visualmente, conserva nombre accesible y foco. Párrafo redundante retirado; aviso obligatorio, textarea/copia/fallback y flujo vigentes intactos. 5 Django, 22 Chromium y Ruff correctos; axe, Escape/cancelación/copia/validación final sin envíos. Archivos: cart_review.html y test_whatsapp.py. Próxima tarea: seed exclusivamente manual en DEBUG, 45 productos sin fotos, simulación por defecto, --apply y --remove. Un manifiesto local en MEDIA_ROOT registra identidad/fingerprint de altas propias para no borrar comerciales ni demos editados; sin dependencias/modelos/migraciones nuevos.

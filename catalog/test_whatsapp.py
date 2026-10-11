@@ -47,6 +47,9 @@ class WhatsAppTests(TestCase):
         self.assertContains(response, "Continuar a WhatsApp")
         self.assertNotContains(response, 'id="whatsapp-ready"')
         self.assertNotContains(self.post("cart_whatsapp"), 'id="whatsapp-ready"')
+        self.assertContains(response, 'id="review-title" class="visually-hidden" tabindex="-1"')
+        self.assertNotContains(response, "El texto se incluye completo.")
+        self.assertContains(response, "Copiar mensaje completo")
 
     def test_acceptance_generates_link_only_after_revalidation(self):
         response = self.post("cart_whatsapp", accepted="yes")
