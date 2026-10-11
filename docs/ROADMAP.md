@@ -63,4 +63,6 @@ Correcciones visuales completadas y publicadas; capturas reales inspeccionadas, 
 - [x] Tarea 4 — Catálogo compacto y paginación de 12 productos.
 - [x] Tarea 5 — Limpieza visual de revisión WhatsApp.
 - [x] Tarea 6 — Seed manual de 45 productos ficticios, simulación y limpieza seguras.
-- [ ] Tarea 7 — QA completa, documentación, publicación y CI.
+- [x] Tarea 7 — QA completa, documentación, publicación y CI; 78 Django, 7 Node y 24 Chromium OK, CI success 38115967060.
+
+Nueva iteración completada y publicada en main. Datos comerciales conservados, sin nuevos modelos/migraciones/dependencias; entorno local actualizado. Próximo paso: recarga Ctrl+F5, pruebas reales en teléfono/lector y dirección completa desde Admin. Seed opcional manual en DEBUG según README; no aplicado automáticamente. Infraestructura futura permanece fuera de alcance.

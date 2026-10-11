@@ -244,3 +244,13 @@ Tarea 6 publicada: e008cbff27add19830a46b40190045e938bdb497; CI success 38115615
 Tarea 7 QA completa: 78 Django, 7 Node y 24 Chromium correctos, check/Ruff OK y makemigrations sin cambios. Nuevas pruebas de lectura de storage bloqueada y datos null/duplicados, nombre largo/foto ausente tras Admin, visor tras recálculo; 45 fixtures explícitos mediante Admin aislado con cuatro páginas/rangos/IDs sin repetir, 15 por categoría, q/categoría y fallback GET sin JS. Se corrigió selector CSRF ambiguo del test (formulario vs logout), después suite completa de navegador correcta. Axe sin infracciones, cinco anchuras más 800, capturas reales/demo/cart/review/horarios/ubicación inspeccionadas. Mapa real visible, fotos existentes completas. Ningún mensaje enviado.
 
 README/arquitectura/UX/spec/QA actualizados, historial conservado. Docker reconstruido sin cambiar volúmenes/.env. HTTP 200 /, /carrito/, /ubicacion/ y 301 antigua. Registros comerciales con huella idéntica antes/después, 6 productos/3 categorías/12 intervalos; seed no ejecutado sobre base comercial y sin manifiesto allí. QA detenido y bases descartables sin filas. Las tareas 1–6 publicadas con CI success. Pendiente publicar QA ampliada y comprobar su CI para cerrar la tarea 7.
+
+## Cierre de nueva iteración UX/UI y datos de prueba
+
+Tarea 7 publicada: 734b68192b5d5f4848c5072b96896fb9dec50d3f; CI completa success [38115967060](https://github.com/fitksh/Dulce-Salado/actions/runs/38115967060), incluidas las nuevas pruebas Chromium y capturas. Tareas 1–6 también publicadas con CI success, detalladas arriba. Las siete tareas solicitadas están completas, sin fallos de implementación conocidos.
+
+Archivos principales: templates base/home/cart/cart_contents/cart_review/directions y visor compartido; CSS y catalog.js/cart.js/cart-core.js; views/urls; comando seed_demo_catalog, dataset y tests de comportamiento; README y los seis documentos. Modelos, migraciones, procesamiento de imágenes, Admin, reglas de precios/WhatsApp y dependencias conservados.
+
+Verificación final: 78 Django, 7 Node, 24 Chromium; check/Ruff y migraciones correctos localmente y en CI. Entorno local actualizado, datos comerciales preservados, QA descartado, capturas inspeccionadas en cinco anchuras. Seed no aplicado a base comercial; opciones de simulación/alta/limpieza y límite conservador de demos editados/manifiesto explicados en README. Próximo paso: Ctrl+F5 y pruebas del dueño en teléfono/lector; actualizar dirección completa en Admin y ejecutar el seed sólo si desea esos datos ficticios. No hay fase futura anticipada.
+
+Este commit cierra el roadmap documental; su propio hash y CI se consultan tras publicar, sin incluir un hash autorreferencial.
