@@ -69,11 +69,6 @@
       </div>
     {% endfor %}
   </div>
-  <dialog id="product-image-dialog" class="image-dialog" aria-label="Imagen ampliada" aria-describedby="image-dialog-description">
-    <p id="image-dialog-description" class="visually-hidden">Fotografía del producto. Cerrá con el botón, Escape o pulsando fuera.</p>
-    <button type="button" class="secondary image-dialog-close" id="image-dialog-close" aria-label="Cerrar imagen" autofocus>×</button>
-    <img id="product-image-expanded" alt="">
-  </dialog>
   {% if page.has_other_pages %}
     <nav class="pagination" aria-label="Páginas del catálogo">
       {% if page.has_previous %}<a class="button secondary" href="?page={{ page.previous_page_number }}&amp;q={{ query|urlencode }}{% if selected_category %}&amp;categoria={{ selected_category.slug|urlencode }}{% endif %}">Anterior</a>{% endif %}

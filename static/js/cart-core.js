@@ -17,11 +17,17 @@
   function read(storage) {
     const raw = storage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    const data = JSON.parse(raw);
-    if (data.version !== 1 || !Array.isArray(data.items)) throw new Error("El carrito guardado tiene un formato inválido. Vaciá el carrito para restablecerlo.");
-    const items = data.items.map(selection);
-    if (new Set(items.map(item => item.id)).size !== items.length) throw new Error("El carrito guardado contiene productos repetidos. Vaciá el carrito para restablecerlo.");
-    return items;
+    try {
+      const data = JSON.parse(raw);
+      if (!data || data.version !== 1 || !Array.isArray(data.items)) throw new Error("Formato inválido");
+      const items = data.items.map(selection);
+      if (new Set(items.map(item => item.id)).size !== items.length) throw new Error("Productos repetidos");
+      return items;
+    } catch {
+      const error = new Error("El carrito guardado no se pudo leer. Usá Restablecer carrito para recuperarlo.");
+      error.name = "CartDataError";
+      throw error;
+    }
   }
   function write(storage, items) {
     storage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, items: items.map(selection) }));

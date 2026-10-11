@@ -76,6 +76,21 @@ class CartTests(TestCase):
             self.assertEqual(self.client.post(reverse("cart_refresh"), {"items": data}).status_code, 400)
         self.assertEqual(parse_items("[]"), [])
 
+    def test_cart_photo_uses_current_product_and_is_not_persisted(self):
+        response = self.client.post(reverse("cart_refresh"), {"items": json.dumps([self.item()])})
+        self.assertNotContains(response, 'cart-thumbnail')
+        self.product.image = "products/current.webp"
+        self.product.save()
+        response = self.client.post(reverse("cart_refresh"), {"items": json.dumps([self.item()])})
+        self.assertContains(response, 'class="product-image-open cart-thumbnail"', count=1)
+        self.assertContains(response, '/media/products/current.webp')
+        self.assertNotIn("image", response.context["cart"]["items"][0])
+        response = self.client.get(reverse("cart"))
+        self.assertContains(response, 'id="product-image-dialog"', count=1)
+        self.assertNotContains(response, "Vaciar carrito")
+        self.assertNotContains(response, "Seguir viendo productos")
+        self.assertContains(response, '<h1 class="visually-hidden">Revisá tu carrito.</h1>')
+
     def test_specific_wholesale_condition_only_for_selected_wholesale(self):
         self.product.wholesale_condition = "Condición específica de prueba"
         self.product.save()

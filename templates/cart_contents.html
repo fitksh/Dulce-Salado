@@ -5,7 +5,13 @@
   <div class="cart-layout"><div class="cart-items">
     {% for row in cart.rows %}
       <article class="cart-item" data-id="{{ row.entry.id }}" {% if row.product %}data-unit="{{ row.product.sale_unit }}"{% endif %} aria-labelledby="cart-product-{{ row.entry.id }}">
-        <div class="cart-item-heading"><h2 id="cart-product-{{ row.entry.id }}">{% if row.product %}{{ row.product.name }}{% else %}Producto no disponible ({{ row.entry.id }}){% endif %}</h2><button type="button" class="secondary remove-item" aria-label="Quitar {% if row.product %}{{ row.product.name }}{% else %}producto {{ row.entry.id }}{% endif %}">Quitar</button></div>
+        <div class="cart-item-heading">
+          <div class="cart-product-heading">
+            {% if row.product.image %}<a class="product-image-open cart-thumbnail" href="{{ row.product.image.url }}" aria-label="Ver imagen ampliada de {{ row.product.name }}"><img src="{{ row.product.image.url }}" alt="{{ row.product.name }}{% if row.product.brand %} — {{ row.product.brand }}{% endif %}" width="56" height="56" loading="lazy" decoding="async"></a>{% endif %}
+            <h2 id="cart-product-{{ row.entry.id }}">{% if row.product %}{{ row.product.name }}{% else %}Producto no disponible ({{ row.entry.id }}){% endif %}</h2>
+          </div>
+          <button type="button" class="secondary remove-item" aria-label="Quitar {% if row.product %}{{ row.product.name }}{% else %}producto {{ row.entry.id }}{% endif %}">Quitar</button>
+        </div>
         {% if row.product %}
           {% if row.product.brand %}<p class="product-brand">{{ row.product.brand }}</p>{% endif %}
           <p data-cart-amount>Precio {% if row.entry.price_type == 'wholesale' %}mayorista{% else %}minorista{% endif %}: {% if row.price is not None %}{{ row.price|ars }} / {{ row.product.sale_unit }}{% else %}no disponible{% endif %}</p>

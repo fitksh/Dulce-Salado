@@ -36,9 +36,11 @@
   <main id="contenido" class="container" tabindex="-1">
     {% include "includes/notification.html" %}
     <p id="cart-storage-error" class="notice error" hidden></p>
+    <button type="button" class="secondary" id="cart-reset" hidden>Restablecer carrito</button>
     <noscript><p class="notice">Para armar y guardar el carrito en este navegador necesitás activar JavaScript.</p></noscript>
     {% block content %}{% endblock %}
   </main>
+  {% include "includes/image_dialog.html" %}
   <footer class="container site-footer">
     <nav class="footer-links" aria-label="Información del comercio"><a href="{% url 'directions' %}">
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>

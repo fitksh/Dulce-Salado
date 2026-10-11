@@ -2,6 +2,7 @@
   "use strict";
   const core = window.CartCore;
   const storageError = document.getElementById("cart-storage-error");
+  const reset = document.getElementById("cart-reset");
   const app = document.getElementById("cart-app");
   let items = [], storageFailed = false, serial = 0;
   let reviewing = false;
@@ -67,8 +68,9 @@
   }
   function count() { document.querySelectorAll("[data-cart-count]").forEach(node => { node.textContent = String(items.length); }); }
   function load() {
+    reset.hidden = true;
     try { items = core.read(window.localStorage); storageFailed = false; storageError.hidden = true; }
-    catch (error) { items = []; storageFailed = true; storageProblem(error instanceof SyntaxError ? "El carrito guardado no se pudo leer. Vaciá el carrito para restablecerlo." : error.name === "SecurityError" ? "Habilitá el almacenamiento local de este navegador para guardar el carrito." : error.message); }
+    catch (error) { items = []; storageFailed = true; reset.hidden = error.name !== "CartDataError"; storageProblem(error.name === "SecurityError" ? "Habilitá el almacenamiento local de este navegador para guardar el carrito." : error.message); }
     count();
   }
   function persist() {
@@ -115,6 +117,14 @@
     } finally { if (requestNumber === serial) { loading.textContent = ""; contents.removeAttribute("aria-busy"); } }
   }
   load();
+  reset.addEventListener("click", () => {
+    if (reset.hidden) return;
+    try {
+      window.localStorage.removeItem(core.STORAGE_KEY);
+      load(); refresh();
+      announce("Carrito restablecido.", "success");
+    } catch { storageProblem("No se pudo restablecer el carrito. Revisá el almacenamiento local del navegador."); }
+  });
   document.querySelectorAll(".add-product").forEach(form => {
     form.addEventListener("submit", event => {
       event.preventDefault();
@@ -208,7 +218,6 @@
         catch { field.focus(); field.select(); announce("Copiá el texto seleccionado para pegarlo en WhatsApp.", "info"); }
       }
     });
-    document.getElementById("cart-clear").addEventListener("click", () => { items = []; persist(); if (!storageFailed) announce("Carrito vacío.", "success"); refresh(); });
     app.addEventListener("click", event => {
       if (event.target.closest("#cart-review")) { review(); return; }
       const remove = event.target.closest(".remove-item");

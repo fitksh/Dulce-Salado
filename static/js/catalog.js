@@ -1,24 +1,28 @@
 (function () {
   "use strict";
   const categories = document.querySelector(".category-select");
-  if (!categories) return;
-  categories.querySelector("button").hidden = true;
-  categories.querySelector("select").addEventListener("change", () => categories.requestSubmit());
+  if (categories) {
+    categories.querySelector("button").hidden = true;
+    categories.querySelector("select").addEventListener("change", () => categories.requestSubmit());
+  }
   const dialog = document.getElementById("product-image-dialog");
   let opener;
-  document.querySelectorAll(".product-image-open").forEach(link => {
-    link.addEventListener("click", event => {
-      if (!dialog.showModal) return;
-      event.preventDefault();
-      opener = link;
-      const source = link.querySelector("img");
-      const expanded = dialog.querySelector("img");
-      expanded.src = source.src;
-      expanded.alt = source.alt;
-      dialog.showModal();
-    });
+  if (!dialog) return;
+  document.addEventListener("click", event => {
+    const link = event.target.closest(".product-image-open");
+    if (!link || !dialog.showModal) return;
+    event.preventDefault();
+    opener = link;
+    const source = link.querySelector("img");
+    const expanded = dialog.querySelector("img");
+    expanded.src = source.src;
+    expanded.alt = source.alt;
+    dialog.showModal();
   });
   document.getElementById("image-dialog-close").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); });
-  dialog.addEventListener("close", () => opener?.focus({ preventScroll: true }));
+  dialog.addEventListener("close", () => {
+    const target = opener?.isConnected ? opener : Array.from(document.querySelectorAll(".product-image-open")).find(link => link.href === opener?.href);
+    target?.focus({ preventScroll: true });
+  });
 })();

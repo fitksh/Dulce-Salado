@@ -350,20 +350,18 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.goto(`${base}/carrito/`);
     await waitCart("$ 27,15");
     assert.equal(await page.locator(".cart-item .wholesale-note").count(), 1);
-    const toolbar = await page.locator(".cart-toolbar > *").evaluateAll(nodes => nodes.map(n => ({ width: n.getBoundingClientRect().width, left: n.getBoundingClientRect().left })));
-    assert.equal(toolbar[0].width, toolbar[1].width);
-    assert.equal(toolbar[0].left, toolbar[1].left);
+    assert.equal(await page.locator("#cart-clear, .cart-toolbar").count(), 0);
+    assert.equal(await page.locator("#cart-reset").isVisible(), false);
     for (const width of [360, 390, 430, 768, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-      if (width < 600) {
-        const layout = await page.evaluate(() => {
-          const buttons = Array.from(document.querySelectorAll(".cart-toolbar > *"), node => node.getBoundingClientRect());
-          const card = document.querySelector(".cart-item").getBoundingClientRect();
-          return { a: buttons[0].width, b: buttons[1].width, card: card.width, left: buttons[0].left, cardLeft: card.left };
-        });
-        assert.equal(layout.a, layout.b); assert.equal(layout.a, layout.card); assert.equal(layout.left, layout.cardLeft);
-      }
+      const thumbnail = page.locator(".cart-thumbnail").first();
+      assert.equal((await thumbnail.boundingBox()).width, 56);
+      assert.equal(await thumbnail.locator("img").evaluate(node => getComputedStyle(node).objectFit), "contain");
+      await thumbnail.click();
+      assert.equal(await page.locator("#product-image-expanded").getAttribute("src"), await thumbnail.locator("img").evaluate(node => node.src));
+      await page.keyboard.press("Escape");
+      assert.equal(await thumbnail.evaluate(node => node === document.activeElement), true);
       await page.screenshot({ path: `.qa/screenshots/cart-${width}.png`, fullPage: true });
     }
     await page.setViewportSize({ width: 390, height: 844 });
@@ -375,6 +373,9 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.screenshot({ path: ".qa/screenshots/cart-mobile.png", fullPage: true });
     await setQuantity("0.5");
     await waitCart("$ 45,25");
+    await page.locator(".cart-thumbnail").click();
+    await page.getByRole("button", { name: "Cerrar imagen" }).click();
+    assert.equal(await page.locator(".cart-thumbnail").evaluate(node => node === document.activeElement), true);
     await setQuantity("0.15");
     await page.locator("[data-cart-error]").filter({ hasText: /La cantidad debe ser positiva/ }).waitFor();
     assert.equal(await page.locator("#cart-review").isDisabled(), true);
@@ -691,11 +692,14 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
   });
 
   await t.test("almacenamiento corrupto recuperable y sin errores JS", async () => {
-    await page.evaluate(() => localStorage.setItem("dulce-salado.cart.v1", "invalid"));
+    await page.evaluate(() => { localStorage.setItem("dulce-salado.cart.v1", "invalid"); localStorage.setItem("qa-other-data", "preservar"); });
     await page.reload();
     await page.locator("#cart-storage-error").filter({ hasText: /El carrito guardado no se pudo leer/ }).waitFor();
-    await page.getByRole("button", { name: "Vaciar carrito" }).click();
+    assert.equal(await page.evaluate(() => localStorage.getItem("dulce-salado.cart.v1")), "invalid");
+    await page.getByRole("button", { name: "Restablecer carrito" }).click();
     await page.getByRole("heading", { name: "Tu carrito está vacío" }).waitFor();
+    assert.equal(await page.evaluate(() => localStorage.getItem("qa-other-data")), "preservar");
+    assert.equal(await page.locator("#cart-reset").isVisible(), false);
     assert.deepEqual(errors, []);
     await accessible();
   });

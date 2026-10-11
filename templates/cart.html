@@ -1,10 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Tu carrito{% endblock %}
 {% block content %}
-  <section class="intro"><h1>Revisá tu carrito.</h1></section>
+  <h1 class="visually-hidden">Revisá tu carrito.</h1>
   <div id="cart-app" data-refresh-url="{% url 'cart_refresh' %}" data-review-url="{% url 'cart_review' %}" data-whatsapp-url="{% url 'cart_whatsapp' %}">
     <form id="cart-token" hidden>{% csrf_token %}</form>
-    <div class="cart-toolbar"><a class="button secondary" href="{% url 'home' %}">Seguir viendo productos</a><button type="button" class="secondary" id="cart-clear">Vaciar carrito</button></div>
     <p id="cart-loading" role="status">Consultando el catálogo vigente…</p>
     <div id="cart-request-error" hidden></div>
     <div id="cart-contents"></div>
