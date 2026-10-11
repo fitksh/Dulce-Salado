@@ -81,6 +81,17 @@ class CatalogViewTests(TestCase):
         self.assertEqual(ars("0.10"), "$ 0,10")
         self.assertEqual(ars("1000000.05"), "$ 1.000.000,05")
 
+    def test_image_enlargement_only_for_existing_photo(self):
+        response = self.client.get("/")
+        self.assertNotContains(response, 'class="product-image-open"')
+        self.assertContains(response, 'id="product-image-dialog"', count=1)
+        self.product.image = "products/test.webp"
+        self.product.save()
+        response = self.client.get("/")
+        self.assertContains(response, 'class="product-image-open"', count=1)
+        self.assertContains(response, f'aria-label="Ver imagen ampliada de {self.product.name}"')
+        self.assertContains(response, 'loading="lazy" decoding="async"')
+
     def test_brand_navigation_and_requested_texts(self):
         response = self.client.get("/")
         self.assertContains(response, '/static/img/logo.webp')

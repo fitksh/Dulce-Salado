@@ -87,6 +87,35 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.goto(base);
   });
 
+  await t.test("imagen ampliada reutiliza foto, cierra con teclado/fondo y restaura foco", async () => {
+    const trigger = page.locator(".product-image-open");
+    assert.equal(await trigger.count(), 1);
+    assert.equal(await page.locator(".product-card").filter({ has: page.locator(".image-placeholder") }).locator(".product-image-open").count(), 0);
+    await trigger.focus();
+    await trigger.press("Enter");
+    const dialog = page.locator("#product-image-dialog");
+    await dialog.waitFor();
+    assert.equal(await dialog.locator("img").getAttribute("src"), await trigger.locator("img").evaluate(node => node.src));
+    for (const width of [360, 390, 430, 768, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      assert.equal(await dialog.locator("img").evaluate(node => getComputedStyle(node).objectFit), "contain");
+    }
+    await accessible();
+    await page.screenshot({ path: ".qa/screenshots/image-expanded.png" });
+    await page.keyboard.press("Escape");
+    await dialog.waitFor({ state: "hidden" });
+    await page.waitForFunction(() => document.activeElement?.classList.contains("product-image-open"));
+    await trigger.click();
+    await page.locator("#image-dialog-close").click();
+    await dialog.waitFor({ state: "hidden" });
+    await trigger.click();
+    await page.mouse.click(1, 1);
+    await dialog.waitFor({ state: "hidden" });
+    assert.equal(await trigger.evaluate(node => node === document.activeElement), true);
+    await page.setViewportSize({ width: 390, height: 844 });
+  });
+
   await t.test("categorías funcionan sin JavaScript y botones respetan decimales/mínimo", async () => {
     const plain = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 360, height: 844 } });
     const plainPage = await plain.newPage();

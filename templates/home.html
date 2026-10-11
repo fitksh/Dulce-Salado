@@ -33,7 +33,9 @@
       <article class="product-card" aria-labelledby="product-{{ product.pk }}">
         <div class="product-image">
           {% if product.image %}
+            <a class="product-image-open" href="{{ product.image.url }}" aria-label="Ver imagen ampliada de {{ product.name }}">
             <img src="{{ product.image.url }}" alt="{{ product.name }}{% if product.brand %}, {{ product.brand }}{% endif %}" width="600" height="450" loading="lazy" decoding="async">
+            </a>
           {% else %}
             <span class="image-placeholder">Sin imagen</span>
           {% endif %}
@@ -68,6 +70,10 @@
       </div>
     {% endfor %}
   </div>
+  <dialog id="product-image-dialog" class="image-dialog" aria-labelledby="image-dialog-title">
+    <div class="image-dialog-heading"><h2 id="image-dialog-title">Imagen del producto</h2><button type="button" class="secondary" id="image-dialog-close" autofocus>Cerrar</button></div>
+    <img id="product-image-expanded" alt="">
+  </dialog>
   {% if page.has_other_pages %}
     <nav class="pagination" aria-label="Páginas del catálogo">
       {% if page.has_previous %}<a class="button secondary" href="?page={{ page.previous_page_number }}&amp;q={{ query|urlencode }}{% if selected_category %}&amp;categoria={{ selected_category.slug|urlencode }}{% endif %}">Anterior</a>{% endif %}
