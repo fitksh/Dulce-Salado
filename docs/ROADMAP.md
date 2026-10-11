@@ -94,6 +94,6 @@ Las seis tareas están completas y publicadas en origin/main, todas con CI succe
 - [x] Tarea 2 — Cuatro columnas a 1280/1440 px, 1/2/3 intermedias; 13 Django y 26 Chromium correctos, controles/textos inspeccionados.
 - [x] Tarea 3 — Foto de carrito centrada en escritorio; 11 Django, 5 Node y 26 Chromium correctos, móvil intacto.
 - [x] Tarea 4 — Logo de 16 mm en los cuatro PDF, foto centrada/etiquetas escapadas en negrita en listas; 23 PDF/CSV, 26 Chromium y 19 páginas inspeccionadas.
-- [ ] Tarea 5 — QA final, capturas/PDF inspeccionados y publicación con CI.
+- [ ] Tarea 5 — QA local completa: 130 Django, 7 Node, 26 Chromium, 19 páginas PDF y capturas web correctos; pendiente CI de publicación final.
 
 Iteración acotada autorizada, secuencial; conserva arquitectura, datos/reglas comerciales, CSV y archivos de fotos. Cambios locales previos del propietario excluidos de commits.

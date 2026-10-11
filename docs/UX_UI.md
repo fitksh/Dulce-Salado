@@ -93,3 +93,13 @@ Sustituye el marco histórico de 210 px: cada tarjeta reserva proporción 1:1, i
 ## Importación en Django Admin
 
 Importar CSV aparece junto a exportaciones sólo con permiso de agregar productos. Pantalla nativa del Admin, etiqueta de archivo/ayuda, enlace subrayado a plantilla y botón Analizar archivo; elegir un archivo no lo importa. Preview con tabla semántica desplazable horizontalmente, números de fila, valores efectivos y conteos nuevo/duplicado/error; mensajes escapados y descriptivos. Cualquier error oculta Confirmar importación y exige corregir/reanalizar. Sin errores, el botón explícito confirma los nuevos y omite duplicados sin sobrescribir. Vista previa vencida/modificada informa reanálisis; datos cambiados pueden presentar preview nueva para revisar/confirmar. Éxito usa mensaje nativo con creados/omitidos y carga vacía. Sin JavaScript adicional ni cambios al catálogo/carrito.
+
+## Ajustes visuales vigentes — 2026-10-11
+
+Visor compartido de ancho intrínseco, padding 10 px y foto en dimensiones naturales con máximos del viewport; no amplía fuentes pequeñas. Botón de cierre opaco 44×44 superpuesto arriba a la derecha, sin franja superior adicional. Foto completa/proporcional, foco/cierres y enlace nativo anteriores conservados. Verificado incluso en 844×300.
+
+Catálogo conserva el contenedor de 1120 px: mínimo de tarjeta 250 px, cuatro columnas a 1280/1440, tres a 1000, dos a 768/800 y una en móviles. Marca sin espacios envuelve dentro de la tarjeta. Marcos cuadrados/cover, controles de 44 px y paginación de 12 intactos.
+
+Carrito desde 800 px centra verticalmente la foto de 132 px respecto de toda la tarjeta, incluidos nombres/condiciones largos. Datos y controles permanecen a su derecha; sin foto recupera ancho. Bajo 800 px no cambia la disposición de 56 px.
+
+Los cuatro PDF muestran el logo existente completo/proporcional de 16 mm arriba a la izquierda, nombre a su derecha y título debajo; encabezado en cada página, con fallback textual. Sólo las listas cambian etiquetas a negrita/valores normales; descripción normal. Foto de lista centrada, datos TOP; si el texto necesita varias páginas, se centra en el fragmento visible que contiene la foto, sin duplicarla. Tablas conservan columnas/encabezados/distribución anteriores salvo marco comercial.
