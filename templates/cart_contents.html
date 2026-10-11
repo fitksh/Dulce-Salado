@@ -10,7 +10,7 @@
             {% if row.product.image %}<a class="product-image-open cart-thumbnail" href="{{ row.product.image.url }}" aria-label="Ver imagen ampliada de {{ row.product.name }}"><img src="{{ row.product.image.url }}" alt="{{ row.product.name }}{% if row.product.brand %} — {{ row.product.brand }}{% endif %}" width="56" height="56" loading="lazy" decoding="async"></a>{% endif %}
             <h2 id="cart-product-{{ row.entry.id }}">{% if row.product %}{{ row.product.name }}{% else %}Producto no disponible ({{ row.entry.id }}){% endif %}</h2>
           </div>
-          <button type="button" class="secondary remove-item" aria-label="Quitar {% if row.product %}{{ row.product.name }}{% else %}producto {{ row.entry.id }}{% endif %}">Quitar</button>
+          <button type="button" class="secondary remove-item" aria-label="Quitar {% if row.product %}{{ row.product.name }}{% else %}producto no disponible {{ row.entry.id }}{% endif %} del carrito"><svg class="icon trash-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg></button>
         </div>
         {% if row.product %}
           {% if row.product.brand %}<p class="product-brand">{{ row.product.brand }}</p>{% endif %}

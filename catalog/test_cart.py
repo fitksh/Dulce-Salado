@@ -22,6 +22,14 @@ class CartTests(TestCase):
         self.assertEqual(cart["total"], Decimal("1.03"))
         self.assertTrue(cart["valid"])
 
+    def test_remove_button_has_product_name_and_accessible_missing_product_fallback(self):
+        for identifier, label in ((self.product.pk, "Quitar Test del carrito"), (999999, "Quitar producto no disponible 999999 del carrito")):
+            response = self.client.post(reverse("cart_refresh"), {"items": json.dumps([self.item(id=identifier)])})
+            self.assertContains(response, f'aria-label="{label}"')
+            self.assertContains(response, 'class="icon trash-icon"', count=1)
+            self.assertContains(response, 'aria-hidden="true" focusable="false"><path d="M3 6h18')
+            self.assertNotContains(response, ">Quitar</button>")
+
     def test_fresh_prices_override_any_local_price(self):
         item = self.item(price="1")
         Product.objects.filter(pk=self.product.pk).update(retail_price="20.50")

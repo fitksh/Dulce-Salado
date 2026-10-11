@@ -359,6 +359,11 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       const thumbnail = page.locator(".cart-thumbnail").first();
       assert.equal((await thumbnail.boundingBox()).width, 56);
+      const remove = page.getByRole("button", { name: "Quitar QA Chocolate (test) del carrito", exact: true });
+      const bounds = await remove.boundingBox();
+      assert.ok(bounds.width >= 44 && bounds.height >= 44);
+      assert.equal(await remove.innerText(), "");
+      assert.equal(await remove.locator('svg[aria-hidden="true"][focusable="false"]').count(), 1);
       assert.equal(await thumbnail.locator("img").evaluate(node => getComputedStyle(node).objectFit), "contain");
       await thumbnail.click();
       assert.equal(await page.locator("#product-image-expanded").getAttribute("src"), await thumbnail.locator("img").evaluate(node => node.src));
@@ -383,6 +388,39 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await page.locator("#cart-review").isDisabled(), true);
     await setQuantity("0.3");
     await waitCart("$ 27,15");
+  });
+
+  await t.test("papelera con teclado quita sólo el artículo elegido y conserva los restantes", async () => {
+    const isolated = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const client = await isolated.newPage();
+    try {
+      await client.goto(base);
+      await client.locator(".add-product").first().waitFor();
+      const items = await client.locator(".add-product").evaluateAll(forms => {
+        const items = forms.slice(0, 2).map(form => ({ id: Number(form.dataset.id), quantity: form.elements.quantity.value,
+          price_type: "retail", sale_unit: form.dataset.unit, revision: form.dataset.revision }));
+        localStorage.setItem("dulce-salado.cart.v1", JSON.stringify({ version: 1, items }));
+        return items;
+      });
+      await client.goto(`${base}/carrito/`);
+      await client.locator(".total").waitFor();
+      assert.equal(await client.locator(".cart-item").count(), 2);
+      const chosen = client.locator(`.cart-item[data-id="${items[1].id}"]`);
+      const name = await chosen.locator("h2").innerText();
+      const remove = chosen.getByRole("button", { name: `Quitar ${name} del carrito`, exact: true });
+      await remove.focus();
+      await remove.press("Enter");
+      await chosen.waitFor({ state: "detached" });
+      assert.equal(await client.locator(".cart-item").count(), 1);
+      assert.equal(await client.locator(".cart-item").getAttribute("data-id"), String(items[0].id));
+      const stored = JSON.parse(await client.evaluate(() => localStorage.getItem("dulce-salado.cart.v1"))).items;
+      assert.equal(stored.length, 1);
+      assert.equal(stored[0].id, items[0].id);
+      assert.equal(stored[0].quantity, items[0].quantity);
+      assert.equal(await client.locator("[data-cart-count]").innerText(), "1");
+      await client.locator("[data-notification]:visible").waitFor();
+      await accessible(client);
+    } finally { await isolated.close(); }
   });
 
   await t.test("Admin descarga CSV y ambas variantes PDF del conjunto filtrado", async () => {

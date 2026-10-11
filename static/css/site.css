@@ -132,7 +132,7 @@ ul.notice { padding-left: 2rem; }
 .cart-product-heading { display: flex; align-items: flex-start; gap: .65rem; min-width: 0; }
 .cart-thumbnail { width: 56px; height: 56px; flex-shrink: 0; border-radius: .35rem; background: #f8f0e8; overflow: hidden; }
 .cart-thumbnail img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.remove-item { flex-shrink: 0; padding-inline: .6rem; }
+.remove-item { flex-shrink: 0; width: 44px; height: 44px; padding: 0; }
 .cart-summary { align-self: start; }
 .total { font-size: 2rem; font-weight: 750; overflow-wrap: anywhere; }
 .cart-summary button { width: 100%; }

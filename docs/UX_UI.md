@@ -70,4 +70,12 @@ Sustituye las indicaciones históricas de títulos y toolbar: Nuestros productos
 
 El carrito comienza con los artículos; no hay Seguir viendo productos ni Vaciar. Fotos actuales de 56 px contain junto al nombre, Quitar a la derecha; sin foto no se reserva una columna ni se muestra placeholder. Usa el mismo dialog de catálogo, sólo imagen/×, con delegación para HTML recalculado. El título oculto de revisión sigue nombrando el diálogo y recibiendo foco; se retira sólo el párrafo redundante de texto largo. Aviso obligatorio, mensaje/copiar y apertura manual permanecen íntegros.
 
+## Exportación PDF y ajustes puntuales
+
+El header incorpora Ubicación como tercer enlace junto a Catálogo y Carrito. Los tres caben en una fila desde 320 px; marca/horarios/navegación siguen apilados bajo 800 px y alineados en escritorio. Se conserva el logo de 64 px y el desplegable existente.
+
+Admin → Productos ofrece PDF con imágenes y PDF sin imágenes junto al CSV; las dos variantes A4 son listas blancas con texto completo, separadores finos, ARS, inactivos identificados y página/aviso comercial. Sin fotos el texto ocupa todo el ancho. Con fotos, encaje proporcional de aprox. 75 px al inicio del registro; imagen ausente/ilegible sólo muestra un aviso discreto.
+
+Quitar se representa con una papelera SVG inline, naranja secundario, objetivo 44×44 px y aria-label «Quitar [nombre] del carrito». El icono decorativo se oculta a lectores; el producto retirado dispone de una etiqueta contextual accesible. Se conservan handler, almacenamiento y avisos existentes.
+
 Los productos [DEMO] y sus marcas/precios son ficticios; se incorporan únicamente por el comando manual documentado en README, nunca durante navegación o arranque.
