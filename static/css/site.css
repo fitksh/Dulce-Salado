@@ -78,7 +78,7 @@ p { line-height: 1.55; }
 .product-image-open:focus-visible { outline-offset: -4px; }
 .image-dialog { width: min(100% - 2rem, 1120px); padding: 3.5rem .75rem .75rem; }
 .image-dialog-close { position: absolute; top: .5rem; right: .5rem; width: 44px; padding: 0; font-size: 1.5rem; }
-.image-dialog > img { display: block; width: 100%; height: min(75dvh, 800px); object-fit: contain; }
+.image-dialog > img { display: block; width: 100%; height: min(75dvh, 90dvh - 5rem, 800px); object-fit: contain; }
 .image-placeholder { display: grid; gap: .5rem; text-align: center; font-size: .8rem; color: var(--muted); }
 .product-info { padding: 1.1rem; display: flex; flex-direction: column; flex: 1; }
 .product-category { margin: 0; color: var(--accent); text-transform: uppercase; font-size: .7rem; letter-spacing: .07em; font-weight: 700; }

@@ -180,6 +180,16 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     }
     await accessible();
     await page.screenshot({ path: ".qa/screenshots/image-expanded.png" });
+    for (const height of [300, 390]) {
+      await page.setViewportSize({ width: 844, height });
+      const fitting = await dialog.evaluate(node => {
+        const frame = node.getBoundingClientRect(), image = node.querySelector("img").getBoundingClientRect();
+        return { scroll: node.scrollHeight > node.clientHeight, inside: image.top >= frame.top && image.bottom <= frame.bottom };
+      });
+      assert.equal(fitting.scroll, false);
+      assert.equal(fitting.inside, true);
+      await page.screenshot({ path: `.qa/screenshots/image-landscape-${height}.png` });
+    }
     await page.keyboard.press("Escape");
     await dialog.waitFor({ state: "hidden" });
     await page.waitForFunction(() => document.activeElement?.classList.contains("product-image-open"));
