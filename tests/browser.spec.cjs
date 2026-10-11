@@ -360,27 +360,66 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.locator("#cart-review").click();
     await page.getByRole("dialog").waitFor();
     await editPrices("200.50", "90.50");
+    const changedPopup = page.waitForEvent("popup");
     await page.locator("#review-continue").click();
+    const provisional = await changedPopup;
     await page.locator("[data-review-notice]").filter({ hasText: /cambió la información/ }).waitFor();
+    if (!provisional.isClosed()) await provisional.waitForEvent("close");
+    assert.equal(provisional.isClosed(), true);
     assert.equal(page.url(), `${base}/carrito/`);
     assert.match(await page.locator("#whatsapp-message").inputValue(), /Total estimado: \$ 60,15/);
   });
 
   await t.test("WhatsApp interceptado incluye mensaje completo; no envía ni borra carrito", async () => {
     let destination;
-    await page.route(/^https:\/\/wa\.me\//, async route => {
+    await context.route(/^https:\/\/wa\.me\//, async route => {
       destination = route.request().url();
       await route.fulfill({ contentType: "text/html; charset=utf-8", body: "<h1>Salida interceptada de QA</h1>" });
     });
+    const opening = page.waitForEvent("popup");
     await page.locator("#review-continue").click();
-    await page.getByRole("heading", { name: "Salida interceptada de QA" }).waitFor();
+    const whatsapp = await opening;
+    await whatsapp.getByRole("heading", { name: "Salida interceptada de QA" }).waitFor();
+    assert.equal(page.url(), `${base}/carrito/`);
+    assert.equal(await whatsapp.evaluate(() => window.opener), null);
+    assert.equal(await whatsapp.evaluate(() => document.referrer), "");
     const url = new URL(destination);
     assert.equal(url.pathname, "/5491100000000");
     assert.match(url.searchParams.get("text"), /precio minorista \$ 200,50\/kg/);
     assert.match(url.searchParams.get("text"), /cantidad 0,3 kg/);
     assert.match(url.searchParams.get("text"), /Total estimado: \$ 60,15/);
+    const stored = JSON.parse(await page.evaluate(() => localStorage.getItem("dulce-salado.cart.v1")));
+    assert.equal(stored.items.length, 1);
+    await whatsapp.close();
     await page.goto(`${base}/carrito/`);
     await waitCart("$ 60,15");
+  });
+
+  await t.test("bloqueo de popup conserva enlace validado seguro y apertura manual", async () => {
+    await page.evaluate(() => { window.qaNativeOpen = window.open; window.open = () => null; });
+    try {
+      await page.locator("#cart-review").click();
+      await page.getByRole("dialog").waitFor();
+      const before = context.pages().length;
+      await page.locator("#review-continue").click();
+      const ready = page.locator("#whatsapp-ready");
+      await ready.waitFor();
+      assert.equal(context.pages().length, before);
+      assert.equal(await ready.getAttribute("target"), "_blank");
+      assert.equal(await ready.getAttribute("rel"), "noopener noreferrer");
+      assert.equal(await page.locator("#review-continue").isVisible(), false);
+      await accessible();
+      const opening = context.waitForEvent("page");
+      await ready.click();
+      const whatsapp = await opening;
+      await whatsapp.getByRole("heading", { name: "Salida interceptada de QA" }).waitFor();
+      assert.equal(await whatsapp.evaluate(() => window.opener), null);
+      assert.equal(await whatsapp.evaluate(() => document.referrer), "");
+      assert.equal(page.url(), `${base}/carrito/`);
+      await whatsapp.close();
+      await page.locator("#review-cancel").click();
+      await waitCart("$ 60,15");
+    } finally { await page.evaluate(() => { window.open = window.qaNativeOpen; }); }
   });
 
   await t.test("cancelar mientras se revalida impide salir a WhatsApp", async () => {
@@ -395,15 +434,37 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     });
     await page.locator("#cart-review").click();
     await page.getByRole("dialog").waitFor();
+    const opening = page.waitForEvent("popup");
     await page.locator("#review-continue").click();
+    const provisional = await opening;
     await reached;
+    const closed = provisional.waitForEvent("close");
     await page.locator("#review-cancel").click();
+    await closed;
     await waitCart("$ 60,15");
+    assert.equal(provisional.isClosed(), true);
+    const cancelledResponse = page.waitForResponse(response => response.url().endsWith("/carrito/whatsapp/"));
     release();
-    await page.waitForResponse(response => response.url().endsWith("/carrito/whatsapp/"));
+    await cancelledResponse;
     await page.unroute("**/carrito/whatsapp/");
     assert.equal(page.url(), `${base}/carrito/`);
     assert.equal(await page.getByRole("dialog").isVisible(), false);
+  });
+
+  await t.test("error al preparar WhatsApp cierra pestaña provisional y conserva carrito", async () => {
+    await page.route("**/carrito/whatsapp/", route => route.abort());
+    try {
+      await page.locator("#cart-review").click();
+      await page.getByRole("dialog").waitFor();
+      const opening = page.waitForEvent("popup");
+      await page.locator("#review-continue").click();
+      const provisional = await opening;
+      if (!provisional.isClosed()) await provisional.waitForEvent("close");
+      await page.getByRole("alert").filter({ hasText: /fetch|verificar/ }).waitFor();
+      assert.equal(page.url(), `${base}/carrito/`);
+      await waitCart("$ 60,15");
+      assert.equal(JSON.parse(await page.evaluate(() => localStorage.getItem("dulce-salado.cart.v1"))).items.length, 1);
+    } finally { await page.unroute("**/carrito/whatsapp/"); }
   });
 
   await t.test("cambio de unidad exige cantidad nueva y sincroniza pestañas", async () => {

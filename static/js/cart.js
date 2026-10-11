@@ -132,6 +132,26 @@
   if (app) {
     const dialog = document.getElementById("cart-review-dialog");
     const reviewContents = document.getElementById("cart-review-contents");
+    let pendingWindow = null;
+    function closePendingWindow() {
+      if (pendingWindow && !pendingWindow.closed) pendingWindow.close();
+      pendingWindow = null;
+    }
+    function prepareWindow() {
+      closePendingWindow();
+      try {
+        // Se inicia en el clic, antes del await. Conservamos el handle para cancelar.
+        pendingWindow = window.open("about:blank", "_blank");
+        if (!pendingWindow) return;
+        pendingWindow.opener = null;
+        const meta = pendingWindow.document.createElement("meta");
+        meta.name = "referrer"; meta.content = "no-referrer";
+        pendingWindow.document.head.append(meta);
+        pendingWindow.document.documentElement.lang = "es-AR";
+        pendingWindow.document.title = "Preparando WhatsApp · Dulce y Salado";
+        pendingWindow.document.body.textContent = "Verificando precios y cantidades antes de abrir WhatsApp…";
+      } catch { closePendingWindow(); }
+    }
     async function review(accepted = false) {
       if (storageFailed || reviewing) return;
       const requestNumber = ++serial;
@@ -140,26 +160,40 @@
       data.set("items", JSON.stringify(items));
       data.set("csrfmiddlewaretoken", document.querySelector("#cart-token input").value);
       if (accepted) data.set("accepted", "yes");
-      if (accepted) document.getElementById("review-continue").disabled = true;
+      if (accepted) { document.getElementById("review-continue").disabled = true; prepareWindow(); }
       try {
         const response = await fetch(accepted ? app.dataset.whatsappUrl : app.dataset.reviewUrl, { method: "POST", body: data, cache: "no-store", credentials: "same-origin" });
         const html = await response.text();
         if (requestNumber !== serial) return;
+        if (accepted && !dialog.open) { closePendingWindow(); return; }
         if (!response.ok) throw new Error("No se pudo verificar el mensaje. Volvé al carrito y reintentá.");
         reviewContents.innerHTML = html;
         items = JSON.parse(reviewContents.querySelector("#review-current-items").textContent);
         persist();
         const ready = reviewContents.querySelector("#whatsapp-ready");
-        if (ready && !storageFailed) { window.location.assign(ready.href); return; }
+        if (ready && !storageFailed) {
+          let opened = false;
+          if (pendingWindow && !pendingWindow.closed) {
+            try { pendingWindow.location.replace(ready.href); opened = true; }
+            catch { closePendingWindow(); }
+          }
+          pendingWindow = null;
+          document.getElementById("review-continue").hidden = true;
+          announce(opened ? "Mensaje preparado. Conservás el carrito en esta pestaña." : "Mensaje preparado. Usá el enlace para abrir WhatsApp en otra pestaña.", "info");
+          return;
+        }
+        closePendingWindow();
+        if (ready) ready.remove();
         if (!dialog.open) dialog.showModal();
         if (storageFailed) document.getElementById("review-continue").disabled = true;
         else cartMessages(reviewContents);
         document.getElementById("review-title").focus({ preventScroll: true });
         dialog.scrollTop = 0;
-      } catch (error) { if (requestNumber === serial) { if (dialog.open) dialog.close(); announce(error.message); } }
+      } catch (error) { if (requestNumber === serial) { closePendingWindow(); if (dialog.open) dialog.close(); announce(error instanceof TypeError ? "No se pudo verificar el mensaje. Revisá la conexión y reintentá desde el carrito." : error.message); } }
       finally { if (requestNumber === serial) reviewing = false; }
     }
     dialog.addEventListener("close", () => {
+      closePendingWindow();
       window.Notifications.close(false, dialog);
       reviewing = false; ++serial;
       document.getElementById("cart-review")?.focus({ preventScroll: true });
@@ -195,5 +229,5 @@
   }
   window.addEventListener("storage", event => { if (event.key === core.STORAGE_KEY || event.key === null) { load(); refresh(); } });
   window.addEventListener("pageshow", event => { if (event.persisted) { load(); refresh(); } });
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { load(); refresh(); } });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && !reviewing) { load(); refresh(); } });
 })();

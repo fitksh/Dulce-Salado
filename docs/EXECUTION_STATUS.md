@@ -3,7 +3,7 @@
 Fecha de inicio: 2026-10-10. Trabajo autorizado secuencial en `main` hasta completar el MVP.
 
 ## Tarea actual
-Segunda iteración UX/UI en curso. Tarea 1: limpieza de textos y navegación. Historial MVP y primera etapa conservados; datos comerciales existentes intactos.
+Segunda iteración UX/UI en curso. Tareas 1–6 implementadas y verificadas localmente; pendiente CI de tarea 6 y QA/documentación final. Historial MVP y primera etapa conservados; datos comerciales existentes intactos.
 
 ## Decisiones autorizadas
 - kg, unidad y paquete; incrementos iniciales 0,1 kg y 1 unidad/paquete. Sin conversión de gramos.
@@ -152,3 +152,9 @@ Tarea 4 publicada: 8570e2314554cd900432641d53e78d9d620b654d, CI success run 3809
 Tarea 5 en curso: función Notifications.show única con plantilla reutilizable, fijo superior/safe-area, cuatro estilos, reemplazo sin acumulación, cierre manual y temporizadores 5/8 segundos pausables por puntero/foco. Dos ubicaciones del mismo componente (página y diálogo modal) para mantener acciones operables dentro del modal; sólo una visible/anuncia a la vez. Éxitos inline eliminados; campos/productos/almacenamiento/red mantienen explicaciones persistentes sin roles live duplicados. Archivos: base/home/cart/cart_contents/cart_review/quantity_control/notification, JS notifications/cart/quantity, CSS y tests de navegador. Criterios: visible tras scroll, foco/scroll intactos, pausa/cierre/duración y bloqueos persisten.
 
 Tarea 5 validada: 24 Django afectados, 7 Node, 18 Chromium OK; check/Ruff/migraciones OK. Tests verifican aviso tras scroll >2000 px, foco/scroll sin cambio, cinco anchuras, éxito con Ver carrito, incompatibilidad de tarifa visible, reemplazo sin acumulación, pausa de 10 s con acción enfocada, duración 5/8 s, cierre manual y error persistente tras desaparecer el aviso que mantiene revisión bloqueada/total ausente. Axe OK, captura error flotante inspeccionada. Se eliminó comparación frágil de saltos de línea en prueba, comprobando el mensaje semántico. Publicar/verificar CI antes de WhatsApp.
+
+Tarea 5 publicada: 278790f70b80842341d7affaca95174c08812026, CI success run 38100310749.
+
+Tarea 6 implementada: apertura about:blank síncrona desde clic, opener null inmediato y meta referrer no-referrer; se conserva handle para cerrar ante cambios/errores/cancelación. Sólo tras respuesta vigente se navega el contexto nuevo. Fallback validado target blank/noopener/noreferrer visible; no se reemplaza pestaña ni se borra carrito. Visibilidad no interrumpe la verificación en curso. Archivos: cart.js/cart_review, tests WhatsApp/browser. Criterios: revalidación y aviso íntegros, popup/contexto/fallback/cancelación con destinos interceptados, sin envío real. Referencias técnicas: https://html.spec.whatwg.org/multipage/nav-history-apis.html y https://developer.mozilla.org/en-US/docs/Web/API/Window/open.
+
+Tarea 6 validada: 14 Django afectados, 7 Node y 20 Chromium OK; check/Ruff/control de migraciones OK. Contexto nuevo con opener null/referrer vacío, pestaña/carrito originales intactos; popup bloqueado abre enlace manual seguro; cambios de precio/cancelación/red cierran provisional sin navegar. QA espera el evento close real, no un total que ya estaba visible. Error de conexión de WhatsApp informado en español. Aviso obligatorio y texto completo preservados. Publicar/verificar CI antes de QA final.

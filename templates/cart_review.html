@@ -18,4 +18,4 @@
   <button type="button" class="secondary" id="review-cancel">Volver al carrito</button>
   <button type="button" id="review-continue" {% if not cart.valid or not whatsapp_configured %}disabled{% endif %}>Continuar a WhatsApp</button>
 </div>
-{% if ready_url %}<a id="whatsapp-ready" href="{{ ready_url }}" rel="noreferrer">Abrir WhatsApp con el mensaje preparado</a>{% endif %}
+{% if ready_url %}<p class="muted">Si no se abrió WhatsApp, usá este enlace. El envío lo hacés vos desde la aplicación.</p><a class="button" id="whatsapp-ready" href="{{ ready_url }}" target="_blank" rel="noopener noreferrer">Abrir WhatsApp con el mensaje preparado</a>{% endif %}

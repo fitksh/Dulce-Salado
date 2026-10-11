@@ -51,6 +51,7 @@ class WhatsAppTests(TestCase):
     def test_acceptance_generates_link_only_after_revalidation(self):
         response = self.post("cart_whatsapp", accepted="yes")
         self.assertContains(response, 'id="whatsapp-ready"')
+        self.assertContains(response, 'target="_blank" rel="noopener noreferrer"')
         item = self.item()
         Product.objects.filter(pk=self.product.pk).update(wholesale_price="120.00")
         response = self.post("cart_whatsapp", [item], accepted="yes")
