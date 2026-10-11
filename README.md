@@ -1,8 +1,8 @@
-# Dulce y Salado
+﻿# Dulce y Salado
 
 Catálogo comercial mobile-first de repostería, dietética y cotillón. Catálogo público, carrito local y mensaje WhatsApp con precios estimados. El comercio confirma disponibilidad y condiciones; el sitio no registra pedidos ni gestiona stock, pagos o envíos.
 
-**Estado:** MVP y dos iteraciones UX/UI implementados; verificación y commits en [EXECUTION_STATUS](docs/EXECUTION_STATUS.md). Cargar y revisar información comercial real mediante Django Admin.
+**Estado:** MVP, dos iteraciones UX/UI y correcciones visuales puntuales implementados; verificación y commits en [EXECUTION_STATUS](docs/EXECUTION_STATUS.md). Cargar y revisar información comercial real mediante Django Admin.
 
 ## Inicio local en Windows (PowerShell)
 
@@ -124,3 +124,11 @@ docker compose exec web python manage.py check
 ```
 
 Conservar `.env` y los volúmenes existentes. Revisar `/`, `/carrito/`, `/como-llegar/` y Admin. Configurar dirección/enlace exacto y horario semanal en Configuración comercial; WhatsApp sigue en `.env`. Los datos comerciales no se generan automáticamente. Ver [QA](docs/QA.md) para pruebas reales de teléfono, accesibilidad, Maps y CSV en Excel.
+
+## Correcciones visuales puntuales
+
+Las tarjetas muestran la fotografía completa en un marco neutro de 210 px, con proporción original y centrada. La ampliación sólo muestra imagen y ×; mantiene etiquetas accesibles, Escape, cierre exterior/foco y enlace sin JavaScript.
+
+Header desde 800 px: marca, horarios y carrito en una fila. Bajo 800 px: una columna centrada en ese orden. El panel horario flota sin mover contenido. Cómo llegar integra Dirección, botón y mapa en una sola región: dos columnas desde 800 px y una por debajo. El footer queda centrado en todas las pantallas. Datos, enlaces, reglas comerciales y flujo de carrito/WhatsApp conservados.
+
+Capturas de QA en `.qa/screenshots`: `photo-*`, `expanded-*`, `catalog-viewport-*`, `hours-*`, `directions-*` y `footer-*`. Las capturas `live-*` corresponden al entorno comercial local inspeccionado sólo en lectura. Actualizar con los comandos de instalación existente anteriores; no hay migraciones nuevas.

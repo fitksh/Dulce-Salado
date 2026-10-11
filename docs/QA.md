@@ -106,3 +106,20 @@ Header corregido: tres regiones alineadas en fila desde 800 px; en 360/390/430/7
 Cómo llegar unificada: h1 Dirección dentro de región única, address/botón Admin y mismo iframe anidado. Tests geométricos verifican columnas a 1280 y pila a 360/390/430/768, mapa dentro de región y sin overflow; clic en iframe QA y navegación Maps interceptada. Ausencia de dirección no ofrece enlace. 16 Django, 22 Chromium y Ruff OK; axe en cinco anchuras y capturas directions inspeccionadas. URL y políticas exactas preservadas; Maps real se comprueba al actualizar entorno local.
 
 Footer centrado en todas las pantallas: text-align y justify-content center base; grupo de enlaces centrado geométricamente, dos iconos y objetivos ≥44 px. Destinos originales/Instagram en nueva pestaña conservados. 10 Django y 22 Chromium OK, axe sin infracciones; las cinco capturas footer inspeccionadas.
+
+## Correcciones puntuales — QA final
+
+Suite completa ejecutada: 63 Django, 7 Node y 22 Chromium correctos; check/Ruff OK y makemigrations sin cambios. Las cuatro áreas tienen pruebas actualizadas. Regresión completa de precios, CSV/Admin, almacenamiento, concurrencia, revisión/revalidación y WhatsApp pasa sin alterar su implementación.
+
+| Área | Comprobación |
+| --- | --- |
+| Miniaturas | Tres proporciones con bordes/esquinas visibles y geometría marco/enlace/imagen 210 px en cinco anchuras; contain centrado sin distorsión |
+| Modal | Tres proporciones en cinco anchuras; 15 capturas expanded; sólo foto/×, etiquetas ocultas, teclado/exterior/foco y enlace nativo sin JS |
+| Header | Centros/separaciones en tres regiones desde 800; columna centrada bajo 800; cinco anchuras más límite 800, controles ≥44 px |
+| Horarios | Main inmóvil al abrir, panel dentro del viewport; siete días/reloj/cierres/control/Escape/iframe/sin JS conservados; axe en cada ancho |
+| Dirección | Región única con h1 Dirección, sin título superior; dos columnas/una columna, mapa útil dentro del contenedor; URL/title/lazy/seguridad exactos |
+| Footer | Enlaces/iconos y párrafos centrados a todas las anchuras, dos SVG y enlaces ≥44 px; destinos/pestaña Instagram conservados |
+
+Capturas QA inspeccionadas de fotos/modal, catálogo, horarios, dirección y footer. Adicionalmente capturas live-* del entorno comercial sólo en lectura: fotografías verticales reales completas, cinco anchuras sin overflow/axe del catálogo sin infracciones, header 165/183/93 px y main inmóvil. Datos existentes preservados. Google Maps real cargó HTTP 200 y se ve en capturas móvil/escritorio al permitir la lectura de red bloqueada inicialmente por sandbox. QA automático intercepta destinos externos para no enviar mensajes ni depender de esos servicios.
+
+Entorno local actualizado, tres páginas públicas HTTP 200, servidor/base QA eliminados (consulta sin filas). CI de tareas 1–4 success: 38104627303, 38104718180, 38104812406 y 38104891571. CI final se registra después de publicar. Pendientes manuales habituales: teléfono Android/iOS, lector TalkBack/VoiceOver, retorno de aplicaciones externas y exactitud comercial. Sin cambios de datos/modelos/dependencias/migraciones ni reglas.

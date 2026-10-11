@@ -68,7 +68,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await page.locator(".wholesale-note").count(), 1);
     assert.equal(await page.locator(".wholesale-note").evaluate(node => getComputedStyle(node).backgroundColor), "rgb(255, 240, 246)");
     assert.equal(await page.getByText("QA Invisible").count(), 0);
-    for (const width of [360, 390, 430, 768, 1280]) {
+    for (const width of [360, 390, 430, 768, 800, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       await headerLayout(width);
@@ -143,6 +143,22 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
         assert.ok(dimensions.paintedWidth <= dimensions.width && dimensions.paintedHeight <= 210);
         ratios.push(dimensions.ratio);
         await photo.screenshot({ path: `.qa/screenshots/photo-${width}-${ratios.length}.png` });
+        await photo.click();
+        const preview = page.locator("#product-image-dialog");
+        await preview.waitFor();
+        const expanded = await preview.locator("img").evaluate(async img => {
+          await img.decode();
+          const r = img.getBoundingClientRect();
+          return { ratio: img.naturalWidth / img.naturalHeight, fit: getComputedStyle(img).objectFit,
+            inside: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight };
+        });
+        assert.equal(expanded.ratio, dimensions.ratio);
+        assert.equal(expanded.fit, "contain");
+        assert.equal(expanded.inside, true);
+        await preview.screenshot({ path: `.qa/screenshots/expanded-${width}-${ratios.length}.png` });
+        await page.keyboard.press("Escape");
+        await preview.waitFor({ state: "hidden" });
+        assert.equal(await photo.evaluate(node => node === document.activeElement), true);
       }
       assert.deepEqual(ratios, [1.5, 1, 0.5]);
     }
@@ -766,7 +782,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await page.locator(".weekly-hours > div").count(), 7);
     assert.match(await page.locator(".weekly-hours dd").first().innerText(), /09:00–12:00\s+15:00–18:00/);
     assert.equal(await page.locator(".weekly-hours dd").nth(1).innerText(), "Cerrado");
-    for (const width of [360, 390, 430, 768, 1280]) {
+    for (const width of [360, 390, 430, 768, 800, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       const layout = await page.evaluate(() => {
@@ -783,6 +799,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       await headerLayout(width);
       assert.ok(layout.left >= 0 && layout.right <= width);
       await page.screenshot({ path: `.qa/screenshots/hours-${width}.png`, fullPage: true });
+      await accessible();
     }
     await accessible();
     await page.locator(".hours-panel summary").press("Enter");

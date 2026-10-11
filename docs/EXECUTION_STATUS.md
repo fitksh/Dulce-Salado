@@ -1,9 +1,9 @@
-# Estado de ejecución — MVP
+﻿# Estado de ejecución — MVP
 
 Fecha de inicio: 2026-10-10. Trabajo autorizado secuencial en `main` hasta completar el MVP.
 
 ## Tarea actual
-SEGUNDA ITERACIÓN UX/UI COMPLETADA Y PUBLICADA. Siete tareas verificadas localmente y en CI (63 Django, 7 Node y 22 Chromium). Historial MVP y primera etapa conservados; datos comerciales existentes intactos. Pendientes sólo pruebas manuales comerciales/dispositivo real descritas en QA.md.
+CORRECCIONES VISUALES: cuatro tareas publicadas con CI success; QA final local completa (63 Django, 7 Node y 22 Chromium). Pendiente confirmar CI de publicación final. Historial previo y datos comerciales conservados.
 
 ## Decisiones autorizadas
 - kg, unidad y paquete; incrementos iniciales 0,1 kg y 1 unidad/paquete. Sin conversión de gramos.
@@ -196,3 +196,11 @@ Tarea 3 validada: una business-card integra encabezado principal Dirección, add
 Tarea 2 CI success confirmada: run 38104718180, commit 59d86ff. Tarea 3 publicada: 3566883dc5f83e342ae0416f0e6e989f63b39aac; CI run 38104812406 en ejecución al iniciar footer.
 
 Tarea 4 validada: centrado base de site-footer y footer-links para todas las resoluciones; retiradas las reglas redundantes sólo móviles. Textos, iconos y destinos intactos. Tests geométricos comprueban grupo de enlaces centrado, ambos SVG y alturas ≥44 px; Instagram mantiene pestaña nueva/opener null/referrer vacío y Cómo llegar su ruta. 10 Django afectados y 22 Chromium OK; capturas footer en 360/390/430/768/1280 inspeccionadas, axe sin infracciones. Archivos: site.css, browser.spec.cjs y documentación. Próxima acción: publicar/verificar CI y QA final completa.
+
+Tarea 3 CI success: run 38104812406, commit 3566883. Tarea 4 publicada: e9ced7e1f44d5c4fddde4649a085a84f7fd2f252; CI success run 38104891571. Las cuatro tareas tienen CI completa correcta.
+
+Tarea 5 QA final: 63 Django, 7 Node y 22 Chromium correctos, check/Ruff OK y makemigrations sin cambios. Se amplía QA a tres proporciones también dentro del modal (15 capturas) y al límite 800 px del header; axe también en cada ancho de horarios. Capturas de fotos/modal/header/horarios/dirección/footer inspeccionadas; sin recortes ni overflow. Regresión completa del carrito, CSV, Admin y WhatsApp conservada, sin modificar su código.
+
+Entorno Docker local reconstruido y check OK; /, /carrito/ y /como-llegar/ responden 200. Inspección comercial sólo lectura: 6 productos, 3 categorías, dirección/enlace/WhatsApp presentes y 12 intervalos publicados. Fotos reales 675×1200 y 900×1200 completas; marco/enlace/imagen 210 px. Axe del catálogo real sin infracciones a cinco anchuras. Horarios reales: main inmóvil en todas, header 165 px móvil, 183 px tablet y 93 px desktop.
+
+La primera captura Maps estaba bloqueada por el sandbox (ERR_NETWORK_ACCESS_DENIED). Verificación de red autorizada en lectura: iframe HTTP 200 y mapa real visible en capturas live-directions, conservando URL/políticas. Capturas reales inspeccionadas móvil/escritorio y despliegue de horarios. No se alteró información comercial, no se enviaron mensajes ni se agregaron artículos al carrito comercial. QA detenido y consulta de bases descartables sin filas. Pendiente publicar la ampliación QA/documentación y confirmar su CI para cerrar estado/roadmap.
