@@ -216,3 +216,7 @@ Entorno local actualizado y disponible; main sincronizada. Próximo paso concret
 Verificación de cierre documental: 144e0791a6695b0a2eb9d18bc28c2a6c06a5fa3b, CI success run 38105345534.
 
 QA adicional de orientación horizontal: a 844×300 el modal conservaba altura de foto 75dvh más padding; imagen terminaba en y=297 frente al borde del dialog y=285. Ajuste mínimo en site.css: limitar además a 90dvh menos 5rem para reservar cierre/padding. A 844×300 ahora no hay scroll interno y la foto completa termina antes del borde; capturas 300/390 de alto inspeccionadas. Regresión añadida a browser.spec.cjs. 10 Django afectados, 7 Node y 22 Chromium correctos, check/Ruff/migraciones OK; la suite completa previa de 63 Django y sus CI están registradas arriba. CI de este último ajuste repite suite completa; hash/run propios se consultan después de publicar. Ningún otro comportamiento cambiado.
+
+## Nueva iteración UX/UI y datos de prueba — 2026-10-11
+
+Tarea 1 validada: logo CSS de 64 px sin modificar el archivo; navegación Catálogo/Carrito agrupada con aria-current y columnas equilibradas. Marca, horarios y acciones en fila desde 800 px y tres regiones centradas en móvil. Separadores únicamente entre los siete días. 11 Django afectados, 22 Chromium y Ruff correctos; cinco anchuras más límite 800 px, axe y capturas móvil/escritorio inspeccionadas. Archivos: base.html, site.css, test_views.py y browser.spec.cjs. Datos y horarios conservados. Próxima tarea: Ubicación y redirección permanente.

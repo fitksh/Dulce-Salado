@@ -54,3 +54,13 @@ Segunda iteración completada y publicada en main. Sin nuevas dependencias/model
 - [x] Tarea 5 — QA completa, capturas, documentación y publicación final; 63 Django, 7 Node y 22 Chromium OK, CI success run 38105183767.
 
 Correcciones visuales completadas y publicadas; capturas reales inspeccionadas, main sincronizada, entorno local actualizado y datos conservados. Próximo paso: pruebas locales en teléfono real según README/QA. Historial anterior intacto; infraestructura futura fuera de alcance.
+
+## Nueva iteración UX/UI y datos de prueba
+
+- [x] Tarea 1 — Logo de 64 px, navegación agrupada y separadores semanales; Django y Chromium correctos.
+- [ ] Tarea 2 — Ubicación, redirección permanente e información centrada.
+- [ ] Tarea 3 — Carrito compacto, miniaturas y recuperación contextual.
+- [ ] Tarea 4 — Catálogo compacto y paginación de 12 productos.
+- [ ] Tarea 5 — Limpieza visual de revisión WhatsApp.
+- [ ] Tarea 6 — Seed manual de 45 productos ficticios, simulación y limpieza seguras.
+- [ ] Tarea 7 — QA completa, documentación, publicación y CI.

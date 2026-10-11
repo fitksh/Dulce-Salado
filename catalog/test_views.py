@@ -108,3 +108,12 @@ class CatalogViewTests(TestCase):
             self.assertNotContains(response, text)
         self.assertNotContains(self.client.get(reverse("cart")), "Cantidades y precios estimados.")
         self.assertNotContains(self.client.get(reverse("directions")), "Visitá Dulce y Salado.")
+
+    def test_header_navigation_marks_only_current_page(self):
+        for name in ("home", "cart", "directions"):
+            response = self.client.get(reverse(name))
+            self.assertContains(response, 'aria-label="Navegación principal"')
+            if name in ("home", "cart"):
+                self.assertContains(response, f'href="{reverse(name)}" aria-current="page"', count=1)
+            else:
+                self.assertNotContains(response, 'aria-current="page"')

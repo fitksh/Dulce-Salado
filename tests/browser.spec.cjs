@@ -30,7 +30,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
   }
   async function waitCart(text) { await page.locator(".total").filter({ hasText: text }).waitFor(); }
   async function headerLayout(width) {
-    const regions = await page.locator(".header-inner").evaluate(node => [".brand", ".business-hours", ".cart-link"].map(selector => {
+    const regions = await page.locator(".header-inner").evaluate(node => [".brand", ".business-hours", ".header-actions"].map(selector => {
       const r = node.querySelector(selector).getBoundingClientRect();
       return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2 };
     }));
@@ -72,6 +72,11 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       await headerLayout(width);
+      assert.equal(await page.locator(".brand-logo").evaluate(node => node.getBoundingClientRect().width), 64);
+      const actions = await page.locator(".header-actions a").evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().toJSON()));
+      assert.equal(actions.length, 2);
+      assert.ok(Math.abs(actions[0].top - actions[1].top) < 1);
+      assert.ok(Math.abs(actions[0].width - actions[1].width) < 1);
       const targets = await page.locator("button, input:not([type=hidden]), select, .button, .chip").evaluateAll(nodes => nodes.filter(n => n.getBoundingClientRect().height > 0).map(n => ({ tag: n.tagName, height: n.getBoundingClientRect().height })));
       assert.equal(targets.every(target => target.height >= 44), true, JSON.stringify(targets));
       const steppers = await page.locator(".quantity-adjust").evaluateAll(nodes => nodes.map(n => n.getBoundingClientRect().width));
@@ -790,6 +795,8 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.locator(".hours-panel summary").click();
     assert.equal(await page.locator("header .hours-panel").count(), 1);
     assert.equal(await page.locator(".weekly-hours > div").count(), 7);
+    const separators = await page.locator(".weekly-hours > div").evaluateAll(nodes => nodes.map(node => getComputedStyle(node).borderTopWidth));
+    assert.deepEqual(separators, ["0px", "1px", "1px", "1px", "1px", "1px", "1px"]);
     assert.match(await page.locator(".weekly-hours dd").first().innerText(), /09:00–12:00\s+15:00–18:00/);
     assert.equal(await page.locator(".weekly-hours dd").nth(1).innerText(), "Cerrado");
     for (const width of [360, 390, 430, 768, 800, 1280]) {
