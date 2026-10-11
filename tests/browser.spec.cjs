@@ -51,6 +51,8 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
 
   await t.test("responsive, sólo activos, búsqueda y WCAG automatizado", async () => {
     assert.equal(await page.locator(".product-card").count(), 12);
+    assert.equal(await page.locator(".wholesale-note").count(), 1);
+    assert.equal(await page.locator(".wholesale-note").evaluate(node => getComputedStyle(node).backgroundColor), "rgb(255, 240, 246)");
     assert.equal(await page.getByText("QA Invisible").count(), 0);
     for (const width of [360, 390, 430, 768, 1280]) {
       await page.setViewportSize({ width, height: 844 });
@@ -156,6 +158,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     page.on("pageerror", error => errors.push(error.message));
     await page.goto(`${base}/carrito/`);
     await waitCart("$ 27,15");
+    assert.equal(await page.locator(".cart-item .wholesale-note").count(), 1);
     const toolbar = await page.locator(".cart-toolbar > *").evaluateAll(nodes => nodes.map(n => ({ width: n.getBoundingClientRect().width, left: n.getBoundingClientRect().left })));
     assert.equal(toolbar[0].width, toolbar[1].width);
     assert.equal(toolbar[0].left, toolbar[1].left);
@@ -269,6 +272,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await page.locator("#cart-review").isDisabled(), true);
     await page.locator(".cart-price").selectOption("retail");
     await waitCart("$ 30,08");
+    assert.equal(await page.locator(".cart-item .wholesale-note").count(), 0);
   });
 
   await t.test("diálogo accesible, Escape cancela, cambio posterior exige nueva revisión", async () => {

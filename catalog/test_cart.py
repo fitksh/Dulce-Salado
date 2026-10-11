@@ -75,3 +75,18 @@ class CartTests(TestCase):
         for data in ("bad", "{}", '[{"id": true}]', json.dumps([self.item(price_type={})]), json.dumps([self.item(), self.item()])):
             self.assertEqual(self.client.post(reverse("cart_refresh"), {"items": data}).status_code, 400)
         self.assertEqual(parse_items("[]"), [])
+
+    def test_specific_wholesale_condition_only_for_selected_wholesale(self):
+        self.product.wholesale_condition = "Condición específica de prueba"
+        self.product.save()
+        for price_type, expected in (("retail", False), ("wholesale", True)):
+            response = self.client.post(reverse("cart_refresh"), {"items": json.dumps([self.item(price_type=price_type)])})
+            if expected:
+                self.assertContains(response, "Condición específica de prueba")
+            else:
+                self.assertNotContains(response, "Condición específica de prueba")
+            self.assertNotContains(response, "Sujeto a confirmación comercial.")
+        self.product.wholesale_condition = ""
+        self.product.save()
+        response = self.client.post(reverse("cart_refresh"), {"items": json.dumps([self.item(price_type="wholesale")])})
+        self.assertNotContains(response, 'class="wholesale-note"')

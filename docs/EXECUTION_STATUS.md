@@ -140,3 +140,9 @@ Tarea 2 publicada: bae066f169fca439267bfdb07e7258dd772d2dac, CI success run 3809
 Tarea 3 implementada: único dialog en catálogo, foto original optimizada sin variantes/recorte, botón Cerrar, Escape/fondo y foco al disparador. Sólo las fotos tienen enlace; sin JS el enlace permite ver el archivo existente. Placeholder intacto. Archivos: home/catalog.js/CSS y test_views/browser. Criterios: teclado, foco, responsive cinco anchuras, axe y recurso único. Pendiente validación/publicación.
 
 Tarea 3 validada: 10 Django afectados y 17 Chromium OK, check/Ruff/migraciones OK. Apertura Enter/clic, cierre botón/Escape/fondo, mismo archivo y retorno de foco; cinco anchuras sin overflow y axe OK. Captura ampliada inspeccionada. Publicar/verificar CI antes del destacado mayorista.
+
+Tarea 3 publicada: 3afb227a1af580c6d417991a9f7c239a8661707a, CI success run 38099815624.
+
+Tarea 4: destacado moderado rosa #fff0f6 con texto #68384c, sin cambios de selección o condiciones. Archivos: CSS, test_cart y browser; tests comprueban sólo condición específica, ausencia cuando vacío y selección mayorista manual. Criterios: contraste axe, responsive y no texto genérico añadido.
+
+Tarea 4 validada: 24 pruebas Django afectadas, 17 Chromium, check/Ruff y migraciones OK. Axe sin infracciones de contraste; cinco anchuras. Captura carrito móvil inspeccionada, condición suave y toolbar de igual ancho. Condición vacía/retail no muestran bloque; sin aplicación automática. Próxima acción: publicar/verificar CI, luego notificaciones flotantes.
