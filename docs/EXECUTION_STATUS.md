@@ -3,7 +3,7 @@
 Fecha de inicio: 2026-10-10. Trabajo autorizado secuencial en `main` hasta completar el MVP.
 
 ## Tarea actual
-CORRECCIONES VISUALES: cuatro tareas publicadas con CI success; QA final local completa (63 Django, 7 Node y 22 Chromium). Pendiente confirmar CI de publicación final. Historial previo y datos comerciales conservados.
+CORRECCIONES VISUALES COMPLETADAS Y PUBLICADAS. Cuatro ajustes y QA final verificados: 63 Django, 7 Node y 22 Chromium, checks/Ruff/migraciones OK. CI success de la QA final run 38105183767. Historial previo y datos comerciales conservados; próximo paso, pruebas locales del dueño según README/QA.
 
 ## Decisiones autorizadas
 - kg, unidad y paquete; incrementos iniciales 0,1 kg y 1 unidad/paquete. Sin conversión de gramos.
@@ -204,3 +204,11 @@ Tarea 5 QA final: 63 Django, 7 Node y 22 Chromium correctos, check/Ruff OK y mak
 Entorno Docker local reconstruido y check OK; /, /carrito/ y /como-llegar/ responden 200. Inspección comercial sólo lectura: 6 productos, 3 categorías, dirección/enlace/WhatsApp presentes y 12 intervalos publicados. Fotos reales 675×1200 y 900×1200 completas; marco/enlace/imagen 210 px. Axe del catálogo real sin infracciones a cinco anchuras. Horarios reales: main inmóvil en todas, header 165 px móvil, 183 px tablet y 93 px desktop.
 
 La primera captura Maps estaba bloqueada por el sandbox (ERR_NETWORK_ACCESS_DENIED). Verificación de red autorizada en lectura: iframe HTTP 200 y mapa real visible en capturas live-directions, conservando URL/políticas. Capturas reales inspeccionadas móvil/escritorio y despliegue de horarios. No se alteró información comercial, no se enviaron mensajes ni se agregaron artículos al carrito comercial. QA detenido y consulta de bases descartables sin filas. Pendiente publicar la ampliación QA/documentación y confirmar su CI para cerrar estado/roadmap.
+
+## Cierre de correcciones visuales puntuales
+
+Tarea 5 publicada: 69902fb54e4ba55c239a66181c95bc41f251bd6a; [CI success run 38105183767](https://github.com/fitksh/Dulce-Salado/actions/runs/38105183767), incluida suite completa y capturas. Tareas 1–4 también success, registradas arriba. Las cinco tareas completas; sin fallos conocidos de implementación ni cambios fuera de alcance.
+
+Archivos modificados en esta iteración: templates/home.html, base.html, directions.html e includes/business_hours.html; static/css/site.css y static/js/catalog.js; catalog/test_views.py y test_business.py; tests/browser_server.py y browser.spec.cjs; README.md y docs/ARCHITECTURE.md, UX_UI.md, ROADMAP.md, EXECUTION_STATUS.md y QA.md. No se modificaron modelos, migraciones, procesamiento de imágenes, carrito, WhatsApp, notificaciones, CSV, Admin, Docker ni datos comerciales.
+
+Entorno local actualizado y disponible; main sincronizada. Próximo paso concreto: recargar localhost:8000 con Ctrl+F5, comprobar fotos completas/ampliación, header/horarios, dirección/mapa y footer en teléfono real; mantener pruebas manuales de lector/retorno de aplicaciones externas descritas en QA. Este commit cierra sólo documentación; su propio hash y CI se consultan en Git/GitHub después de publicar.

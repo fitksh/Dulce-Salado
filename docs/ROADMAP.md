@@ -51,4 +51,6 @@ Segunda iteración completada y publicada en main. Sin nuevas dependencias/model
 - [x] Tarea 2 — Header en fila de tres regiones en escritorio y columna en móvil; 16 Django, 7 Node y 22 Chromium OK.
 - [x] Tarea 3 — Dirección, botón y mapa en una región responsive; 16 Django, 22 Chromium y Ruff OK.
 - [x] Tarea 4 — Footer centrado en todas las pantallas; 10 Django y 22 Chromium OK, cinco capturas inspeccionadas.
-- [ ] Tarea 5 — QA completa, capturas, documentación y publicación final.
+- [x] Tarea 5 — QA completa, capturas, documentación y publicación final; 63 Django, 7 Node y 22 Chromium OK, CI success run 38105183767.
+
+Correcciones visuales completadas y publicadas; capturas reales inspeccionadas, main sincronizada, entorno local actualizado y datos conservados. Próximo paso: pruebas locales en teléfono real según README/QA. Historial anterior intacto; infraestructura futura fuera de alcance.
