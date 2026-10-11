@@ -68,15 +68,17 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await page.locator(".wholesale-note").count(), 1);
     assert.equal(await page.locator(".wholesale-note").evaluate(node => getComputedStyle(node).backgroundColor), "rgb(255, 240, 246)");
     assert.equal(await page.getByText("QA Invisible").count(), 0);
-    for (const width of [360, 390, 430, 768, 800, 1280]) {
+    for (const width of [320, 360, 390, 430, 768, 800, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       await headerLayout(width);
       assert.equal(await page.locator(".brand-logo").evaluate(node => node.getBoundingClientRect().width), 64);
       const actions = await page.locator(".header-actions a").evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().toJSON()));
-      assert.equal(actions.length, 2);
+      assert.equal(actions.length, 3);
       assert.ok(Math.abs(actions[0].top - actions[1].top) < 1);
+      assert.ok(Math.abs(actions[1].top - actions[2].top) < 1);
       assert.ok(Math.abs(actions[0].width - actions[1].width) < 1);
+      assert.equal(await page.locator('.header-actions a[aria-current="page"]').getAttribute("href"), "/");
       const targets = await page.locator("button, input:not([type=hidden]), select, .button, .chip").evaluateAll(nodes => nodes.filter(n => n.getBoundingClientRect().height > 0).map(n => ({ tag: n.tagName, height: n.getBoundingClientRect().height })));
       assert.equal(targets.every(target => target.height >= 44), true, JSON.stringify(targets));
       const steppers = await page.locator(".quantity-adjust").evaluateAll(nodes => nodes.map(n => n.getBoundingClientRect().width));
@@ -731,7 +733,8 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
   });
 
   await t.test("Ubicación sin dirección y configuración única desde Admin", async () => {
-    await page.getByRole("link", { name: "Ubicación", exact: true }).click();
+    await page.locator(".header-actions").getByRole("link", { name: "Ubicación", exact: true }).click();
+    assert.equal(await page.locator('.header-actions a[aria-current="page"]').getAttribute("href"), "/ubicacion/");
     await page.getByText(/La dirección del comercio todavía no está disponible/).waitFor();
     assert.equal(await page.getByRole("link", { name: "Abrir en Google Maps" }).count(), 0);
     await accessible();
@@ -935,7 +938,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.goto(`${base}/?q=${encodeURIComponent("[DEMO]")}`);
     const seen = [];
     for (const [number, start, end] of [[1, 1, 12], [2, 13, 24], [3, 25, 36], [4, 37, 45]]) {
-      await page.getByText(`Mostrando ${start}–${end} de 45 productos`, { exact: false }).waitFor();
+      await page.getByText(`${start}–${end} de 45 productos`, { exact: false }).waitFor();
       assert.equal(await page.locator(".product-card").count(), end - start + 1);
       await page.getByText(`Página ${number} de 4`, { exact: true }).waitFor();
       seen.push(...await page.locator(".product-card").evaluateAll(nodes => nodes.map(node => node.getAttribute("aria-labelledby"))));
@@ -962,19 +965,19 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.setViewportSize({ width: 390, height: 844 });
     for (const slug of Object.values(slugs)) {
       await page.goto(`${base}/?q=${encodeURIComponent("[DEMO]")}&categoria=${slug}`);
-      await page.getByText("Mostrando 1–12 de 15 productos", { exact: false }).waitFor();
+      await page.getByText("1–12 de 15 productos", { exact: false }).waitFor();
       await page.getByRole("link", { name: "Siguiente", exact: true }).click();
       await page.waitForURL(url => url.searchParams.get("page") === "2");
       assert.equal(new URL(page.url()).searchParams.get("categoria"), slug);
       assert.equal(new URL(page.url()).searchParams.get("q"), "[DEMO]");
       assert.equal(await page.locator(".product-card").count(), 3);
-      await page.getByText("Mostrando 13–15 de 15 productos", { exact: false }).waitFor();
+      await page.getByText("13–15 de 15 productos", { exact: false }).waitFor();
     }
     const plain = await browser.newContext({ javaScriptEnabled: false });
     const plainPage = await plain.newPage();
     await plainPage.goto(`${base}/?q=${encodeURIComponent("[DEMO]")}&categoria=reposteria`);
     await plainPage.getByRole("link", { name: "Siguiente", exact: true }).click();
-    await plainPage.getByText("Mostrando 13–15 de 15 productos", { exact: false }).waitFor();
+    await plainPage.getByText("13–15 de 15 productos", { exact: false }).waitFor();
     assert.equal(new URL(plainPage.url()).searchParams.get("q"), "[DEMO]");
     await plain.close();
     assert.deepEqual(errors, []);

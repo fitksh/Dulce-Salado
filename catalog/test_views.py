@@ -118,7 +118,7 @@ class CatalogViewTests(TestCase):
             if name in ("home", "cart"):
                 self.assertContains(response, f'href="{reverse(name)}" aria-current="page"', count=1)
             else:
-                self.assertNotContains(response, 'aria-current="page"')
+                self.assertContains(response, f'href="{reverse(name)}" aria-current="page"', count=1)
 
     def test_45_products_have_four_stable_filtered_pages_and_ranges(self):
         Product.objects.bulk_create([
@@ -130,7 +130,7 @@ class CatalogViewTests(TestCase):
         seen = []
         for number, start, end in ((1, 1, 12), (2, 13, 24), (3, 25, 36), (4, 37, 45)):
             response = self.client.get("/", {"q": "Chocolate", "categoria": self.category.slug, "page": number})
-            self.assertContains(response, f"Mostrando {start}–{end} de 45 productos")
+            self.assertContains(response, f"{start}–{end} de 45 productos")
             self.assertContains(response, f"Página {number} de 4")
             self.assertNotContains(response, "Chocolate excluido")
             seen.extend(product.pk for product in response.context["page"])
@@ -144,8 +144,8 @@ class CatalogViewTests(TestCase):
 
     def test_empty_and_single_page_have_no_pagination(self):
         response = self.client.get("/", {"q": "no existe"})
-        self.assertContains(response, "Mostrando 0 de 0 productos")
+        self.assertContains(response, "0 de 0 productos")
         self.assertNotContains(response, 'class="pagination"')
         response = self.client.get("/")
-        self.assertContains(response, "Mostrando 1–1 de 1 producto")
+        self.assertContains(response, "1–1 de 1 producto")
         self.assertNotContains(response, 'class="pagination"')

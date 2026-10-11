@@ -254,3 +254,9 @@ Archivos principales: templates base/home/cart/cart_contents/cart_review/directi
 Verificación final: 78 Django, 7 Node, 24 Chromium; check/Ruff y migraciones correctos localmente y en CI. Entorno local actualizado, datos comerciales preservados, QA descartado, capturas inspeccionadas en cinco anchuras. Seed no aplicado a base comercial; opciones de simulación/alta/limpieza y límite conservador de demos editados/manifiesto explicados en README. Próximo paso: Ctrl+F5 y pruebas del dueño en teléfono/lector; actualizar dirección completa en Admin y ejecutar el seed sólo si desea esos datos ficticios. No hay fase futura anticipada.
 
 Este commit cierra el roadmap documental; su propio hash y CI se consultan tras publicar, sin incluir un hash autorreferencial.
+
+## Exportación PDF y ajustes puntuales — 2026-10-11
+
+Solicitud y documentación obligatoria revisadas. main sincronizada; cambios locales previos en CSS (panel 260 px) y home (sin Mostrando) se conservan fuera de commits. Tareas secuenciales: header, PDF Admin, papelera, carrito desktop y QA. Sin modelos/migraciones ni cambios comerciales/fotográficos. Tarea 1 en curso: enlace Ubicación nombrado/aria-current, tres botones compactos con 44 px y cinco resoluciones más 320/800. Archivos base/CSS/tests. Las pruebas de rango comprueban datos semánticos para tolerar ambos textos del usuario.
+
+Tarea 1 validada: 20 Django afectados, Ruff y 24 Chromium correctos; header 320/360/390/430/768/800/1280 sin overflow, tres enlaces con aria-current y objetivos ≥44 px, logo 64 px y horarios sin cambios. Capturas 320 y 800 inspeccionadas; axe correcto. Staging selectivo conserva cambios locales previos fuera de commits; tests de resultados independientes del prefijo editorial. Próxima tarea: PDF Admin mediante una implementación ReportLab, memoria y miniaturas Pillow temporales.

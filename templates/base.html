@@ -25,6 +25,7 @@
     {% include "includes/business_hours.html" %}
     <nav class="header-actions" aria-label="Navegación principal">
     <a class="button secondary" href="{% url 'home' %}"{% if request.resolver_match.url_name == 'home' %} aria-current="page"{% endif %}>Catálogo</a>
+    <a class="button secondary" href="{% url 'directions' %}"{% if request.resolver_match.url_name == 'directions' %} aria-current="page"{% endif %}>Ubicación</a>
     <a class="button secondary cart-link" href="{% url 'cart' %}"{% if request.resolver_match.url_name == 'cart' %} aria-current="page"{% endif %}>
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 3h3l3 12h11l3-9H6"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>
       Carrito <span data-cart-count aria-label="productos diferentes">0</span>
