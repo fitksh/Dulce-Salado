@@ -5,11 +5,13 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 import reportlab
+from django.contrib.staticfiles import finders
 from PIL import Image as PILImage
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
+from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
@@ -40,30 +42,37 @@ def _styles():
     )
 
 
+def _escaped_text(value):
+    return escape(str(value)).replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br/>")
+
+
 def _paragraph(value, style):
-    text = escape(str(value)).replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br/>")
-    return Paragraph(text, style)
+    return Paragraph(_escaped_text(value), style)
+
+
+def _labelled(label, value, style):
+    return Paragraph(f"<b>{escape(label)}:</b> {_escaped_text(value)}", style)
 
 
 def _product_text(product, body, name):
     fields = [
         _paragraph(product.name, name),
-        _paragraph(f"Categoría: {product.category.name}", body),
+        _labelled("Categoría", product.category.name, body),
     ]
     if product.brand:
-        fields.append(_paragraph(f"Marca: {product.brand}", body))
+        fields.append(_labelled("Marca", product.brand, body))
     if product.description:
         fields.append(_paragraph(product.description, body))
     fields.extend([
-        _paragraph(f"Unidad de venta: {product.get_sale_unit_display()}", body),
-        _paragraph(f"Precio minorista: {ars(product.retail_price)}", body),
+        _labelled("Unidad de venta", product.get_sale_unit_display(), body),
+        _labelled("Precio minorista", ars(product.retail_price), body),
     ])
     if product.wholesale_price is not None:
-        fields.append(_paragraph(f"Precio mayorista: {ars(product.wholesale_price)}", body))
+        fields.append(_labelled("Precio mayorista", ars(product.wholesale_price), body))
     if product.wholesale_condition:
-        fields.append(_paragraph(f"Condición mayorista: {product.wholesale_condition}", body))
+        fields.append(_labelled("Condición mayorista", product.wholesale_condition, body))
     if not product.is_active:
-        fields.append(_paragraph("Estado: Inactivo", body))
+        fields.append(_labelled("Estado", "Inactivo", body))
     return fields
 
 
@@ -105,14 +114,42 @@ def _page_frame(canvas, doc):
     canvas.setTitle("Dulce y Salado — Catálogo de productos")
     canvas.setAuthor("Dulce y Salado")
     canvas.setFillColor(colors.HexColor("#292324"))
+    text_left = doc.leftMargin
+    try:
+        logo_path = finders.find("img/logo.webp")
+        if logo_path:
+            logo = ImageReader(logo_path)
+            logo_width, logo_height = logo.getSize()
+            size = 16 * mm
+            scale = min(size / logo_width, size / logo_height)
+            canvas.drawImage(logo, doc.leftMargin, height - 24 * mm + (size - logo_height * scale) / 2,
+                             width=logo_width * scale, height=logo_height * scale, mask="auto")
+            text_left += size + 4 * mm
+    except (OSError, ValueError):
+        # El encabezado textual permanece disponible si el recurso falta/no se puede leer.
+        pass
     canvas.setFont("CatalogSansBold", 13)
-    canvas.drawString(doc.leftMargin, height - 16 * mm, "Dulce y Salado")
+    canvas.drawString(text_left, height - 16 * mm, "Dulce y Salado")
     canvas.setFont("CatalogSans", 9)
-    canvas.drawString(doc.leftMargin, height - 22 * mm, "Catálogo de productos")
+    canvas.drawString(text_left, height - 22 * mm, "Catálogo de productos")
     canvas.setFont("CatalogSans", 7)
     canvas.drawString(doc.leftMargin, 14 * mm, "Precios estimativos en ARS. Disponibilidad y condiciones a confirmar con el comercio.")
     canvas.drawRightString(width - doc.rightMargin, 9 * mm, f"Página {doc.page}")
     canvas.restoreState()
+
+
+class _ImageListRow(Table):
+    def split(self, availWidth, availHeight):
+        # ReportLab acumula padding al dividir una celda MIDDLE: una fila muy
+        # extensa puede dejar de avanzar. Dividir en TOP y centrar cada fragmento.
+        self.setStyle(TableStyle([("VALIGN", (0, 0), (0, -1), "TOP")]))
+        try:
+            parts = super().split(availWidth, availHeight)
+        finally:
+            self.setStyle(TableStyle([("VALIGN", (0, 0), (0, -1), "MIDDLE")]))
+        for part in parts:
+            part.setStyle(TableStyle([("VALIGN", (0, 0), (0, -1), "MIDDLE")]))
+        return parts
 
 
 def build_catalog_pdf(products, *, include_images):
@@ -126,7 +163,8 @@ def build_catalog_pdf(products, *, include_images):
         width = document.width - 12  # Padding del marco Platypus, 6 pt por lado.
         cells = [[_photo(product, label), fields]] if include_images else [[fields]]
         columns = [66, width - 66] if include_images else [width]
-        row = Table(cells, colWidths=columns, splitByRow=0, splitInRow=1, hAlign="LEFT")
+        row_type = _ImageListRow if include_images else Table
+        row = row_type(cells, colWidths=columns, splitByRow=0, splitInRow=1, hAlign="LEFT")
         commands = [
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
             ("LEFTPADDING", (0, 0), (-1, -1), 0),
@@ -136,6 +174,7 @@ def build_catalog_pdf(products, *, include_images):
         ]
         if include_images:
             commands.append(("RIGHTPADDING", (0, 0), (0, -1), 10))
+            commands.append(("VALIGN", (0, 0), (0, -1), "MIDDLE"))
         row.setStyle(TableStyle(commands))
         # Conserva registros normales juntos; uno mayor que la hoja se divide
         # en el espacio disponible sin dejar una página casi vacía por anticipado.

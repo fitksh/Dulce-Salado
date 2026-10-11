@@ -6,7 +6,9 @@ from io import StringIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import skipUnless
+from unittest.mock import patch
 from urllib.parse import urlencode
+from xml.etree import ElementTree
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
@@ -57,7 +59,17 @@ class PDFTestCase(TestCase):
         return self.tool("pdftotext", data, "-", "-")
 
     def image_count(self, data):
-        return len(re.findall(r"^\s+\d+\s+\d+\s+image\s", self.tool("pdfimages", data, "-list", "-"), re.MULTILINE))
+        # Fotografías inline; el logo compartido es un XObject independiente.
+        return sum("[inline]" in line for line in self.tool("pdfimages", data, "-list", "-").splitlines())
+
+    def xml(self, data, *, images=False):
+        with TemporaryDirectory() as temporary:
+            path = Path(temporary) / "qa.pdf"
+            path.write_bytes(data)
+            result = subprocess.run(["pdftohtml", "-xml", "-noroundcoord", "-stdout",
+                                     *([] if images else ["-i"]), str(path)], cwd=temporary,
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+            return ElementTree.fromstring(result.stdout)
 
 
 class ProductPDFTests(PDFTestCase):
@@ -321,3 +333,79 @@ class ProductTablePDFTests(PDFTestCase):
     @skipUnless(POPPLER, "Instalar poppler-utils para inspeccionar tablas PDF")
     def test_table_missing_and_corrupt_photos_keep_the_record(self):
         ProductPDFTests.test_missing_corrupt_or_absent_photos_do_not_abort_export(self)
+
+
+@skipUnless(POPPLER and shutil.which("pdftohtml"), "Instalar poppler-utils para inspeccionar logo/fuentes/posición")
+class PDFFormattingTests(PDFTestCase):
+    def setUp(self):
+        super().setUp()
+        self.urls += [reverse(f"admin:catalog_product_export_pdf_table_{variant}") for variant in ("images", "plain")]
+        self.allow()
+
+    def test_logo_and_name_are_present_on_every_page_in_all_four_variants(self):
+        Product.objects.bulk_create([
+            Product(category=self.category, name=f"Registro logo QA {index:02}", retail_price="1",
+                    description="Texto ficticio para comprobar el encabezado repetido. " * 8)
+            for index in range(15)
+        ])
+        for url in self.urls:
+            with self.subTest(url=url):
+                pages = self.xml(self.pdf(url), images=True).findall("page")
+                self.assertGreater(len(pages), 1)
+                for page in pages:
+                    logo = next(image for image in page.findall("image") if float(image.attrib["top"]) < 110)
+                    name = next(text for text in page.findall("text") if "".join(text.itertext()) == "Dulce y Salado")
+                    self.assertLess(float(logo.attrib["left"]) + float(logo.attrib["width"]), float(name.attrib["left"]))
+                    self.assertAlmostEqual(float(logo.attrib["width"]) / float(logo.attrib["height"]), 1, places=2)
+                    # Poppler XML escala a 1.5; 16 mm son unos 68 píxeles en esta inspección.
+                    self.assertAlmostEqual(float(logo.attrib["width"]), 16 * 72 / 25.4 * 1.5, delta=1)
+                    self.assertEqual(len([image for image in page.findall("image") if float(image.attrib["top"]) < 110]), 1)
+
+    def test_missing_and_corrupt_logo_leave_valid_text_headers_in_all_variants(self):
+        broken = Path(self.media.name) / "bad-logo.webp"
+        broken.write_bytes(b"not an image")
+        for missing in (None, str(broken), str(broken.parent / "missing-logo.webp")):
+            with patch("catalog.pdf.finders.find", return_value=missing):
+                for url in self.urls:
+                    data = self.pdf(url)
+                    self.assertIn("Dulce y Salado", self.text(data))
+                    self.assertNotRegex(self.tool("pdfimages", data, "-list", "-"), r"\simage\s")
+
+    def test_list_labels_are_bold_values_are_normal_and_markup_is_literal(self):
+        self.product.brand = "Café <b>literal</b> & Águila"
+        self.product.save()
+        for url in self.urls[:2]:
+            page = self.xml(self.pdf(url)).find("page")
+            fields = {"".join(text.itertext()).split(":", 1)[0]: text for text in page.findall("text")
+                      if text.find("b") is not None}
+            for label in ("Categoría", "Marca", "Unidad de venta", "Precio minorista", "Precio mayorista",
+                          "Condición mayorista", "Estado"):
+                field = fields[label]
+                self.assertEqual([child.text for child in field.findall("b")], [f"{label}:"])
+                self.assertTrue(field.find("b").tail.strip())
+            self.assertIn(self.product.brand, "".join(fields["Marca"].itertext()))
+
+    def test_list_product_photo_is_centered_in_short_and_long_text_blocks(self):
+        path = Path(self.media.name) / "photo.webp"
+        Image.new("RGB", (600, 400), "orange").save(path, "WEBP")
+        self.product.image = path.name
+        for description in ("Descripción breve.", "Descripción extensa de prueba. " * 35,
+                            "Descripción extensa de prueba. " * 300):
+            self.product.description = description
+            self.product.save()
+            data = self.pdf()
+            page = self.xml(data, images=True).find("page")
+            photo = next(image for image in page.findall("image") if float(image.attrib["top"]) > 110)
+            body_bottom = float(page.attrib["height"]) - 22 * 72 / 25.4 * 1.5
+            fields = [text for text in page.findall("text") if float(text.attrib["left"]) > 180
+                      and 110 < float(text.attrib["top"]) < body_bottom]
+            text_top = min(float(text.attrib["top"]) for text in fields)
+            text_bottom = max(float(text.attrib["top"]) + float(text.attrib["height"]) for text in fields)
+            photo_center = float(photo.attrib["top"]) + float(photo.attrib["height"]) / 2
+            self.assertAlmostEqual(photo_center, (text_top + text_bottom) / 2, delta=6)
+            self.assertAlmostEqual(float(photo.attrib["width"]) / float(photo.attrib["height"]), 1.5, places=2)
+            if len(description) > 5000:
+                self.assertGreater(len(self.xml(data).findall("page")), 2)
+                self.assertEqual(self.text(data).count("extensa"), 300)
+                self.assertEqual(self.text(data).count("prueba."), 300)
+                self.assertEqual(self.image_count(data), 1)
