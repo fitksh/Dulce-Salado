@@ -92,7 +92,7 @@ Las seis tareas están completas y publicadas en origin/main, todas con CI succe
 
 - [x] Tarea 1 — Visor ajustado a proporción intrínseca; 33 Django, 26 Chromium y 18 capturas de seis viewports correctos.
 - [x] Tarea 2 — Cuatro columnas a 1280/1440 px, 1/2/3 intermedias; 13 Django y 26 Chromium correctos, controles/textos inspeccionados.
-- [ ] Tarea 3 — Foto de carrito centrada en escritorio, móvil intacto.
+- [x] Tarea 3 — Foto de carrito centrada en escritorio; 11 Django, 5 Node y 26 Chromium correctos, móvil intacto.
 - [ ] Tarea 4 — Logo en los cuatro PDF, foto centrada/etiquetas en negrita sólo en listas.
 - [ ] Tarea 5 — QA final, capturas/PDF inspeccionados y publicación con CI.
 

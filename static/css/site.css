@@ -147,7 +147,7 @@ textarea { display: block; width: 100%; margin-block: .6rem; padding: .8rem; fon
 @media (min-width: 800px) { .cart-layout { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } .cart-summary { position: sticky; top: 1rem; } }
 @media (min-width: 800px) {
   .cart-item:has(.cart-thumbnail) { position: relative; padding-left: calc(1.2rem + 132px + 1rem); min-height: calc(132px + 2.4rem); }
-  .cart-item .cart-thumbnail { position: absolute; left: 1.2rem; top: 1.2rem; width: 132px; height: 132px; }
+  .cart-item .cart-thumbnail { position: absolute; left: 1.2rem; top: 50%; transform: translateY(-50%); width: 132px; height: 132px; }
 }
 @media (min-width: 800px) {
   .business-card { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }

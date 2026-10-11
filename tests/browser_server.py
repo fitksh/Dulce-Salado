@@ -61,7 +61,7 @@ def main():
                 category=category, name="QA Chocolate (test)", brand="QA Marca",
                 description="Producto descartable de prueba; no representa información comercial.",
                 sale_unit="kg", quantity_step="0.1", retail_price="100.25", wholesale_price="90.50",
-                wholesale_condition="Condición de test, confirmar con el comercio",
+                wholesale_condition="Condición de test, confirmar con el comercio. " + "Datos ficticios de prueba. " * 8,
                 image=test_photo((600, 400)),
             )
             Product.objects.create(

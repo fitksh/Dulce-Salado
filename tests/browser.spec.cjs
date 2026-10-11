@@ -48,6 +48,13 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await input.fill(value);
     await input.press("Tab");
   }
+  async function photosCentered(target) {
+    const offsets = await target.locator(".cart-item:has(.cart-thumbnail)").evaluateAll(rows => rows.map(row => {
+      const card = row.getBoundingClientRect(), photo = row.querySelector(".cart-thumbnail").getBoundingClientRect();
+      return Math.abs(card.top + card.height / 2 - photo.top - photo.height / 2);
+    }));
+    assert.ok(offsets.length && offsets.every(offset => offset < 1), JSON.stringify(offsets));
+  }
   const admin = await context.newPage();
   await admin.goto(`${base}/admin/login/`);
   await admin.locator("#id_username").fill("qa-admin");
@@ -397,6 +404,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       const thumbnail = page.locator(".cart-thumbnail").first();
       assert.equal((await thumbnail.boundingBox()).width, width >= 800 ? 132 : 56);
       if (width >= 800) {
+        await photosCentered(page);
         const aligned = await page.locator(".cart-item").first().evaluate(node => {
           const photo = node.querySelector(".cart-thumbnail").getBoundingClientRect();
           const fields = node.querySelectorAll("h2, .product-brand, [data-cart-amount], .wholesale-note, .product-controls, [data-cart-error]");
@@ -417,6 +425,29 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       assert.equal(await thumbnail.evaluate(node => node === document.activeElement), true);
       await page.screenshot({ path: `.qa/screenshots/cart-${width}.png`, fullPage: true });
     }
+    await photosCentered(page);
+    const desktopQuantity = page.locator(".cart-quantity");
+    await desktopQuantity.focus();
+    const desktopScroll = await page.evaluate(() => scrollY);
+    await desktopQuantity.fill("0.4");
+    await desktopQuantity.dispatchEvent("change");
+    await waitCart("$ 36,20");
+    assert.equal(await desktopQuantity.evaluate(node => node === document.activeElement), true);
+    assert.ok(Math.abs(await page.evaluate(() => scrollY) - desktopScroll) < 3);
+    await photosCentered(page);
+    const desktopPrice = page.locator(".cart-price");
+    await desktopPrice.focus();
+    const priceScroll = await page.evaluate(() => scrollY);
+    await desktopPrice.selectOption("retail");
+    await waitCart("$ 40,10");
+    assert.equal(await desktopPrice.evaluate(node => node === document.activeElement), true);
+    assert.ok(Math.abs(await page.evaluate(() => scrollY) - priceScroll) < 3);
+    await photosCentered(page);
+    await desktopPrice.selectOption("wholesale");
+    await waitCart("$ 36,20");
+    await setQuantity("0.3");
+    await waitCart("$ 27,15");
+    await photosCentered(page);
     await page.setViewportSize({ width: 390, height: 844 });
     await accessible();
     await page.getByRole("button", { name: /Aumentar cantidad/ }).click();
@@ -626,6 +657,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       await scrolled.getByRole("button", { name: "Reintentar" }).click();
       await scrolled.locator(".total").filter({ hasText: "$ 50,13" }).waitFor();
       await scrolled.setViewportSize({ width: 1280, height: 844 });
+      await photosCentered(scrolled);
       await input.evaluate(node => { node.scrollIntoView({ block: "center" }); node.focus({ preventScroll: true }); });
       const desktopScroll = await scrolled.evaluate(() => scrollY);
       assert.ok(desktopScroll > 1000);
@@ -1055,6 +1087,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
         return { separated: photo.right <= name.left && name.right <= remove.left, fits: document.documentElement.scrollWidth <= innerWidth };
       });
       assert.ok(layout.separated && layout.fits);
+      if (width >= 800) await photosCentered(page);
       await page.locator(".cart-thumbnail").click();
       await page.keyboard.press("Escape");
       await page.screenshot({ path: `.qa/screenshots/cart-long-name-${width}.png`, fullPage: true });
@@ -1062,6 +1095,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     }
     await page.getByRole("button", { name: /Aumentar cantidad/ }).click();
     await waitCart("$ 50,20");
+    await photosCentered(page);
     await page.locator(".cart-thumbnail").click();
     await page.getByRole("button", { name: "Cerrar imagen" }).click();
     assert.equal(await page.locator(".cart-thumbnail").evaluate(node => node === document.activeElement), true);
