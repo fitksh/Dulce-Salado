@@ -7,7 +7,7 @@ from xml.sax.saxutils import escape
 import reportlab
 from PIL import Image as PILImage
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
@@ -99,6 +99,22 @@ def _photo(product, label_style):
         return _paragraph("Foto no disponible", label_style)
 
 
+def _page_frame(canvas, doc):
+    width, height = doc.pagesize
+    canvas.saveState()
+    canvas.setTitle("Dulce y Salado — Catálogo de productos")
+    canvas.setAuthor("Dulce y Salado")
+    canvas.setFillColor(colors.HexColor("#292324"))
+    canvas.setFont("CatalogSansBold", 13)
+    canvas.drawString(doc.leftMargin, height - 16 * mm, "Dulce y Salado")
+    canvas.setFont("CatalogSans", 9)
+    canvas.drawString(doc.leftMargin, height - 22 * mm, "Catálogo de productos")
+    canvas.setFont("CatalogSans", 7)
+    canvas.drawString(doc.leftMargin, 14 * mm, "Precios estimativos en ARS. Disponibilidad y condiciones a confirmar con el comercio.")
+    canvas.drawRightString(width - doc.rightMargin, 9 * mm, f"Página {doc.page}")
+    canvas.restoreState()
+
+
 def build_catalog_pdf(products, *, include_images):
     body, name, label = _styles()
     output = BytesIO()
@@ -130,19 +146,43 @@ def build_catalog_pdf(products, *, include_images):
     if not story:
         story.append(_paragraph("No hay productos para los filtros seleccionados", body))
 
-    def page_frame(canvas, doc):
-        canvas.saveState()
-        canvas.setTitle("Dulce y Salado — Catálogo de productos")
-        canvas.setAuthor("Dulce y Salado")
-        canvas.setFillColor(colors.HexColor("#292324"))
-        canvas.setFont("CatalogSansBold", 13)
-        canvas.drawString(doc.leftMargin, A4[1] - 16 * mm, "Dulce y Salado")
-        canvas.setFont("CatalogSans", 9)
-        canvas.drawString(doc.leftMargin, A4[1] - 22 * mm, "Catálogo de productos")
-        canvas.setFont("CatalogSans", 7)
-        canvas.drawString(doc.leftMargin, 14 * mm, "Precios estimativos en ARS. Disponibilidad y condiciones a confirmar con el comercio.")
-        canvas.drawRightString(A4[0] - doc.rightMargin, 9 * mm, f"Página {doc.page}")
-        canvas.restoreState()
+    document.build(story, onFirstPage=_page_frame, onLaterPages=_page_frame)
+    return output.getvalue()
 
-    document.build(story, onFirstPage=page_frame, onLaterPages=page_frame)
+
+def build_catalog_table_pdf(products):
+    body, _, _ = _styles()
+    cell = ParagraphStyle("table-cell", parent=body, fontSize=9, leading=12, spaceAfter=0)
+    header = ParagraphStyle("table-header", parent=cell, fontName="CatalogSansBold")
+    output = BytesIO()
+    document = SimpleDocTemplate(output, pagesize=landscape(A4), leftMargin=16 * mm, rightMargin=16 * mm,
+                                topMargin=29 * mm, bottomMargin=22 * mm)
+    headings = ("Producto", "Marca", "Descripción", "Unidad", "$ Min.", "$ May.", "Cond. mayorista")
+    rows = [[_paragraph(value, header) for value in headings]]
+    for product in products:
+        name = [_paragraph(product.name, cell)]
+        if not product.is_active:
+            name.append(_paragraph("Estado: Inactivo", cell))
+        values = (product.brand, product.description, product.get_sale_unit_display(), ars(product.retail_price),
+                  ars(product.wholesale_price) if product.wholesale_price is not None else "",
+                  product.wholesale_condition)
+        rows.append([name, *[_paragraph(value, cell) for value in values]])
+    story = []
+    if len(rows) > 1:
+        width = document.width - 12
+        columns = [width * fraction for fraction in (.20, .12, .26, .07, .105, .105, .14)]
+        table = Table(rows, colWidths=columns, repeatRows=1, splitByRow=1, splitInRow=1, hAlign="LEFT")
+        table.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 5),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+            ("TOPPADDING", (0, 0), (-1, -1), 6),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ("LINEBELOW", (0, 0), (-1, 0), .7, colors.HexColor("#655c58")),
+            ("LINEBELOW", (0, 1), (-1, -1), .4, colors.HexColor("#c9c3bf")),
+        ]))
+        story.append(table)
+    else:
+        story.append(_paragraph("No hay productos para los filtros seleccionados", body))
+    document.build(story, onFirstPage=_page_frame, onLaterPages=_page_frame)
     return output.getvalue()

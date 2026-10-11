@@ -76,3 +76,14 @@ Nueva iteración completada y publicada en main. Datos comerciales conservados, 
 - [x] Tarea 5 — QA completa, PDFs de ejemplo, documentación y CI.
 
 Exportación PDF y ajustes completados/publicados en main, cinco tareas con CI success. 88 Django, 7 Node, 25 Chromium, check/Ruff y migraciones correctos; dos PDFs ficticios A4 inspeccionados en todas sus páginas. Entorno local actualizado y registros/fotos conservados. Próximo paso: Admin/filtros/ambas descargas y pruebas locales de carrito responsive, visor/impresora, zoom y teléfono/lector según README/QA. Sin modelos/migraciones ni trabajo de fases futuras.
+
+## Nuevas exportaciones PDF, imágenes e importación CSV
+
+- [x] Tarea 1 — PDF tabla compacta; 17 PDF/CSV, 25 Chromium y revisión de seis páginas correctos.
+- [ ] Tarea 2 — PDF tabla con imágenes.
+- [ ] Tarea 3 — Marcos cuadrados y fotografías del catálogo.
+- [ ] Tarea 4 — Importación CSV y validaciones de altas.
+- [ ] Tarea 5 — Vista previa, confirmación y documentación.
+- [ ] Tarea 6 — QA completa y publicación final.
+
+Iteración autorizada en curso, secuencial y sin modelos/migraciones/dependencias nuevos. Los cambios locales anteriores del propietario se conservan fuera de commits.

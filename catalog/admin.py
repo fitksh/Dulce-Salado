@@ -12,7 +12,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_GET
 
 from .models import BusinessSettings, Category, OpeningInterval, Product
-from .pdf import build_catalog_pdf
+from .pdf import build_catalog_pdf, build_catalog_table_pdf
 
 
 class ProductAdminForm(forms.ModelForm):
@@ -58,6 +58,8 @@ class ProductAdmin(admin.ModelAdmin):
                  {"include_images": True}, name="catalog_product_export_pdf_images"),
             path("exportar-pdf-sin-imagenes/", self.admin_site.admin_view(self.export_pdf),
                  {"include_images": False}, name="catalog_product_export_pdf_plain"),
+            path("exportar-pdf-tabla-compacta/", self.admin_site.admin_view(self.export_pdf),
+                 {"include_images": False, "table": True}, name="catalog_product_export_pdf_table_plain"),
         ] + super().get_urls()
 
     def export_queryset(self, request):
@@ -87,13 +89,14 @@ class ProductAdmin(admin.ModelAdmin):
         return response
 
     @method_decorator(require_GET)
-    def export_pdf(self, request, *, include_images):
+    def export_pdf(self, request, *, include_images, table=False):
         try:
             products = self.export_queryset(request)
         except IncorrectLookupParameters:
             return HttpResponseBadRequest("Filtros de exportación inválidos.")
-        response = HttpResponse(build_catalog_pdf(products.iterator(), include_images=include_images), content_type="application/pdf")
-        variant = "con-imagenes" if include_images else "sin-imagenes"
+        data = build_catalog_table_pdf(products.iterator()) if table else build_catalog_pdf(products.iterator(), include_images=include_images)
+        response = HttpResponse(data, content_type="application/pdf")
+        variant = "tabla-compacta" if table else "con-imagenes" if include_images else "sin-imagenes"
         response["Content-Disposition"] = f'attachment; filename="dulce-y-salado-productos-{variant}.pdf"'
         return response
 

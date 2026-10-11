@@ -108,6 +108,8 @@ Junto al CSV están «PDF con imágenes» y «PDF sin imágenes». Ambas descarg
 
 QA PDF: CI instala Poppler para leer/renderizar los archivos. En entornos sin `pdfinfo`, `pdftotext` y `pdfimages`, las pruebas de inspección se omiten explícitamente; instalar `poppler-utils` para ejecutarlas completas. En Docker puede instalarse temporalmente sólo para QA con `docker compose exec -u root web sh -c 'apt-get update && apt-get install -y --no-install-recommends poppler-utils'`. `docker compose exec web python tests/pdf_examples.py` genera dos ejemplos ficticios en `.qa/pdfs`, ignorada por Git, con modelos sin guardar y media temporal. No toca la base comercial. Para inspección: `pdftoppm -png -r 110 archivo.pdf prefijo` y revisar todas las páginas.
 
+«PDF tabla compacta» añade una descarga A4 horizontal con producto, marca, descripción, unidad, $ Min., $ May. y Cond. mayorista. Sin categoría ni fotografías; filas de altura variable, encabezados repetidos, texto completo y las mismas reglas de permisos/filtros/orden. El script de QA también genera `catalogo-tabla-compacta.pdf`.
+
 ## Ubicación
 En Admin → Catálogo → Configuración comercial, crear una única configuración con la dirección real. El enlace exacto de Google Maps es opcional: pegar un enlace HTTPS compartido por Maps o dejarlo vacío para buscar la dirección. Luego editar ese mismo registro. La página pública `/ubicacion/` está enlazada desde el footer. Si falta dirección muestra un aviso sin destino ficticio. Migración nueva: `catalog.0003_business_settings`; ejecutar `docker compose exec web python manage.py migrate` al actualizar.
 

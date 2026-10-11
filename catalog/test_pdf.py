@@ -20,7 +20,7 @@ from .models import Category, Product
 POPPLER = all(shutil.which(tool) for tool in ("pdfinfo", "pdftotext", "pdfimages"))
 
 
-class ProductPDFTests(TestCase):
+class PDFTestCase(TestCase):
     def setUp(self):
         self.media = TemporaryDirectory()
         self.addCleanup(self.media.cleanup)
@@ -59,6 +59,8 @@ class ProductPDFTests(TestCase):
     def image_count(self, data):
         return len(re.findall(r"^\s+\d+\s+\d+\s+image\s", self.tool("pdfimages", data, "-list", "-"), re.MULTILINE))
 
+
+class ProductPDFTests(PDFTestCase):
     def test_both_variants_permissions_headers_and_get_only(self):
         for url in self.urls:
             with self.subTest(url=url):
@@ -220,3 +222,84 @@ class ProductPDFTests(TestCase):
                 self.assertIn(f"Marca QA {index:02}", page)
                 self.assertIn(f"Condición QA {index:02}", page)
                 self.assertIn("Precio minorista: $ 15,25", page)
+
+
+class ProductTablePDFTests(PDFTestCase):
+    def setUp(self):
+        super().setUp()
+        self.urls = [reverse("admin:catalog_product_export_pdf_table_plain")]
+
+    def test_permissions_methods_buttons_and_invalid_filters(self):
+        ProductPDFTests.test_both_variants_permissions_headers_and_get_only(self)
+        self.allow()
+        filters = {"category__id__exact": self.category.pk, "q": "Chocolate", "o": "-1", "p": "0"}
+        response = self.client.get(reverse("admin:catalog_product_changelist"), filters)
+        self.assertContains(response, "PDF tabla compacta")
+        for url in self.urls:
+            self.assertContains(response, f'href="{url}?{escape(urlencode(filters))}"')
+            self.assertEqual(self.client.get(url, {"invalid_field": "x"}).status_code, 400)
+
+    @skipUnless(POPPLER, "Instalar poppler-utils para inspeccionar tablas PDF")
+    def test_landscape_text_prices_optional_inactive_and_no_category_or_images(self):
+        self.allow()
+        for url in self.urls:
+            data = self.pdf(url)
+            text = " ".join(self.text(data).split())
+            for value in (self.product.name, self.product.brand, "Línea uno Línea dos & más",
+                          "$ 1.234,56", "$ 1.000,01", self.product.wholesale_condition, "Estado: Inactivo"):
+                self.assertIn(value, text)
+            self.assertNotIn(self.category.name, text)
+            self.assertNotIn("Categoría", text)
+            self.assertEqual(self.image_count(data), 0)
+            self.assertRegex(self.tool("pdfinfo", data, "-"), r"Page size:\s+841\.[\d]+ x 595\.[\d]+ pts \(A4\)")
+            self.assertIn("tabla-compacta", self.client.get(url)["Content-Disposition"])
+        self.product.brand = self.product.description = self.product.wholesale_condition = ""
+        self.product.wholesale_price = None
+        self.product.is_active = True
+        self.product.save()
+        text = self.text(self.pdf())
+        for omitted in ("None", "null", "Estado:", "Sin imagen"):
+            self.assertNotIn(omitted, text)
+
+    @skipUnless(POPPLER, "Instalar poppler-utils para inspeccionar tablas PDF")
+    def test_filters_order_all_pages_and_empty(self):
+        ProductPDFTests.test_filters_order_and_all_pages_match_csv_and_changelist(self)
+        ProductPDFTests.test_empty_pdf_is_valid_and_explains_filters(self)
+
+    @skipUnless(POPPLER, "Instalar poppler-utils para inspeccionar tablas PDF")
+    def test_repeated_headers_normal_rows_stay_together_and_long_text_is_complete(self):
+        self.allow()
+        Product.objects.bulk_create([
+            Product(category=self.category, name=f"Registro QA {i:02}", brand=f"Marca QA {i:02}", retail_price="15.25",
+                    description=f"Descripción QA {i:02}. " * 4, wholesale_condition=f"Condición QA {i:02}")
+            for i in range(25)
+        ])
+        for url in self.urls:
+            pages = [page for page in self.text(self.pdf(url)).split("\f") if page.strip()]
+            self.assertGreater(len(pages), 1)
+            for number, page in enumerate(pages, 1):
+                for heading in ("Dulce y Salado", "Producto", "Marca", "Descripción", "Unidad", "$ Min.", "$ May.",
+                                "Precios estimativos en ARS", f"Página {number}"):
+                    self.assertIn(heading, " ".join(page.split()))
+            for index in range(25):
+                page = next(page for page in pages if f"Registro QA {index:02}" in page)
+                self.assertIn(f"Marca QA {index:02}", page)
+                self.assertIn(f"Condición QA {index:02}", page)
+        self.product.name = "Ñ" * 180
+        self.product.description = "Descripción larga con acentos y ñ. " * 300 + "FIN DESCRIPCIÓN LARGA"
+        self.product.wholesale_condition = "Condición extensa " * 15 + "FIN CONDICIÓN"
+        self.product.save()
+        for url in self.urls:
+            data = self.pdf(url, {"q": self.product.name})
+            text = self.text(data)
+            self.assertGreater(text.count("\f"), 2)
+            self.assertIn("FIN DESCRIPCIÓN LARGA", " ".join(text.split()))
+            self.assertIn("FIN CONDICIÓN", " ".join(text.split()))
+            self.assertEqual(text.count("Descripción larga con acentos y ñ."), 300)
+            self.assertIn(self.product.name, "".join(text.split()))
+            for page in text.split("\f"):
+                if page.strip():
+                    self.assertIn("Producto", page)
+                    self.assertIn("Descripción", page)
+                    self.assertIn("Dulce y Salado", page)
+                    self.assertIn("Precios estimativos en ARS", page)

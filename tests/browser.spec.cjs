@@ -432,7 +432,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     } finally { await isolated.close(); }
   });
 
-  await t.test("Admin descarga CSV y ambas variantes PDF del conjunto filtrado", async () => {
+  await t.test("Admin descarga CSV y variantes PDF del conjunto filtrado", async () => {
     await admin.goto(`${base}/admin/catalog/product/?q=Scroll&sale_unit__exact=unidad&is_active__exact=1`);
     const downloaded = admin.waitForEvent("download");
     await admin.getByRole("link", { name: "Exportar CSV", exact: true }).click();
@@ -442,7 +442,8 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     const lines = bytes.toString("utf8").trim().split(/\r?\n/);
     assert.equal(lines.length, 11);
     assert.equal(lines.slice(1).every(line => line.includes("ZZZ QA Scroll") && line.endsWith(";Sí")), true);
-    for (const [label, variant] of [["PDF con imágenes", "con-imagenes"], ["PDF sin imágenes", "sin-imagenes"]]) {
+    for (const [label, variant] of [["PDF con imágenes", "con-imagenes"], ["PDF sin imágenes", "sin-imagenes"],
+                                  ["PDF tabla compacta", "tabla-compacta"]]) {
       const link = admin.getByRole("link", { name: label, exact: true });
       const url = new URL(await link.getAttribute("href"), base);
       assert.equal(url.searchParams.get("q"), "Scroll");

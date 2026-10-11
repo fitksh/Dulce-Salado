@@ -16,7 +16,7 @@ from django.test import override_settings  # noqa: E402
 from PIL import Image, ImageDraw  # noqa: E402
 
 from catalog.models import Category, Product  # noqa: E402
-from catalog.pdf import build_catalog_pdf  # noqa: E402
+from catalog.pdf import build_catalog_pdf, build_catalog_table_pdf  # noqa: E402
 
 
 def main():
@@ -55,6 +55,9 @@ def main():
             path = output / f"catalogo-{variant}.pdf"
             path.write_bytes(build_catalog_pdf(products, include_images=include_images))
             print(f"{path}: {path.stat().st_size} bytes")
+        path = output / "catalogo-tabla-compacta.pdf"
+        path.write_bytes(build_catalog_table_pdf(products))
+        print(f"{path}: {path.stat().st_size} bytes")
 
 
 if __name__ == "__main__":
