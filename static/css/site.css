@@ -32,6 +32,8 @@ label { font-weight: 600; }
 .footer-links { display: flex; align-items: center; flex-wrap: wrap; gap: 1.2rem; }
 .footer-links > a { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; }
 .business-card { padding: 1.2rem; max-width: 680px; background: white; border: 1px solid var(--line); border-radius: .8rem; }
+.location-map { margin-top: 1.25rem; border: 1px solid var(--line); border-radius: .8rem; overflow: hidden; }
+.location-map iframe { display: block; border: 0; width: 100%; height: clamp(280px, 55vw, 460px); }
 address { font-style: normal; line-height: 1.6; margin-block: 1rem; overflow-wrap: anywhere; }
 .business-hours { font-size: .85rem; padding-bottom: .25rem; }
 .hours-panel { position: relative; width: fit-content; max-width: 100%; }

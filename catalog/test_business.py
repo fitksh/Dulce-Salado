@@ -68,3 +68,9 @@ class BusinessSettingsTests(TestCase):
         staff.user_permissions.add(Permission.objects.get(codename="view_businesssettings"))
         self.assertEqual(self.client.get(url).status_code, 200)
         self.assertEqual(self.client.get(reverse("admin:catalog_businesssettings_add")).status_code, 403)
+
+    def test_owner_embed_is_fixed_and_accessible_without_address(self):
+        response = self.client.get(reverse("directions"))
+        self.assertContains(response, 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3604.4548652322774!2d-62.985447699999995!3d-40.8327939!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95f69903d3bece3b%3A0xcf531a0c9b35d8a8!2sDulce%20y%20Salado%20-%20Todo%20suelto!5e1!3m2!1sen!2sar!4v1791677257344!5m2!1sen!2sar')
+        self.assertContains(response, 'title="Ubicación de Dulce y Salado en Google Maps" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen')
+        self.assertContains(response, "todavía no está disponible")

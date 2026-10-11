@@ -126,3 +126,11 @@ Tarea 1 implementada, pendiente validación: horarios dentro del header con deta
 Tarea 1 validación backend: check/Ruff OK, 28 pruebas Django afectadas y 7 Node OK, makemigrations sin cambios. QA de navegador ampliado a 360/390/430/768/1280 px, sin desbordamiento, categorías automáticas/fallback y toolbar simétrica; panel dentro de header (<150 px), no desplaza main, Escape con retorno de foco y cierre exterior. Captura móvil inspeccionada. Se corrigió el test exterior para pulsar un texto del footer fuera del panel (el h1 estaba detrás de éste). Resultado Chromium se registra antes de publicar.
 
 Tarea 1 Chromium final: 16 comprobaciones OK, axe sin infracciones y cinco anchuras verificadas. Próxima acción: publicar/verificar CI; luego tarea 2, mapa fijo del propietario sin depender de conectividad externa.
+
+Tarea 1 publicada: b503ac4cf6f4ef924e3e6a61917b22b48ae5be02, CI success run 38099439417.
+
+Tarea 2: iframe fijo exacto proporcionado por el dueño en Cómo llegar, visible también en móvil, altura responsive, title/lazy/referrerpolicy/allowfullscreen. Dirección y enlace Admin preservados, incluso cuando falla el recurso externo. El iframe del comercio es independiente de la dirección editable y deberá actualizarse manualmente en templates/directions.html si el comercio se muda. Sin modelos/dependencias/migraciones. Archivos: directions/CSS, test_business y browser (Maps interceptado). Criterios: cinco anchuras, atributos correctos, fallback dirección/botón funcionando sin red Google.
+
+Tarea 2 backend: 15 pruebas Django afectadas, check/Ruff y control de migraciones OK. QA intercepta el iframe (o aborta en contexto sin JS), sin depender de Google. Se hizo explícita la espera de navegación y mejora progresiva del selector en el test; evita seleccionar en el DOM anterior mientras termina la búsqueda. Sin cambios en búsqueda/categorías.
+
+Tarea 2 validada: 16 Chromium OK, iframe visible/medidas/atributos correctos a 360/390/430/768/1280 px, axe OK y navegación externa interceptada. Captura móvil inspeccionada. Próxima acción: publicar/verificar CI; luego dialog de imagen única.

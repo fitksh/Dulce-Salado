@@ -10,6 +10,8 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
   const browser = await chromium.launch();
   t.after(() => browser.close());
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  // Recurso externo independiente de QA: el test sólo inspecciona el iframe/atributos.
+  await context.route("https://www.google.com/maps/embed?*", route => route.fulfill({ contentType: "text/html", body: "<p>Mapa aislado de QA</p>" }));
   for (let attempt = 0; attempt < 30; attempt++) {
     const response = await context.request.get(base, { timeout: 1000 }).catch(() => null);
     if (response?.ok()) break;
@@ -69,8 +71,11 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.setViewportSize({ width: 390, height: 844 });
     await page.locator("#catalog-search").fill("QA Marca");
     await page.getByRole("button", { name: "Buscar", exact: true }).click();
+    await page.waitForURL(url => url.searchParams.get("q") === "QA Marca");
+    await page.locator(".category-select button").waitFor({ state: "hidden" });
     assert.equal(await page.locator(".product-card").count(), 1);
     await page.locator("#category-filter").selectOption("qa-cotillon");
+    await page.waitForURL(url => url.searchParams.get("categoria") === "qa-cotillon");
     await page.getByRole("heading", { name: "No encontramos productos" }).waitFor();
     assert.equal(await page.locator("#catalog-search").inputValue(), "QA Marca");
     assert.equal(await page.locator("#category-filter").inputValue(), "qa-cotillon");
@@ -377,9 +382,17 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     const link = new URL(await maps.getAttribute("href"));
     assert.equal(link.searchParams.get("query"), address);
     assert.equal(link.searchParams.get("api"), "1");
-    for (const width of [360, 390, 430, 1280]) {
+    const iframe = page.locator(".location-map iframe");
+    assert.equal(await iframe.getAttribute("title"), "Ubicación de Dulce y Salado en Google Maps");
+    assert.equal(await iframe.getAttribute("loading"), "lazy");
+    assert.equal(await iframe.getAttribute("referrerpolicy"), "strict-origin-when-cross-origin");
+    assert.equal(await iframe.getAttribute("allowfullscreen"), "");
+    assert.match(await iframe.getAttribute("src"), /^https:\/\/www\.google\.com\/maps\/embed\?pb=!1m18/);
+    for (const width of [360, 390, 430, 768, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      const map = await iframe.boundingBox();
+      assert.ok(map.width <= width - 32 && map.height >= 280 && map.height <= 460);
       await page.screenshot({ path: `.qa/screenshots/directions-${width}.png`, fullPage: true });
     }
     await accessible();
@@ -449,6 +462,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await page.locator(".hours-panel").evaluate(node => node.open), false);
     const plain = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 360, height: 844 } });
     const plainPage = await plain.newPage();
+    await plain.route("https://www.google.com/maps/embed?*", route => route.abort());
     await plainPage.goto(`${base}/como-llegar/`);
     await plainPage.locator(".hours-panel summary").click();
     assert.equal(await plainPage.locator(".weekly-hours").isVisible(), true);
