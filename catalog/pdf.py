@@ -79,7 +79,7 @@ class _Photo(Flowable):
         self.canv.drawInlineImage(self.image, 0, 0, width=self.width, height=self.height)
 
 
-def _photo(product, label_style):
+def _photo(product, label_style, *, max_side=56):
     if not product.image:
         return _paragraph("Sin imagen", label_style)
     try:
@@ -93,7 +93,7 @@ def _photo(product, label_style):
             reduced.save(buffer, format="JPEG", quality=82)
             buffer.seek(0)
             width, height = reduced.size
-        scale = 56 / max(width, height)  # 56 pt ≈ 75 px; contain en ambas proporciones.
+        scale = max_side / max(width, height)  # Contain, sin recortar ni modificar el original.
         return _Photo(buffer, width=width * scale, height=height * scale)
     except (OSError, ValueError, PILImage.DecompressionBombError):
         return _paragraph("Foto no disponible", label_style)
@@ -150,14 +150,16 @@ def build_catalog_pdf(products, *, include_images):
     return output.getvalue()
 
 
-def build_catalog_table_pdf(products):
-    body, _, _ = _styles()
+def build_catalog_table_pdf(products, *, include_images=False):
+    body, _, label = _styles()
     cell = ParagraphStyle("table-cell", parent=body, fontSize=9, leading=12, spaceAfter=0)
     header = ParagraphStyle("table-header", parent=cell, fontName="CatalogSansBold")
     output = BytesIO()
     document = SimpleDocTemplate(output, pagesize=landscape(A4), leftMargin=16 * mm, rightMargin=16 * mm,
                                 topMargin=29 * mm, bottomMargin=22 * mm)
-    headings = ("Producto", "Marca", "Descripción", "Unidad", "$ Min.", "$ May.", "Cond. mayorista")
+    headings = ("Imagen", "Producto", "Marca", "Descripción", "Unidad de venta", "Precio minorista",
+                "Precio mayorista", "Condición mayorista") if include_images else (
+                    "Producto", "Marca", "Descripción", "Unidad", "$ Min.", "$ May.", "Cond. mayorista")
     rows = [[_paragraph(value, header) for value in headings]]
     for product in products:
         name = [_paragraph(product.name, cell)]
@@ -166,11 +168,15 @@ def build_catalog_table_pdf(products):
         values = (product.brand, product.description, product.get_sale_unit_display(), ars(product.retail_price),
                   ars(product.wholesale_price) if product.wholesale_price is not None else "",
                   product.wholesale_condition)
-        rows.append([name, *[_paragraph(value, cell) for value in values]])
+        row = [name, *[_paragraph(value, cell) for value in values]]
+        if include_images:
+            row.insert(0, _photo(product, label, max_side=38))  # 38 pt ≈ 51 px.
+        rows.append(row)
     story = []
     if len(rows) > 1:
         width = document.width - 12
-        columns = [width * fraction for fraction in (.20, .12, .26, .07, .105, .105, .14)]
+        columns = ([48, *[(width - 48) * fraction for fraction in (.19, .10, .235, .085, .115, .115, .16)]]
+                   if include_images else [width * fraction for fraction in (.20, .12, .26, .07, .105, .105, .14)])
         table = Table(rows, colWidths=columns, repeatRows=1, splitByRow=1, splitInRow=1, hAlign="LEFT")
         table.setStyle(TableStyle([
             ("VALIGN", (0, 0), (-1, -1), "TOP"),

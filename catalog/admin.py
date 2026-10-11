@@ -60,6 +60,8 @@ class ProductAdmin(admin.ModelAdmin):
                  {"include_images": False}, name="catalog_product_export_pdf_plain"),
             path("exportar-pdf-tabla-compacta/", self.admin_site.admin_view(self.export_pdf),
                  {"include_images": False, "table": True}, name="catalog_product_export_pdf_table_plain"),
+            path("exportar-pdf-tabla-con-imagenes/", self.admin_site.admin_view(self.export_pdf),
+                 {"include_images": True, "table": True}, name="catalog_product_export_pdf_table_images"),
         ] + super().get_urls()
 
     def export_queryset(self, request):
@@ -94,9 +96,13 @@ class ProductAdmin(admin.ModelAdmin):
             products = self.export_queryset(request)
         except IncorrectLookupParameters:
             return HttpResponseBadRequest("Filtros de exportación inválidos.")
-        data = build_catalog_table_pdf(products.iterator()) if table else build_catalog_pdf(products.iterator(), include_images=include_images)
+        builder = build_catalog_table_pdf if table else build_catalog_pdf
+        data = builder(products.iterator(), include_images=include_images)
         response = HttpResponse(data, content_type="application/pdf")
-        variant = "tabla-compacta" if table else "con-imagenes" if include_images else "sin-imagenes"
+        if table:
+            variant = "tabla-con-imagenes" if include_images else "tabla-compacta"
+        else:
+            variant = "con-imagenes" if include_images else "sin-imagenes"
         response["Content-Disposition"] = f'attachment; filename="dulce-y-salado-productos-{variant}.pdf"'
         return response
 

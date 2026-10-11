@@ -227,7 +227,7 @@ class ProductPDFTests(PDFTestCase):
 class ProductTablePDFTests(PDFTestCase):
     def setUp(self):
         super().setUp()
-        self.urls = [reverse("admin:catalog_product_export_pdf_table_plain")]
+        self.urls = [reverse(f"admin:catalog_product_export_pdf_table_{variant}") for variant in ("images", "plain")]
 
     def test_permissions_methods_buttons_and_invalid_filters(self):
         ProductPDFTests.test_both_variants_permissions_headers_and_get_only(self)
@@ -235,6 +235,7 @@ class ProductTablePDFTests(PDFTestCase):
         filters = {"category__id__exact": self.category.pk, "q": "Chocolate", "o": "-1", "p": "0"}
         response = self.client.get(reverse("admin:catalog_product_changelist"), filters)
         self.assertContains(response, "PDF tabla compacta")
+        self.assertContains(response, "PDF tabla con imágenes")
         for url in self.urls:
             self.assertContains(response, f'href="{url}?{escape(urlencode(filters))}"')
             self.assertEqual(self.client.get(url, {"invalid_field": "x"}).status_code, 400)
@@ -252,12 +253,12 @@ class ProductTablePDFTests(PDFTestCase):
             self.assertNotIn("Categoría", text)
             self.assertEqual(self.image_count(data), 0)
             self.assertRegex(self.tool("pdfinfo", data, "-"), r"Page size:\s+841\.[\d]+ x 595\.[\d]+ pts \(A4\)")
-            self.assertIn("tabla-compacta", self.client.get(url)["Content-Disposition"])
+            self.assertIn("tabla-", self.client.get(url)["Content-Disposition"])
         self.product.brand = self.product.description = self.product.wholesale_condition = ""
         self.product.wholesale_price = None
         self.product.is_active = True
         self.product.save()
-        text = self.text(self.pdf())
+        text = self.text(self.pdf(self.urls[1]))
         for omitted in ("None", "null", "Estado:", "Sin imagen"):
             self.assertNotIn(omitted, text)
 
@@ -278,7 +279,8 @@ class ProductTablePDFTests(PDFTestCase):
             pages = [page for page in self.text(self.pdf(url)).split("\f") if page.strip()]
             self.assertGreater(len(pages), 1)
             for number, page in enumerate(pages, 1):
-                for heading in ("Dulce y Salado", "Producto", "Marca", "Descripción", "Unidad", "$ Min.", "$ May.",
+                prices = ("Precio minorista", "Precio mayorista") if url == self.urls[0] else ("$ Min.", "$ May.")
+                for heading in ("Dulce y Salado", "Producto", "Marca", "Descripción", "Unidad", *prices,
                                 "Precios estimativos en ARS", f"Página {number}"):
                     self.assertIn(heading, " ".join(page.split()))
             for index in range(25):
@@ -295,7 +297,10 @@ class ProductTablePDFTests(PDFTestCase):
             self.assertGreater(text.count("\f"), 2)
             self.assertIn("FIN DESCRIPCIÓN LARGA", " ".join(text.split()))
             self.assertIn("FIN CONDICIÓN", " ".join(text.split()))
-            self.assertEqual(text.count("Descripción larga con acentos y ñ."), 300)
+            # La extracción intercala otras columnas entre fragmentos de página.
+            # Ambas palabras únicas comprueban las 300 repeticiones completas.
+            self.assertEqual(len(re.findall(r"\bacentos\b", text)), 300)
+            self.assertEqual(text.count("ñ."), 300)
             self.assertIn(self.product.name, "".join(text.split()))
             for page in text.split("\f"):
                 if page.strip():
@@ -303,3 +308,16 @@ class ProductTablePDFTests(PDFTestCase):
                     self.assertIn("Descripción", page)
                     self.assertIn("Dulce y Salado", page)
                     self.assertIn("Precios estimativos en ARS", page)
+
+    @skipUnless(POPPLER, "Instalar poppler-utils para inspeccionar tablas PDF")
+    def test_table_photos_reuse_contain_missing_and_corrupt_handling(self):
+        self.allow()
+        ProductPDFTests.test_photos_keep_proportions_are_reduced_and_stored_files_do_not_change(self)
+        text = " ".join(self.text(self.pdf()).split())
+        for heading in ("Imagen", "Producto", "Marca", "Descripción", "Unidad de venta", "Precio minorista",
+                        "Precio mayorista", "Condición mayorista"):
+            self.assertIn(heading, text)
+
+    @skipUnless(POPPLER, "Instalar poppler-utils para inspeccionar tablas PDF")
+    def test_table_missing_and_corrupt_photos_keep_the_record(self):
+        ProductPDFTests.test_missing_corrupt_or_absent_photos_do_not_abort_export(self)

@@ -58,6 +58,9 @@ def main():
         path = output / "catalogo-tabla-compacta.pdf"
         path.write_bytes(build_catalog_table_pdf(products))
         print(f"{path}: {path.stat().st_size} bytes")
+        path = output / "catalogo-tabla-con-imagenes.pdf"
+        path.write_bytes(build_catalog_table_pdf(products, include_images=True))
+        print(f"{path}: {path.stat().st_size} bytes")
 
 
 if __name__ == "__main__":

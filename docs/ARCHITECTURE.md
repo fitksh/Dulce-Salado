@@ -63,3 +63,7 @@ Fotos existentes se leen desde storage y se reducen sólo en memoria a 240 px, J
 Poppler es herramienta exclusiva de QA/CI (lectura de texto, páginas e imágenes y renderizado); no es dependencia de runtime ni se añade al Dockerfile. tests/pdf_examples.py genera dos ejemplos en .qa/pdfs a partir de modelos sin guardar y media temporal: no consulta ni modifica la base comercial. .qa permanece ignorada.
 
 La composición desktop del carrito se resuelve exclusivamente con CSS: padding lateral condicionado por :has(.cart-thumbnail) y miniatura absoluta de 132 px dentro del artículo. Todos los campos siguen en el mismo flujo de contenido a la derecha. Sin foto no se reserva espacio; HTML recalculado cambia la condición automáticamente. No se añade wrapper ni se altera renderCart: los controles permanecen conectados durante las actualizaciones. Bajo 800 px siguen las reglas móviles anteriores.
+
+## Variantes tabulares PDF
+
+build_catalog_table_pdf comparte fuentes, escape, marco/paginación y fotos con las listas, conservadas. A4 horizontal y Table con repeatRows=1, división entre filas y división interna sólo cuando la fila no cabe; columnas de 9 pt, sin categoría. La tabla con fotos utiliza máximo 38 pt, las listas conservan 56 pt por defecto. ProductAdmin añade dos rutas GET al mismo export_pdf, selector table e include_images; queryset/permisos y CSV intactos. Todo BytesIO, sin persistencia ni nuevas dependencias. Referencia de encabezados repetidos: [ReportLab Tables](https://docs.reportlab.com/reportlab/userguide/ch7_tables/).

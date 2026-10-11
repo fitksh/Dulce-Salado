@@ -81,3 +81,7 @@ Quitar se representa con una papelera SVG inline, naranja secundario, objetivo 4
 Desde 800 px, las filas del carrito con foto disponen de una columna de 132 px a la izquierda. Nombre/marca/precios/condición/controles/subtotal quedan a su derecha y la papelera arriba a la derecha. Entre 800 y 1099 px, los controles de estas filas se apilan para mantener espacio útil. Sin imagen se recupera todo el ancho, también si se elimina en Admin. Bajo 800 px se conserva la miniatura de 56 px junto al nombre y la distribución móvil previa. Fotos contain y visor compartido intactos.
 
 Los productos [DEMO] y sus marcas/precios son ficticios; se incorporan únicamente por el comando manual documentado en README, nunca durante navegación o arranque.
+
+## Nuevas variantes PDF del Admin
+
+PDF tabla compacta y PDF tabla con imágenes se agregan junto al CSV y ambas listas, sin reemplazarlas. A4 horizontal blanco, filas flexibles y encabezados repetidos, tipografía oscura de 9 pt, márgenes y separadores finos; no categoría. Compacta usa abreviaturas monetarias claras. Con imágenes conserva los ocho encabezados completos, miniaturas contain de unos 51 px y avisos discretos cuando faltan; texto completo, ARS, inactivos y nota/página en las dos tablas.

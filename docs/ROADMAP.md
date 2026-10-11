@@ -80,7 +80,7 @@ Exportación PDF y ajustes completados/publicados en main, cinco tareas con CI s
 ## Nuevas exportaciones PDF, imágenes e importación CSV
 
 - [x] Tarea 1 — PDF tabla compacta; 17 PDF/CSV, 25 Chromium y revisión de seis páginas correctos.
-- [ ] Tarea 2 — PDF tabla con imágenes.
+- [x] Tarea 2 — PDF tabla con imágenes; 19 PDF/CSV, 25 Chromium y siete páginas inspeccionadas.
 - [ ] Tarea 3 — Marcos cuadrados y fotografías del catálogo.
 - [ ] Tarea 4 — Importación CSV y validaciones de altas.
 - [ ] Tarea 5 — Vista previa, confirmación y documentación.

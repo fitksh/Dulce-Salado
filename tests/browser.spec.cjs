@@ -443,7 +443,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(lines.length, 11);
     assert.equal(lines.slice(1).every(line => line.includes("ZZZ QA Scroll") && line.endsWith(";Sí")), true);
     for (const [label, variant] of [["PDF con imágenes", "con-imagenes"], ["PDF sin imágenes", "sin-imagenes"],
-                                  ["PDF tabla compacta", "tabla-compacta"]]) {
+                                  ["PDF tabla compacta", "tabla-compacta"], ["PDF tabla con imágenes", "tabla-con-imagenes"]]) {
       const link = admin.getByRole("link", { name: label, exact: true });
       const url = new URL(await link.getAttribute("href"), base);
       assert.equal(url.searchParams.get("q"), "Scroll");
