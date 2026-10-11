@@ -2,7 +2,7 @@
 
 Catálogo comercial mobile-first de repostería, dietética y cotillón. Catálogo público, carrito local y mensaje WhatsApp con precios estimados. El comercio confirma disponibilidad y condiciones; el sitio no registra pedidos ni gestiona stock, pagos o envíos.
 
-**Estado:** MVP, mejoras UX/UI y exportación PDF Admin implementados; verificación y commits en [EXECUTION_STATUS](docs/EXECUTION_STATUS.md). Cargar y revisar información comercial real mediante Django Admin.
+**Estado:** MVP y mejoras UX/UI implementados, con cuatro variantes PDF, miniaturas cuadradas e importación CSV de altas con vista previa en Admin; verificación y commits en [EXECUTION_STATUS](docs/EXECUTION_STATUS.md). Cargar y revisar información comercial real mediante Django Admin.
 
 ## Inicio local en Windows (PowerShell)
 
@@ -199,4 +199,10 @@ Capturas de QA en `.qa/screenshots`: `photo-*`, `expanded-*`, `catalog-viewport-
 3. Abrir ambos PDFs y revisar nombres, acentos, ARS, imágenes completas, salto de páginas y vista previa de impresión A4. Una búsqueda sin resultados genera un PDF válido con el aviso de conjunto vacío. Fotos ilegibles no impiden descargar los otros datos. No son pedidos ni listas de stock.
 4. En catálogo/carrito, probar Catálogo/Ubicación/Carrito a 320/360/390/430 y 800/1280 px. Agregar un producto con foto: en escritorio muestra 132 px y datos a la derecha; en móvil, 56 px junto al nombre. Sin foto no queda hueco. Abrir foto, cerrar con Escape, cambiar cantidad/tarifa, comprobar total vigente y quitar un artículo por papelera/teclado.
 
-Verificación local: 88 Django, 7 Node y 25 Chromium, check/Ruff y control de migraciones correctos. Se inspeccionaron todas las páginas de los dos ejemplos PDF ficticios y capturas responsive, también con fotografía comercial sólo en lectura. Los ejemplos usan modelos sin guardar y media temporal. Pendientes manuales: visor/impresora propios, zoom real del navegador y teléfono/lector reales; no se ha realizado una impresión física ni enviado WhatsApp.
+Verificación de esa iteración: 88 Django, 7 Node y 25 Chromium, check/Ruff y control de migraciones correctos. Se inspeccionaron todas las páginas de los dos ejemplos PDF ficticios y capturas responsive, también con fotografía comercial sólo en lectura. Los ejemplos usan modelos sin guardar y media temporal. Pendientes manuales: visor/impresora propios, zoom real del navegador y teléfono/lector reales; no se ha realizado una impresión física ni enviado WhatsApp.
+
+## Nuevas exportaciones e importación CSV — validación final
+
+126 pruebas Django, 7 Node y 26 Chromium correctas; check/Ruff y control de migraciones correctos. Los cuatro PDFs se generaron y sus 19 páginas renderizadas se inspeccionaron completas. Capturas comerciales revisadas en 360/390/430/768/1280: marcos cuadrados sin deformación, placeholders uniformes y visor completo. Todos los registros/fotos comerciales conservan sus huellas iniciales; sólo se importaron fixtures en bases aisladas. Confirmaciones simultáneas crean una sola alta; paso importado 0.05 kg compatible con 0.25 kg en el carrito.
+
+Para probar ahora: Ctrl+F5 y Admin → Productos → aplicar filtros/búsqueda/orden → **PDF tabla compacta** y **PDF tabla con imágenes**. Revisar conjunto completo respecto del CSV, A4 horizontal, ARS y fotos completas. Para la carga, seguir [Preparar e importar productos desde CSV](#preparar-e-importar-productos-desde-csv), descargar la plantilla ficticia, reemplazar categoría/productos y analizar antes de confirmar. No se modificaron los modelos, migraciones, reglas ni dependencias de esta iteración. Evidencia/commits/CI en [EXECUTION_STATUS](docs/EXECUTION_STATUS.md) y [QA](docs/QA.md).

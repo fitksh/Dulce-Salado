@@ -1,6 +1,8 @@
 import csv
+from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 from io import StringIO
+from threading import Barrier
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -8,11 +10,12 @@ from django.contrib.auth.models import Permission
 from django.core import signing
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db import IntegrityError
-from django.test import Client, TestCase
+from django.db import IntegrityError, close_old_connections, connections
+from django.test import Client, TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.urls import reverse
 
 from .admin import IMPORT_MAX_AGE, IMPORT_MAX_TOKEN, IMPORT_SALT
+from .cart import calculate_cart, product_revision
 from .csv_import import (
     HEADERS,
     MAX_FILE_BYTES,
@@ -215,6 +218,18 @@ class CSVImportEngineTests(TestCase):
         self.assertEqual(create_from_preview(records, preview.fingerprint), (0, 1))
         product.refresh_from_db()
         self.assertEqual(product.retail_price, Decimal("99.50"))
+
+    def test_imported_fifty_gram_step_accepts_a_quarter_kilo_in_the_existing_cart(self):
+        records = read_csv(csv_upload([csv_row(column5="0.05")]))
+        preview = preview_rows(records)
+        create_from_preview(records, preview.fingerprint)
+        product = Product.objects.get(name="Producto ficticio QA")
+        item = {"id": product.pk, "quantity": "0.25", "price_type": "retail", "sale_unit": "kg",
+                "revision": product_revision(product)}
+        cart = calculate_cart([item])
+        self.assertTrue(cart["valid"])
+        self.assertEqual(cart["total"], Decimal("3625.00"))
+        self.assertFalse(calculate_cart([{**item, "quantity": "0.26"}])["valid"])
 
 
 class CSVImportAdminTests(TestCase):
@@ -421,3 +436,30 @@ class CSVImportAdminTests(TestCase):
         self.assertContains(self.confirm(token, follow=True), "30 productos creados y 0 duplicados omitidos")
         self.assertEqual(Product.objects.filter(name__startswith="Lote Unicode QA").count(), 30)
         self.assertEqual(Product.objects.get(name="Lote Unicode QA 00").description, "ñ" * 4000)
+
+
+class CSVImportConcurrencyTests(TransactionTestCase):
+    @skipUnlessDBFeature("has_select_for_update")
+    def test_concurrent_confirmations_create_once_and_require_a_new_preview(self):
+        Category.objects.create(name="Repostería", slug="reposteria")
+        records = read_csv(csv_upload([csv_row()]))
+        expected = preview_rows(records).fingerprint
+        ready = Barrier(2)
+
+        def confirm():
+            close_old_connections()
+            try:
+                ready.wait(timeout=10)
+                try:
+                    created, omitted = create_from_preview(records, expected)
+                except PreviewChanged as error:
+                    return ("changed", error.preview.new_count, error.preview.duplicate_count)
+                return ("created", created, omitted)
+            finally:
+                connections.close_all()
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            futures = [pool.submit(confirm) for _ in range(2)]
+            results = [future.result(timeout=20) for future in futures]
+        self.assertCountEqual(results, [("created", 1, 0), ("changed", 0, 1)])
+        self.assertEqual(Product.objects.count(), 1)
