@@ -1,0 +1,53 @@
+{
+  "Dietética": [
+    ["Avena arrollada fina", "kg", "0.10", "2400.50", "2100.00", "Consultar compra por bolsa."],
+    ["Almendras naturales", "kg", "0.25", "14500.00", "12800.00", "Consultar cantidad y presentación."],
+    ["Nueces mariposa", "kg", "0.10", "13200.00", null, ""],
+    ["Pasas de uva sin semilla", "kg", "0.10", "5400.00", "4800.00", "Consultar compra por caja."],
+    ["Semillas de chía", "kg", "0.25", "6800.00", null, ""],
+    ["Semillas de lino dorado", "kg", "0.10", "3100.00", "2750.00", "Consultar cantidad mínima."],
+    ["Mix de frutos secos sin sal", "kg", "0.25", "11800.50", "10200.00", "Confirmar composición y presentación."],
+    ["Harina de almendras", "kg", "0.10", "16400.00", null, ""],
+    ["Harina integral de trigo", "kg", "0.25", "2200.00", "1950.00", "Consultar bolsa cerrada."],
+    ["Garbanzos secos", "kg", "0.25", "3500.00", null, ""],
+    ["Lentejas secas", "kg", "0.25", "3200.00", "2800.00", "Consultar cantidad mínima."],
+    ["Granola con miel", "kg", "0.10", "6200.00", null, ""],
+    ["Arroz integral", "kg", "0.25", "2700.00", "2400.00", "Consultar compra por bolsa."],
+    ["Galletas de arroz paquete", "paquete", "1.00", "1800.00", "1550.00", "Consultar paquetes por caja."],
+    ["Miel frasco 500 g", "unidad", "1.00", "4500.00", null, ""]
+  ],
+  "Cotillón": [
+    ["Velas de cumpleaños multicolor", "paquete", "1.00", "1200.00", "950.00", "Consultar paquetes por caja."],
+    ["Globo metálico estrella", "unidad", "1.00", "2500.00", null, ""],
+    ["Globos de látex surtidos", "paquete", "1.00", "3200.00", "2750.00", "Consultar combinación de colores."],
+    ["Servilletas festivas", "paquete", "1.00", "1800.00", null, ""],
+    ["Vasos de cartón cumpleaños", "paquete", "1.00", "2400.00", "2050.00", "Consultar cantidad de paquetes."],
+    ["Platos de cartón decorados", "paquete", "1.00", "2600.00", "2200.00", "Consultar presentación comercial."],
+    ["Guirnalda feliz cumpleaños", "unidad", "1.00", "1900.00", null, ""],
+    ["Mantel de fiesta", "unidad", "1.00", "2100.00", "1800.00", "Consultar colores disponibles."],
+    ["Bolsitas para sorpresas", "paquete", "1.00", "1500.00", null, ""],
+    ["Confeti de papel", "paquete", "1.00", "900.50", "750.00", "Consultar paquetes por bolsa."],
+    ["Topper de torta dorado", "unidad", "1.00", "1750.00", null, ""],
+    ["Bengala para torta", "unidad", "1.00", "1300.00", "1100.00", "Consultar cantidad mínima."],
+    ["Sombreros de fiesta", "paquete", "1.00", "2800.00", null, ""],
+    ["Cinta decorativa rizada", "unidad", "1.00", "1600.00", "1350.00", "Consultar rollos por caja."],
+    ["Número decorativo para torta", "unidad", "1.00", "1450.00", null, ""]
+  ],
+  "Repostería": [
+    ["Chocolate cobertura semiamargo", "kg", "0.10", "9800.50", "8500.00", "Consultar compra por caja."],
+    ["Chocolate cobertura blanco", "kg", "0.25", "10400.00", "9100.00", "Consultar presentación cerrada."],
+    ["Cacao amargo en polvo", "kg", "0.10", "8700.00", null, ""],
+    ["Azúcar impalpable", "kg", "0.25", "2800.00", "2450.00", "Consultar compra por bolsa."],
+    ["Dulce de leche repostero", "kg", "0.25", "5100.00", "4500.00", "Consultar cantidad y envase."],
+    ["Coco rallado fino", "kg", "0.10", "6200.00", null, ""],
+    ["Granas de colores", "kg", "0.10", "4900.00", "4200.00", "Consultar colores y presentación."],
+    ["Chips de chocolate", "kg", "0.25", "9300.00", null, ""],
+    ["Pasta para cubrir tortas", "paquete", "1.00", "5600.00", "4900.00", "Consultar paquetes por caja."],
+    ["Esencia de vainilla frasco", "unidad", "1.00", "2300.00", null, ""],
+    ["Colorante en gel rojo", "unidad", "1.00", "2700.00", "2350.00", "Consultar combinación de colores."],
+    ["Polvo de hornear", "paquete", "1.00", "1700.00", null, ""],
+    ["Pirotines para cupcakes", "paquete", "1.00", "2100.00", "1800.00", "Consultar cantidad de paquetes."],
+    ["Manga descartable grande", "unidad", "1.00", "650.00", "520.00", "Consultar compra por paquete."],
+    ["Gelatina sin sabor", "paquete", "1.00", "1900.00", null, ""]
+  ]
+}

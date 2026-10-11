@@ -62,5 +62,5 @@ Correcciones visuales completadas y publicadas; capturas reales inspeccionadas, 
 - [x] Tarea 3 — Carrito compacto, miniaturas y recuperación contextual.
 - [x] Tarea 4 — Catálogo compacto y paginación de 12 productos.
 - [x] Tarea 5 — Limpieza visual de revisión WhatsApp.
-- [ ] Tarea 6 — Seed manual de 45 productos ficticios, simulación y limpieza seguras.
+- [x] Tarea 6 — Seed manual de 45 productos ficticios, simulación y limpieza seguras.
 - [ ] Tarea 7 — QA completa, documentación, publicación y CI.

@@ -131,4 +131,22 @@ Las tarjetas muestran la fotografía completa en un marco neutro de 210 px, con 
 
 Header desde 800 px: marca, horarios y navegación Catálogo/Carrito en una fila. Bajo 800 px: tres regiones centradas, con ambos enlaces juntos. Logo de 64 px. El panel horario flota sin mover contenido. Ubicación integra información centrada, botón y mapa en una sola región: dos columnas desde 800 px y una por debajo. El footer queda centrado en todas las pantallas. `/como-llegar/` redirige permanentemente a `/ubicacion/`. La dirección completa, por ejemplo «Viedma, Río Grande 1814», se carga manualmente en Admin; no se agrega ni modifica automáticamente.
 
+## Productos ficticios para pruebas locales
+
+Comando manual, permitido sólo con `DJANGO_DEBUG=1`. Requiere las categorías activas Dietética, Cotillón y Repostería ya creadas en Admin; tolera mayúsculas y acentos, pero rechaza nombres ambiguos o faltantes antes de escribir. No se ejecuta al iniciar Docker, migrar ni preparar fixtures de navegador. Los tests de comportamiento lo invocan expresamente en bases y media temporales.
+
+```powershell
+# Simulación por defecto: no escribe productos ni archivos.
+docker compose exec web python manage.py seed_demo_catalog
+# Crear 45 productos [DEMO], 15 por categoría, sin fotos.
+docker compose exec web python manage.py seed_demo_catalog --apply
+# Simular limpieza; después aplicarla explícitamente.
+docker compose exec web python manage.py seed_demo_catalog --remove
+docker compose exec web python manage.py seed_demo_catalog --remove --apply
+```
+
+Son precios y marcas ficticios en ARS. Repetir el alta no duplica ni sobrescribe productos, incluidas ediciones manuales de demos. Las condiciones mayoristas requieren selección y confirmación comercial como cualquier producto. Buscar `[DEMO]` permite revisar las cuatro páginas de los 45 registros, con 12 por página; productos comerciales existentes cuentan adicionalmente en el catálogo general.
+
+La limpieza sólo borra altas propias sin modificaciones ni nombres duplicados. `MEDIA_ROOT/.seed_demo_catalog.json`, dentro del volumen de media ignorado por Git, registra PK, fecha de creación y huella de datos. Conservá este manifiesto junto con la base: si falta, está corrupto o no corresponde a los registros, el comando conserva los productos o aborta. Los demos editados se conservan y deben revisarse manualmente en Admin. No usa el prefijo como permiso de borrado. Las escrituras de productos son transaccionales; el archivo se reemplaza atómicamente. Una interrupción entre archivo y commit puede dejar identidad dudosa, que se conserva por seguridad. No hay nuevos modelos, migraciones ni dependencias.
+
 Capturas de QA en `.qa/screenshots`: `photo-*`, `expanded-*`, `catalog-viewport-*`, `hours-*`, `directions-*` y `footer-*`. Las capturas `live-*` corresponden al entorno comercial local inspeccionado sólo en lectura. Actualizar con los comandos de instalación existente anteriores; no hay migraciones nuevas.
