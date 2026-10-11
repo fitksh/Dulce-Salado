@@ -2,7 +2,7 @@
 {{ cart.items|json_script:"review-current-items" }}
 <h2 id="review-title" tabindex="-1">Antes de abrir WhatsApp</h2>
 <p class="notice warning" id="review-warning">{{ warning }}</p>
-{% if cart.notices %}<div class="notice warning" role="status"><ul>{% for notice in cart.notices %}<li>{{ notice }}</li>{% endfor %}</ul></div>{% endif %}
+{% if cart.notices %}<div class="notice warning" data-review-notice><ul>{% for notice in cart.notices %}<li>{{ notice }}</li>{% endfor %}</ul></div>{% endif %}
 {% if cart.valid %}
   <p>Total estimado: <strong>{{ cart.total|ars }}</strong></p>
   <label for="whatsapp-message">Mensaje que vas a preparar</label>
@@ -10,7 +10,7 @@
   <p class="muted">El texto se incluye completo. Si tu aplicación no abre un mensaje largo, copiá este texto y pegalo en la conversación del comercio.</p>
   <button type="button" class="secondary" id="copy-message">Copiar mensaje completo</button>
 {% else %}
-  <p class="notice error" role="alert">El carrito requiere correcciones. Volvé para revisar los artículos indicados.</p>
+  <p class="notice error" data-review-error>El carrito requiere correcciones. Volvé para revisar los artículos indicados.</p>
 {% endif %}
 {% if not whatsapp_configured %}<p class="notice">El comercio todavía no habilitó su número de WhatsApp en el catálogo.</p>{% endif %}
 <p class="muted">WhatsApp abrirá con el texto preparado. Vos decidís enviarlo; el sitio no confirma ni registra pedidos.</p>

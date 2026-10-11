@@ -8,6 +8,7 @@
   <title>{% block title %}Catálogo{% endblock %} · Dulce y Salado</title>
   <link rel="stylesheet" href="{% static 'css/site.css' %}">
   <script src="{% static 'js/cart-core.js' %}" defer></script>
+  <script src="{% static 'js/notifications.js' %}" defer></script>
   <script src="{% static 'js/quantity.js' %}" defer></script>
   <script src="{% static 'js/cart.js' %}" defer></script>
   <script src="{% static 'js/business-hours.js' %}" defer></script>
@@ -30,7 +31,8 @@
     {% include "includes/business_hours.html" %}
   </header>
   <main id="contenido" class="container" tabindex="-1">
-    <p id="cart-feedback" class="feedback" role="status" aria-live="polite" hidden></p>
+    {% include "includes/notification.html" %}
+    <p id="cart-storage-error" class="notice error" hidden></p>
     <noscript><p class="notice">Para armar y guardar el carrito en este navegador necesitás activar JavaScript.</p></noscript>
     {% block content %}{% endblock %}
   </main>

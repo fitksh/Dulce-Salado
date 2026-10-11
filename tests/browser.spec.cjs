@@ -136,8 +136,78 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await card.locator('input[name="quantity"]').inputValue(), "0.30");
     await card.locator('input[name="quantity"]').fill("0.15");
     await card.getByRole("button", { name: /Aumentar cantidad/ }).click();
-    await card.getByRole("alert").filter({ hasText: /múltiplo/ }).waitFor();
+    await card.locator(".quantity-error").filter({ hasText: /múltiplo/ }).waitFor();
     await card.locator('input[name="quantity"]').fill("0.10");
+  });
+
+  await t.test("notificaciones flotantes con scroll, temporizador, pausa, reemplazo y cierre", async () => {
+    const isolated = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const client = await isolated.newPage();
+    try {
+      await client.clock.install();
+      await client.goto(base);
+      const card = client.locator(".product-card").nth(8);
+      const add = card.getByRole("button", { name: "Agregar al carrito" });
+      await add.scrollIntoViewIfNeeded();
+      await add.focus();
+      const before = await client.evaluate(() => scrollY);
+      assert.ok(before > 2000);
+      await add.click();
+      const toast = client.locator("[data-notification]:visible");
+      await toast.waitFor();
+      assert.equal(await toast.count(), 1);
+      assert.ok(Math.abs(await client.evaluate(() => scrollY) - before) < 3);
+      assert.equal(await add.evaluate(node => node === document.activeElement), true);
+      assert.equal(await client.locator(".product-feedback").count(), 0);
+      for (const width of [360, 390, 430, 768, 1280]) {
+        await client.setViewportSize({ width, height: 844 });
+        const bounds = await toast.boundingBox();
+        assert.ok(bounds.y >= 16 && bounds.y + bounds.height <= 844);
+        assert.ok(bounds.x >= 16 && bounds.x + bounds.width <= width - 16);
+      }
+      await client.setViewportSize({ width: 390, height: 844 });
+      await toast.getByRole("link", { name: "Ver carrito" }).focus();
+      await client.mouse.move(0, 800);
+      await client.clock.fastForward(10000);
+      assert.equal(await toast.isVisible(), true);
+      await client.locator(".skip-link").focus();
+      await client.clock.fastForward(5100);
+      assert.equal(await toast.count(), 0);
+      await client.evaluate(() => Notifications.show("Información breve", "info"));
+      await client.clock.fastForward(4000);
+      await client.evaluate(() => Notifications.show("Advertencia nueva", "warning"));
+      await client.clock.fastForward(4000);
+      assert.equal(await toast.locator("[data-notification-message]").innerText(), "Advertencia nueva");
+      await toast.getByRole("button", { name: "Cerrar notificación" }).press("Enter");
+      assert.equal(await toast.count(), 0);
+      await client.evaluate(() => Notifications.show("Error puntual", "error"));
+      await client.mouse.move(0, 800);
+      await client.clock.fastForward(7900);
+      assert.equal(await toast.isVisible(), true);
+      await client.clock.fastForward(200);
+      assert.equal(await toast.count(), 0);
+
+      const first = client.locator(".product-card").first();
+      await first.getByRole("button", { name: "Agregar al carrito" }).click();
+      await first.locator('select[name="price_type"]').selectOption("wholesale");
+      await first.getByRole("button", { name: "Agregar al carrito" }).click();
+      await toast.getByRole("alert").filter({ hasText: /otra selección/ }).waitFor();
+      assert.equal(await client.locator('[role="alert"]:visible').count(), 1);
+      assert.ok((await toast.boundingBox()).y >= 16);
+      await accessible(client);
+      await client.screenshot({ path: ".qa/screenshots/floating-error.png" });
+      await client.goto(`${base}/carrito/`);
+      await client.locator(".total").waitFor();
+      await client.locator(".cart-quantity").first().fill("0.15");
+      await client.locator(".cart-quantity").first().dispatchEvent("change");
+      await client.locator("[data-cart-error]").filter({ hasText: /múltiplo/ }).waitFor();
+      await client.mouse.move(0, 800);
+      await client.clock.fastForward(8100);
+      assert.equal(await client.locator("[data-cart-error]").filter({ hasText: /múltiplo/ }).isVisible(), true);
+      assert.equal(await client.locator("#cart-review").isDisabled(), true);
+      assert.equal(await client.locator(".total").count(), 0);
+      assert.equal(await client.locator("[data-notification]:visible").count(), 0);
+    } finally { await isolated.close(); }
   });
 
   await t.test("cantidad, mayorista manual y persistencia al cerrar pestaña", async () => {
@@ -146,7 +216,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await card.locator('select[name="price_type"]').selectOption("wholesale");
     await card.getByRole("button", { name: "Agregar al carrito" }).click();
     await page.getByRole("status").filter({ hasText: "Producto agregado" }).waitFor();
-    assert.equal(await card.getByRole("link", { name: "Ver carrito" }).isVisible(), true);
+    assert.equal(await page.getByRole("link", { name: "Ver carrito" }).isVisible(), true);
     assert.equal(await page.locator("[data-cart-count]").innerText(), "1");
     await accessible();
     const stored = JSON.parse(await page.evaluate(() => localStorage.getItem("dulce-salado.cart.v1")));
@@ -171,7 +241,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await setQuantity("0.5");
     await waitCart("$ 45,25");
     await setQuantity("0.15");
-    await page.getByText(/La cantidad debe ser positiva/).waitFor();
+    await page.locator("[data-cart-error]").filter({ hasText: /La cantidad debe ser positiva/ }).waitFor();
     assert.equal(await page.locator("#cart-review").isDisabled(), true);
     await setQuantity("0.3");
     await waitCart("$ 27,15");
@@ -254,7 +324,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       } finally { pending.forEach(request => request.send()); await scrolled.unrouteAll({ behavior: "wait" }); }
       await scrolled.route("**/carrito/recalcular/", route => route.abort());
       await input.fill("6"); await input.dispatchEvent("change");
-      await scrolled.getByText(/Los importes no se muestran/).waitFor();
+      await scrolled.locator("#cart-request-error").filter({ hasText: /Los importes no se muestran/ }).waitFor();
       assert.equal(await input.isVisible(), true);
       assert.equal(await input.evaluate(node => node === window.qaQuantityNode), true);
       assert.equal(await scrolled.locator(".total").isVisible(), false);
@@ -268,7 +338,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
   await t.test("mayorista retirado exige selección explícita", async () => {
     await editPrices("100.25", "");
     await page.reload();
-    await page.getByText(/El precio mayorista ya no está disponible/).waitFor();
+    await page.locator("[data-cart-error]").filter({ hasText: /El precio mayorista ya no está disponible/ }).waitFor();
     assert.equal(await page.locator("#cart-review").isDisabled(), true);
     await page.locator(".cart-price").selectOption("retail");
     await waitCart("$ 30,08");
@@ -291,7 +361,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.getByRole("dialog").waitFor();
     await editPrices("200.50", "90.50");
     await page.locator("#review-continue").click();
-    await page.getByRole("dialog").getByText(/cambió la información/).waitFor();
+    await page.locator("[data-review-notice]").filter({ hasText: /cambió la información/ }).waitFor();
     assert.equal(page.url(), `${base}/carrito/`);
     assert.match(await page.locator("#whatsapp-message").inputValue(), /Total estimado: \$ 60,15/);
   });
@@ -342,7 +412,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await admin.locator("#id_quantity_step").fill("1");
     await admin.locator('input[name="_save"]').click();
     await page.reload();
-    await page.getByText(/Cambió la unidad de venta/).waitFor();
+    await page.locator("[data-cart-error]").filter({ hasText: /Cambió la unidad de venta/ }).waitFor();
     assert.equal(await page.locator(".cart-quantity").inputValue(), "");
     assert.equal(await page.locator("#cart-review").isDisabled(), true);
     await setQuantity("2");
@@ -359,7 +429,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
   await t.test("fallo de red oculta importes, recuperación y producto retirado", async () => {
     await page.route("**/carrito/recalcular/", route => route.abort());
     await page.reload();
-    await page.getByText(/Los importes no se muestran/).waitFor();
+    await page.locator("#cart-request-error").filter({ hasText: /Los importes no se muestran/ }).waitFor();
     assert.equal(await page.locator(".total").count(), 0);
     await page.unroute("**/carrito/recalcular/");
     await page.getByRole("button", { name: "Reintentar" }).click();
@@ -368,7 +438,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await admin.locator("#id_is_active").uncheck();
     await admin.locator('input[name="_save"]').click();
     await page.reload();
-    await page.getByText(/Este producto ya no está disponible/).waitFor();
+    await page.locator("[data-cart-error]").filter({ hasText: /Este producto ya no está disponible/ }).waitFor();
     assert.equal(await page.locator("#cart-review").isDisabled(), true);
     await page.getByRole("button", { name: /Quitar producto/ }).click();
     await page.getByRole("heading", { name: "Tu carrito está vacío" }).waitFor();
@@ -377,7 +447,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
   await t.test("almacenamiento corrupto recuperable y sin errores JS", async () => {
     await page.evaluate(() => localStorage.setItem("dulce-salado.cart.v1", "invalid"));
     await page.reload();
-    await page.getByText(/El carrito guardado no se pudo leer/).waitFor();
+    await page.locator("#cart-storage-error").filter({ hasText: /El carrito guardado no se pudo leer/ }).waitFor();
     await page.getByRole("button", { name: "Vaciar carrito" }).click();
     await page.getByRole("heading", { name: "Tu carrito está vacío" }).waitFor();
     assert.deepEqual(errors, []);
@@ -392,7 +462,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     const blockedPage = await blocked.newPage();
     await blockedPage.goto(base);
     await blockedPage.getByRole("button", { name: "Agregar al carrito" }).first().click();
-    await blockedPage.getByText(/No se pudo guardar el carrito/).waitFor();
+    await blockedPage.locator("#cart-storage-error").filter({ hasText: /No se pudo guardar el carrito/ }).waitFor();
     await blockedPage.goto(`${base}/carrito/`);
     await blockedPage.getByRole("heading", { name: "Tu carrito está vacío" }).waitFor();
     assert.equal(await blockedPage.locator("#cart-review").count(), 0);

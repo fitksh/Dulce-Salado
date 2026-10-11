@@ -1,17 +1,20 @@
 (function () {
   "use strict";
   const core = window.CartCore;
-  const feedback = document.getElementById("cart-feedback");
+  const storageError = document.getElementById("cart-storage-error");
   const app = document.getElementById("cart-app");
   let items = [], storageFailed = false, serial = 0;
   let reviewing = false;
-  let feedbackTimer;
-  function announce(message, kind = "error") {
-    clearTimeout(feedbackTimer);
-    feedback.className = `feedback ${kind}`;
-    feedback.setAttribute("role", kind === "error" ? "alert" : "status");
-    feedback.textContent = message; feedback.hidden = false;
-    if (kind === "success") feedbackTimer = setTimeout(() => { feedback.hidden = true; }, 8000);
+  const announce = window.Notifications.show;
+  function storageProblem(message) {
+    storageError.textContent = message; storageError.hidden = false;
+    announce(message);
+  }
+  function cartMessages(contents) {
+    const error = contents.querySelector("[data-cart-error] li, [data-review-error]");
+    const notice = contents.querySelector("#cart-notices li, [data-review-notice] li");
+    if (error) announce(error.textContent, "error");
+    else if (notice) announce(notice.textContent, "warning");
   }
   function renderCart(contents, html, submitted, pendingFocus) {
     const focused = document.activeElement;
@@ -64,13 +67,13 @@
   }
   function count() { document.querySelectorAll("[data-cart-count]").forEach(node => { node.textContent = String(items.length); }); }
   function load() {
-    try { items = core.read(window.localStorage); storageFailed = false; }
-    catch (error) { items = []; storageFailed = true; announce(error instanceof SyntaxError ? "El carrito guardado no se pudo leer. Vaciá el carrito para restablecerlo." : error.name === "SecurityError" ? "Habilitá el almacenamiento local de este navegador para guardar el carrito." : error.message); }
+    try { items = core.read(window.localStorage); storageFailed = false; storageError.hidden = true; }
+    catch (error) { items = []; storageFailed = true; storageProblem(error instanceof SyntaxError ? "El carrito guardado no se pudo leer. Vaciá el carrito para restablecerlo." : error.name === "SecurityError" ? "Habilitá el almacenamiento local de este navegador para guardar el carrito." : error.message); }
     count();
   }
   function persist() {
-    try { core.write(window.localStorage, items); storageFailed = false; }
-    catch { storageFailed = true; announce("No se pudo guardar el carrito en este navegador. Habilitá el almacenamiento local para continuar."); }
+    try { core.write(window.localStorage, items); storageFailed = false; storageError.hidden = true; }
+    catch { storageFailed = true; storageProblem("No se pudo guardar el carrito en este navegador. Habilitá el almacenamiento local para continuar."); }
     count();
   }
   async function refresh() {
@@ -100,18 +103,19 @@
       items = JSON.parse(contents.querySelector("#cart-current-items").textContent);
       persist();
       if (storageFailed) contents.querySelector("#cart-review")?.setAttribute("disabled", "");
+      else cartMessages(contents);
       contents.classList.remove("is-unverified");
     } catch (error) {
       if (requestNumber !== serial) return;
-      const notice = document.createElement("p"); notice.className = "notice error"; notice.setAttribute("role", "alert");
+      const notice = document.createElement("p"); notice.className = "notice error";
       notice.textContent = `${error.message} Los importes no se muestran hasta consultar el catálogo.`;
       const retry = document.createElement("button"); retry.type = "button"; retry.textContent = "Reintentar"; retry.addEventListener("click", refresh);
       requestError.replaceChildren(notice, retry); requestError.hidden = false;
+      announce(notice.textContent);
     } finally { if (requestNumber === serial) { loading.textContent = ""; contents.removeAttribute("aria-busy"); } }
   }
   load();
   document.querySelectorAll(".add-product").forEach(form => {
-    let successTimer;
     form.addEventListener("submit", event => {
       event.preventDefault();
       if (storageFailed) { announce("Revisá el almacenamiento del carrito antes de agregar productos."); return; }
@@ -120,11 +124,7 @@
         items = core.add(items, { id: Number(form.dataset.id), quantity: data.get("quantity"), price_type: data.get("price_type"), revision: form.dataset.revision, sale_unit: form.dataset.unit }, form.elements.quantity.step);
         persist();
         if (!storageFailed) {
-          feedback.hidden = true;
-          const confirmation = form.querySelector(".product-feedback");
-          confirmation.hidden = false;
-          clearTimeout(successTimer);
-          successTimer = setTimeout(() => { confirmation.hidden = true; }, 8000);
+          announce("Producto agregado al carrito.", "success", { label: "Ver carrito", href: document.querySelector(".cart-link").getAttribute("href") });
         }
       } catch (error) { announce(error.message); }
     });
@@ -153,12 +153,14 @@
         if (ready && !storageFailed) { window.location.assign(ready.href); return; }
         if (!dialog.open) dialog.showModal();
         if (storageFailed) document.getElementById("review-continue").disabled = true;
+        else cartMessages(reviewContents);
         document.getElementById("review-title").focus({ preventScroll: true });
         dialog.scrollTop = 0;
       } catch (error) { if (requestNumber === serial) { if (dialog.open) dialog.close(); announce(error.message); } }
       finally { if (requestNumber === serial) reviewing = false; }
     }
     dialog.addEventListener("close", () => {
+      window.Notifications.close(false, dialog);
       reviewing = false; ++serial;
       document.getElementById("cart-review")?.focus({ preventScroll: true });
       refresh();

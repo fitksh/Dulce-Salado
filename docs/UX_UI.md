@@ -41,3 +41,9 @@ Catálogo sin introducción comercial; Nuestros productos es el h1. Buscador con
 ## Segunda iteración — mapa del comercio
 
 Cómo llegar incluye el iframe fijo exacto suministrado por el propietario, responsive también en móvil, title accesible, carga lazy y referrerpolicy strict-origin-when-cross-origin. La dirección/enlace Admin y el botón siguen siendo independientes del iframe y funcionan ante un bloqueo del recurso externo. Si el comercio se muda, actualizar la URL fija en templates/directions.html además de los datos del Admin. No usa API key ni scripts Maps.
+
+## Segunda iteración — fotos, condiciones y avisos
+
+La fotografía abre un único dialog nativo del catálogo con mismo archivo optimizado, imagen contain, nombre accesible, cierre botón/Escape/fondo y devolución de foco. Sin foto se mantiene Sin imagen; sin JS el enlace abre el archivo. Condición mayorista específica con fondo rosa suave y texto oscuro, sólo en selección mayorista del carrito.
+
+Notifications.show centraliza éxitos/info (5 s), errores/warnings (8 s), reemplazo, cierre y pausa por hover/foco. Componente fijo superior con safe-area, acción Ver carrito, sin alterar scroll/foco/layout. Sólo un aviso visible/live; el diálogo de revisión tiene una ubicación del mismo componente para mantenerlo operable dentro del modal. Explicaciones persistentes de campos/productos/red/almacenamiento permanecen sin anuncios live duplicados. Invalidar cantidad del carrito dispara la validación vigente y bloquea revisión/importes; Admin conserva sus mensajes nativos.

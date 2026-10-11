@@ -7,9 +7,10 @@
     <div class="cart-toolbar"><a class="button secondary" href="{% url 'home' %}">Seguir viendo productos</a><button type="button" class="secondary" id="cart-clear">Vaciar carrito</button></div>
     <p id="cart-loading" role="status">Consultando el catálogo vigente…</p>
     <div id="cart-request-error" hidden></div>
-    <div id="cart-contents" aria-live="polite"></div>
+    <div id="cart-contents"></div>
     <p class="notice">El carrito se guarda sólo en este navegador. No confirma un pedido.</p>
     <dialog id="cart-review-dialog" aria-labelledby="review-title" aria-describedby="review-warning">
+      {% include "includes/notification.html" %}
       <div id="cart-review-contents"></div>
     </dialog>
   </div>

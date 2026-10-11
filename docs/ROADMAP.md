@@ -39,6 +39,6 @@ Etapa complementaria completada y publicada. Historial MVP conservado. Siguiente
 - [x] Tarea 2 — Mapa embebido responsive y navegación externa; 15 Django y 16 Chromium OK, recurso externo interceptado.
 - [x] Tarea 3 — Ampliación de imagen con dialog reutilizable; 10 Django y 17 Chromium OK, teclado/foco/axe.
 - [x] Tarea 4 — Condiciones mayoristas con destacado suave; 24 Django y 17 Chromium OK, contraste axe.
-- [ ] Tarea 5 — Notificaciones flotantes y errores persistentes.
+- [x] Tarea 5 — Notificaciones flotantes y errores persistentes; 24 Django, 7 Node y 18 Chromium OK, scroll/foco/timers/axe.
 - [ ] Tarea 6 — WhatsApp en nueva pestaña con fallback seguro.
 - [ ] Tarea 7 — QA, documentación y publicación final.
