@@ -91,6 +91,10 @@ class CatalogViewTests(TestCase):
         self.assertContains(response, 'class="product-image-open"', count=1)
         self.assertContains(response, f'aria-label="Ver imagen ampliada de {self.product.name}"')
         self.assertContains(response, 'loading="lazy" decoding="async"')
+        self.assertContains(response, 'aria-label="Cerrar imagen"')
+        self.assertContains(response, 'aria-describedby="image-dialog-description"')
+        self.assertNotContains(response, 'id="image-dialog-title"')
+        self.assertNotContains(response, 'class="image-dialog-heading"')
 
     def test_brand_navigation_and_requested_texts(self):
         response = self.client.get("/")

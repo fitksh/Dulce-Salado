@@ -15,7 +15,6 @@
       const expanded = dialog.querySelector("img");
       expanded.src = source.src;
       expanded.alt = source.alt;
-      document.getElementById("image-dialog-title").textContent = source.alt;
       dialog.showModal();
     });
   });

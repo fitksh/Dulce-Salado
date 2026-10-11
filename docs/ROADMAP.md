@@ -44,3 +44,11 @@ Etapa complementaria completada y publicada. Historial MVP conservado. Siguiente
 - [x] Tarea 7 — QA, documentación y publicación final; 63 Django, 7 Node y 22 Chromium OK, cinco anchuras/axe y CI success run 38101095717.
 
 Segunda iteración completada y publicada en main. Sin nuevas dependencias/modelos/migraciones ni cambios de reglas comerciales. Entorno local actualizado y datos conservados. Siguiente paso: prueba real en teléfono/lector, carga externa Maps y configuración comercial según QA.md.
+
+## Correcciones visuales puntuales
+
+- [x] Tarea 1 — Miniaturas completas y modal sólo foto/cierre; 10 Django, 22 Chromium y Ruff OK; cinco anchuras/axe y capturas inspeccionadas.
+- [ ] Tarea 2 — Header en fila de tres regiones en escritorio y columna en móvil.
+- [ ] Tarea 3 — Dirección, botón y mapa en una región responsive.
+- [ ] Tarea 4 — Footer centrado en todas las pantallas.
+- [ ] Tarea 5 — QA completa, capturas, documentación y publicación final.

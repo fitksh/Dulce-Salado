@@ -91,13 +91,46 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
   });
 
   await t.test("imagen ampliada reutiliza foto, cierra con teclado/fondo y restaura foco", async () => {
-    const trigger = page.locator(".product-image-open");
-    assert.equal(await trigger.count(), 1);
+    const photos = page.locator(".product-image-open");
+    const trigger = photos.first();
+    assert.equal(await photos.count(), 3);
+    for (const width of [360, 390, 430, 768, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      const ratios = [];
+      for (const photo of await photos.all()) {
+        await photo.scrollIntoViewIfNeeded();
+        const dimensions = await photo.locator("img").evaluate(async img => {
+          await img.decode();
+          const frame = img.closest(".product-image").getBoundingClientRect();
+          const link = img.parentElement.getBoundingClientRect(), box = img.getBoundingClientRect();
+          const scale = Math.min(box.width / img.naturalWidth, box.height / img.naturalHeight);
+          const paintedWidth = img.naturalWidth * scale, paintedHeight = img.naturalHeight * scale;
+          return { height: frame.height, linkHeight: link.height, imageHeight: box.height,
+            fits: box.left >= frame.left && box.right <= frame.right && box.top >= frame.top && box.bottom <= frame.bottom,
+            ratio: img.naturalWidth / img.naturalHeight, fit: getComputedStyle(img).objectFit,
+            centered: getComputedStyle(img).objectPosition === "50% 50%",
+            paintedWidth, paintedHeight, width: frame.width };
+        });
+        assert.equal(dimensions.height, 210);
+        assert.equal(dimensions.linkHeight, 210);
+        assert.equal(dimensions.imageHeight, 210);
+        assert.equal(dimensions.fits && dimensions.centered, true);
+        assert.equal(dimensions.fit, "contain");
+        assert.ok(dimensions.paintedWidth <= dimensions.width && dimensions.paintedHeight <= 210);
+        ratios.push(dimensions.ratio);
+        await photo.screenshot({ path: `.qa/screenshots/photo-${width}-${ratios.length}.png` });
+      }
+      assert.deepEqual(ratios, [1.5, 1, 0.5]);
+    }
     assert.equal(await page.locator(".product-card").filter({ has: page.locator(".image-placeholder") }).locator(".product-image-open").count(), 0);
     await trigger.focus();
     await trigger.press("Enter");
     const dialog = page.locator("#product-image-dialog");
     await dialog.waitFor();
+    assert.equal(await dialog.locator("h1, h2, h3, .product-brand, .product-description").count(), 0);
+    assert.equal(await dialog.evaluate(node => [...node.children].filter(child => !child.classList.contains("visually-hidden")).map(child => child.innerText.trim()).filter(Boolean).join(" ")), "×");
+    assert.equal(await dialog.getAttribute("aria-label"), "Imagen ampliada");
+    assert.equal(await dialog.getByRole("button", { name: "Cerrar imagen" }).count(), 1);
     assert.equal(await dialog.locator("img").getAttribute("src"), await trigger.locator("img").evaluate(node => node.src));
     for (const width of [360, 390, 430, 768, 1280]) {
       await page.setViewportSize({ width, height: 844 });
@@ -117,6 +150,14 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.mouse.click(1, 1);
     await dialog.waitFor({ state: "hidden" });
     assert.equal(await trigger.evaluate(node => node === document.activeElement), true);
+    const plain = await browser.newContext({ javaScriptEnabled: false });
+    const plainPage = await plain.newPage();
+    await plainPage.goto(base);
+    const imageUrl = await plainPage.locator(".product-image-open").first().getAttribute("href");
+    const imageRequest = plainPage.waitForRequest(request => new URL(request.url()).pathname === imageUrl && request.isNavigationRequest());
+    await plainPage.locator(".product-image-open").first().click();
+    assert.equal(new URL((await imageRequest).url()).pathname, imageUrl);
+    await plain.close();
     await page.setViewportSize({ width: 390, height: 844 });
   });
 

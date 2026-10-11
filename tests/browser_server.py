@@ -22,13 +22,27 @@ from django.contrib.auth import get_user_model  # noqa: E402
 from django.core.files.uploadedfile import SimpleUploadedFile  # noqa: E402
 from django.core.management import call_command  # noqa: E402
 from django.test.runner import DiscoverRunner  # noqa: E402
-from PIL import Image  # noqa: E402
+from PIL import Image, ImageDraw  # noqa: E402
 
 from catalog.models import Category, Product  # noqa: E402
 
 
 def stop_server(signum, frame):
     raise KeyboardInterrupt
+
+
+def test_photo(size):
+    """Bordes y esquinas distinguibles para detectar recorte en capturas QA."""
+    photo = Image.new("RGB", size, "#edc399")
+    drawing = ImageDraw.Draw(photo)
+    width, height = size
+    drawing.rectangle((0, 0, width - 1, height - 1), outline="#126877", width=12)
+    drawing.rectangle((12, 12, 65, 65), fill="#ad3c0c")
+    drawing.rectangle((width - 66, height - 66, width - 13, height - 13), fill="#68384c")
+    drawing.text((25, height // 2), f"QA {width} x {height}", fill="#292324", font_size=24)
+    image = BytesIO()
+    photo.save(image, "PNG")
+    return SimpleUploadedFile("qa.png", image.getvalue())
 
 
 def main():
@@ -42,20 +56,24 @@ def main():
             category = Category.objects.create(name="QA Repostería (test)", slug="qa-reposteria")
             other = Category.objects.create(name="QA Cotillón (test)", slug="qa-cotillon")
             hidden = Category.objects.create(name="QA Oculta", slug="qa-oculta", is_active=False)
-            image = BytesIO()
-            Image.new("RGB", (600, 400), "#edc399").save(image, "PNG")
             Product.objects.create(
                 category=category, name="QA Chocolate (test)", brand="QA Marca",
                 description="Producto descartable de prueba; no representa información comercial.",
                 sale_unit="kg", quantity_step="0.1", retail_price="100.25", wholesale_price="90.50",
                 wholesale_condition="Condición de test, confirmar con el comercio",
-                image=SimpleUploadedFile("qa.png", image.getvalue()),
+                image=test_photo((600, 400)),
             )
-            Product.objects.create(category=other, name="QA Velas (test)", retail_price="25.10")
+            Product.objects.create(
+                category=other, name="QA Velas (test)", retail_price="25.10",
+                image=test_photo((400, 400)),
+            )
             Product.objects.bulk_create([
                 Product(category=category, name=f"ZZZ QA Scroll {index:02}", retail_price="1")
                 for index in range(10)
             ])
+            vertical = Product.objects.get(name="ZZZ QA Scroll 00")
+            vertical.image = test_photo((300, 600))
+            vertical.save()
             Product.objects.create(category=hidden, name="QA Invisible", retail_price="1")
             Product.objects.create(category=category, name="QA Inactivo", retail_price="1", is_active=False)
             get_user_model().objects.create_superuser("qa-admin", "", "qa-only-password-582")

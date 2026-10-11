@@ -69,8 +69,9 @@
       </div>
     {% endfor %}
   </div>
-  <dialog id="product-image-dialog" class="image-dialog" aria-labelledby="image-dialog-title">
-    <div class="image-dialog-heading"><h2 id="image-dialog-title">Imagen del producto</h2><button type="button" class="secondary" id="image-dialog-close" autofocus>Cerrar</button></div>
+  <dialog id="product-image-dialog" class="image-dialog" aria-label="Imagen ampliada" aria-describedby="image-dialog-description">
+    <p id="image-dialog-description" class="visually-hidden">Fotografía del producto. Cerrá con el botón, Escape o pulsando fuera.</p>
+    <button type="button" class="secondary image-dialog-close" id="image-dialog-close" aria-label="Cerrar imagen" autofocus>×</button>
     <img id="product-image-expanded" alt="">
   </dialog>
   {% if page.has_other_pages %}
