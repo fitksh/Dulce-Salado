@@ -125,8 +125,8 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     const photos = page.locator(".product-image-open");
     const trigger = photos.first();
     assert.equal(await photos.count(), 3);
-    for (const width of [360, 390, 430, 768, 1280]) {
-      await page.setViewportSize({ width, height: 844 });
+    for (const [width, height] of [[360, 800], [390, 844], [430, 932], [768, 844], [844, 300], [1280, 800], [1440, 900]]) {
+      await page.setViewportSize({ width, height });
       const ratios = [];
       for (const photo of await photos.all()) {
         await photo.scrollIntoViewIfNeeded();
@@ -156,13 +156,24 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
         const expanded = await preview.locator("img").evaluate(async img => {
           await img.decode();
           const r = img.getBoundingClientRect();
+          const frame = img.closest("dialog"), box = frame.getBoundingClientRect();
           return { ratio: img.naturalWidth / img.naturalHeight, fit: getComputedStyle(img).objectFit,
+            renderedRatio: r.width / r.height,
+            unscaled: r.width <= img.naturalWidth + .1 && r.height <= img.naturalHeight + .1,
+            margins: [r.left - box.left, box.right - r.right, r.top - box.top, box.bottom - r.bottom],
+            scroll: frame.scrollHeight > frame.clientHeight || frame.scrollWidth > frame.clientWidth,
             inside: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight };
         });
         assert.equal(expanded.ratio, dimensions.ratio);
         assert.equal(expanded.fit, "contain");
         assert.equal(expanded.inside, true);
-        await preview.screenshot({ path: `.qa/screenshots/expanded-${width}-${ratios.length}.png` });
+        assert.ok(Math.abs(expanded.renderedRatio - expanded.ratio) < .001);
+        assert.equal(expanded.unscaled, true);
+        assert.ok(expanded.margins.every(gap => gap >= 8 && gap <= 12));
+        assert.equal(expanded.scroll, false);
+        const close = await preview.getByRole("button", { name: "Cerrar imagen" }).boundingBox();
+        assert.ok(close.width >= 44 && close.height >= 44);
+        await page.screenshot({ path: `.qa/screenshots/viewer-${width}x${height}-${ratios.length}.png` });
         await page.keyboard.press("Escape");
         await preview.waitFor({ state: "hidden" });
         assert.equal(await photo.evaluate(node => node === document.activeElement), true);

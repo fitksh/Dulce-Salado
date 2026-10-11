@@ -87,3 +87,13 @@ Exportación PDF y ajustes completados/publicados en main, cinco tareas con CI s
 - [x] Tarea 6 — QA completa y publicación final; 126 Django, 7 Node, 26 Chromium, 19 páginas PDF y cinco anchuras inspeccionadas, CI success.
 
 Las seis tareas están completas y publicadas en origin/main, todas con CI success (detalle en EXECUTION_STATUS). Sin modelos/migraciones/dependencias nuevos ni cambios comerciales/fotográficos. Los cambios locales anteriores del propietario se conservan fuera de commits. Próximo paso: Ctrl+F5, Admin → Productos → ambas tablas PDF; descargar/preparar plantilla CSV, analizar/revisar y confirmar las altas deseadas según README. Impresora, Excel/Sheets y teléfono/lector propios quedan como pruebas manuales; no se anticipó ninguna fase futura.
+
+## Ajustes puntuales de imágenes, catálogo, carrito y PDF
+
+- [x] Tarea 1 — Visor ajustado a proporción intrínseca; 33 Django, 26 Chromium y 18 capturas de seis viewports correctos.
+- [ ] Tarea 2 — Cuatro columnas a 1280 px, grilla responsive y controles completos.
+- [ ] Tarea 3 — Foto de carrito centrada en escritorio, móvil intacto.
+- [ ] Tarea 4 — Logo en los cuatro PDF, foto centrada/etiquetas en negrita sólo en listas.
+- [ ] Tarea 5 — QA final, capturas/PDF inspeccionados y publicación con CI.
+
+Iteración acotada autorizada, secuencial; conserva arquitectura, datos/reglas comerciales, CSV y archivos de fotos. Cambios locales previos del propietario excluidos de commits.
