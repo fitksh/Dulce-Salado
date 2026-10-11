@@ -11,7 +11,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
   t.after(() => browser.close());
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   // Recurso externo independiente de QA: el test sólo inspecciona el iframe/atributos.
-  await context.route("https://www.google.com/maps/embed?*", route => route.fulfill({ contentType: "text/html", body: "<p>Mapa aislado de QA</p>" }));
+  await context.route("https://www.google.com/maps/embed?*", route => route.fulfill({ contentType: "text/html", body: '<p>Mapa aislado de QA</p><button onclick="this.textContent=\'Mapa interactuado\'">Interactuar con mapa de QA</button>' }));
   for (let attempt = 0; attempt < 30; attempt++) {
     const response = await context.request.get(base, { timeout: 1000 }).catch(() => null);
     if (response?.ok()) break;
@@ -686,6 +686,12 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(link.searchParams.get("query"), address);
     assert.equal(link.searchParams.get("api"), "1");
     const iframe = page.locator(".location-map iframe");
+    assert.equal(await page.getByRole("heading", { name: "Cómo llegar", exact: true }).count(), 0);
+    assert.equal(await page.getByRole("heading", { name: "Dirección", level: 1 }).count(), 1);
+    assert.equal(await page.locator(".business-card .business-address address").count(), 1);
+    assert.equal(await page.locator(".business-card .location-map iframe").count(), 1);
+    await page.frameLocator(".location-map iframe").getByRole("button", { name: "Interactuar con mapa de QA" }).click();
+    await page.frameLocator(".location-map iframe").getByRole("button", { name: "Mapa interactuado" }).waitFor();
     assert.equal(await iframe.getAttribute("title"), "Ubicación de Dulce y Salado en Google Maps");
     assert.equal(await iframe.getAttribute("loading"), "lazy");
     assert.equal(await iframe.getAttribute("referrerpolicy"), "strict-origin-when-cross-origin");
@@ -695,8 +701,17 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       const map = await iframe.boundingBox();
+      const info = await page.locator(".business-address").boundingBox();
+      const region = await page.locator(".business-card").boundingBox();
+      assert.ok(map.x >= region.x && map.x + map.width <= region.x + region.width);
+      if (width >= 800) {
+        assert.ok(info.x + info.width <= map.x && info.y >= map.y && info.y + info.height <= map.y + map.height);
+      } else {
+        assert.ok(info.y + info.height <= map.y && Math.abs(info.x - map.x) < 2);
+      }
       assert.ok(map.width <= width - 32 && map.height >= 280 && map.height <= 460);
       await page.screenshot({ path: `.qa/screenshots/directions-${width}.png`, fullPage: true });
+      await accessible();
     }
     await accessible();
     await page.route(/^https:\/\/www\.google\.com\/maps\//, route => route.fulfill({ contentType: "text/html", body: "<h1>Mapa interceptado de QA</h1>" }));

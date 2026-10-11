@@ -31,8 +31,10 @@ label { font-weight: 600; }
 .social-link { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; }
 .footer-links { display: flex; align-items: center; flex-wrap: wrap; gap: 1.2rem; }
 .footer-links > a { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; }
-.business-card { padding: 1.2rem; max-width: 680px; background: white; border: 1px solid var(--line); border-radius: .8rem; }
-.location-map { margin-top: 1.25rem; border: 1px solid var(--line); border-radius: .8rem; overflow: hidden; }
+.business-card { display: grid; margin-top: 1.25rem; background: white; border: 1px solid var(--line); border-radius: .8rem; overflow: hidden; }
+.business-address { padding: 1.2rem; min-width: 0; align-self: center; }
+.business-address h1 { font-size: 1.4rem; letter-spacing: normal; margin: 0; }
+.location-map { min-width: 0; border-top: 1px solid var(--line); overflow: hidden; }
 .location-map iframe { display: block; border: 0; width: 100%; height: clamp(280px, 55vw, 460px); }
 address { font-style: normal; line-height: 1.6; margin-block: 1rem; overflow-wrap: anywhere; }
 .business-hours { font-size: .85rem; max-width: 100%; }
@@ -133,6 +135,8 @@ textarea { display: block; width: 100%; margin-block: .6rem; padding: .8rem; fon
 .dialog-actions button { flex: 1; }
 @media (min-width: 800px) { .cart-layout { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } .cart-summary { position: sticky; top: 1rem; } }
 @media (min-width: 800px) {
+  .business-card { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+  .location-map { border-top: 0; border-left: 1px solid var(--line); }
   .header-inner { min-height: 92px; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 1rem; padding-block: 1rem; }
   .header-inner .brand { justify-self: start; }
   .header-inner .cart-link { justify-self: end; }

@@ -15,6 +15,8 @@ class BusinessSettingsTests(TestCase):
         response = self.client.get(reverse("directions"))
         self.assertContains(response, "todavía no está disponible")
         self.assertNotContains(response, "Abrir en Google Maps")
+        self.assertContains(response, '<h1 id="directions-title">Dirección</h1>')
+        self.assertNotContains(response, '<h1>Cómo llegar</h1>')
         business = BusinessSettings.objects.create()
         for address in ("", "   "):
             business.address = address
@@ -32,6 +34,8 @@ class BusinessSettingsTests(TestCase):
         response = self.client.get(reverse("directions"))
         self.assertContains(response, "Córdoba &amp; &quot;Centro&quot;")
         self.assertContains(response, "Abrir en Google Maps")
+        self.assertContains(response, 'class="business-card" aria-labelledby="directions-title"')
+        self.assertContains(response, 'class="business-address"')
 
     def test_exact_url_validation_and_precedence(self):
         for url in ("https://maps.app.goo.gl/test", "https://www.google.com/maps/place/Test", "https://maps.google.com/?q=Test", "https://goo.gl/maps/test"):
