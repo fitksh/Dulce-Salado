@@ -84,6 +84,6 @@ Exportación PDF y ajustes completados/publicados en main, cinco tareas con CI s
 - [x] Tarea 3 — Marcos cuadrados; 24 Django, 25 Chromium y cinco anchuras/fotos reales inspeccionadas.
 - [x] Tarea 4 — Motor CSV de altas y validaciones; 19 tests CSV correctos. Interfaz/confirmación en tarea 5.
 - [x] Tarea 5 — Admin, preview/confirmación firmada y plantilla/documentación; 49 CSV/PDF y 26 Chromium correctos.
-- [ ] Tarea 6 — QA completa y publicación final.
+- [x] Tarea 6 — QA completa y publicación final; 126 Django, 7 Node, 26 Chromium, 19 páginas PDF y cinco anchuras inspeccionadas, CI success.
 
-Iteración autorizada en curso, secuencial y sin modelos/migraciones/dependencias nuevos. Los cambios locales anteriores del propietario se conservan fuera de commits.
+Las seis tareas están completas y publicadas en origin/main, todas con CI success (detalle en EXECUTION_STATUS). Sin modelos/migraciones/dependencias nuevos ni cambios comerciales/fotográficos. Los cambios locales anteriores del propietario se conservan fuera de commits. Próximo paso: Ctrl+F5, Admin → Productos → ambas tablas PDF; descargar/preparar plantilla CSV, analizar/revisar y confirmar las altas deseadas según README. Impresora, Excel/Sheets y teléfono/lector propios quedan como pruebas manuales; no se anticipó ninguna fase futura.
