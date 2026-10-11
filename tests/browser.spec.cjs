@@ -68,9 +68,17 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await page.locator(".wholesale-note").count(), 1);
     assert.equal(await page.locator(".wholesale-note").evaluate(node => getComputedStyle(node).backgroundColor), "rgb(255, 240, 246)");
     assert.equal(await page.getByText("QA Invisible").count(), 0);
-    for (const width of [320, 360, 390, 430, 768, 800, 1280]) {
+    for (const [width, columns] of [[320, 1], [360, 1], [390, 1], [430, 1], [768, 2], [800, 2], [1000, 3], [1280, 4], [1440, 4]]) {
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      const cards = await page.locator(".product-card").evaluateAll(nodes => nodes.map(node => {
+        const r = node.getBoundingClientRect();
+        return { top: r.top, width: r.width, fits: [...node.querySelectorAll("input, select, button")].every(control => {
+          const c = control.getBoundingClientRect(); return c.left >= r.left && c.right <= r.right;
+        }) };
+      }));
+      assert.equal(cards.filter(card => Math.abs(card.top - cards[0].top) < 1).length, columns);
+      assert.ok(cards.every(card => Math.abs(card.width - cards[0].width) < 1 && card.fits));
       await headerLayout(width);
       assert.equal(await page.locator(".brand-logo").evaluate(node => node.getBoundingClientRect().width), 64);
       const actions = await page.locator(".header-actions a").evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().toJSON()));
@@ -101,6 +109,20 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       await footer.screenshot({ path: `.qa/screenshots/footer-${width}.png` });
       await page.evaluate(() => scrollTo(0, 0));
     }
+    // Sólo esta página descartable: contenido permitido por el modelo, sin escribir datos.
+    await page.locator(".product-card").first().evaluate(card => {
+      card.querySelector("h3").textContent = "N".repeat(180);
+      card.querySelector(".product-brand").textContent = "M".repeat(100);
+      card.querySelector(".product-description").textContent = "Descripción extensa. ".repeat(20);
+      card.querySelector(".wholesale-note").textContent = "Condición de mayorista extensa. ".repeat(9);
+    });
+    for (const width of [390, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      const card = page.locator(".product-card").first();
+      assert.ok(await card.evaluate(node => [...node.querySelectorAll("h3, p, input, select, button")].every(field => field.scrollWidth <= field.clientWidth + 1)));
+      await card.screenshot({ path: `.qa/screenshots/catalog-long-text-${width}.png` });
+    }
+    await page.reload();
     await accessible();
     await page.setViewportSize({ width: 390, height: 844 });
     await page.locator("#catalog-search").fill("QA Marca");

@@ -91,7 +91,7 @@ Las seis tareas están completas y publicadas en origin/main, todas con CI succe
 ## Ajustes puntuales de imágenes, catálogo, carrito y PDF
 
 - [x] Tarea 1 — Visor ajustado a proporción intrínseca; 33 Django, 26 Chromium y 18 capturas de seis viewports correctos.
-- [ ] Tarea 2 — Cuatro columnas a 1280 px, grilla responsive y controles completos.
+- [x] Tarea 2 — Cuatro columnas a 1280/1440 px, 1/2/3 intermedias; 13 Django y 26 Chromium correctos, controles/textos inspeccionados.
 - [ ] Tarea 3 — Foto de carrito centrada en escritorio, móvil intacto.
 - [ ] Tarea 4 — Logo en los cuatro PDF, foto centrada/etiquetas en negrita sólo en listas.
 - [ ] Tarea 5 — QA final, capturas/PDF inspeccionados y publicación con CI.
