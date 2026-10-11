@@ -3,7 +3,7 @@
 Fecha de inicio: 2026-10-10. Trabajo autorizado secuencial en `main` hasta completar el MVP.
 
 ## Tarea actual
-Segunda iteración UX/UI en curso. Tareas 1–6 implementadas y verificadas localmente; pendiente CI de tarea 6 y QA/documentación final. Historial MVP y primera etapa conservados; datos comerciales existentes intactos.
+SEGUNDA ITERACIÓN UX/UI COMPLETADA Y PUBLICADA. Siete tareas verificadas localmente y en CI (63 Django, 7 Node y 22 Chromium). Historial MVP y primera etapa conservados; datos comerciales existentes intactos. Pendientes sólo pruebas manuales comerciales/dispositivo real descritas en QA.md.
 
 ## Decisiones autorizadas
 - kg, unidad y paquete; incrementos iniciales 0,1 kg y 1 unidad/paquete. Sin conversión de gramos.
@@ -166,3 +166,11 @@ Tarea 7 en curso: regresiones adicionales de Instagram en pestaña nueva, cantid
 Tarea 7 QA completa: 63 Django, 7 Node, 22 Chromium OK, check/Ruff y makemigrations sin cambios. Axe sin infracciones; cinco anchuras verificadas. Instagram/Maps/WhatsApp interceptados sin navegación real/envíos; prueba de copia success/fallback dentro de modal y cambio de storage durante validación cierran provisional sin destino. README/especificación/arquitectura/UX/QA actualizados, historial previo conservado. Se amplían capturas de viewport/foto/toolbar para inspección final, con regresión responsive de alineación exacta a tarjetas. Pendiente última revisión visual, publicar/verificar CI y actualizar entorno local.
 
 Última verificación local: 22 Chromium OK tras ampliar capturas y comprobaciones de toolbar. Capturas inspeccionadas de catálogo móvil/tablet/escritorio, foto móvil, avisos éxito/error, carrito, dirección y horarios. Sin overflow/recortes inesperados. Entorno Docker reconstruido, migrate sin pendientes y check OK; HTTP 200 en /, /carrito/ y /como-llegar/. QA detenido y bases descartables consultadas sin filas. Configuración real verificada sólo por presencia (sin revelar valores): dirección/enlace Maps, 12 intervalos publicados y teléfono presentes; ningún dato comercial sobrescrito. Pendiente publicación y CI final.
+
+## Cierre de la segunda iteración UX/UI
+
+Tarea 7 publicada: a43a5789feafa1966362d6f0950beafab779f7f4, [CI success run 38101095717](https://github.com/fitksh/Dulce-Salado/actions/runs/38101095717). Suite completa correcta: 63 Django, 7 Node y 22 Chromium, check/Ruff y migraciones. Tareas 1–6 también con CI success, detalladas arriba.
+
+Todas las mejoras solicitadas completas; sin bloqueos de implementación ni fallos conocidos de pruebas. Sin dependencias/modelos/migraciones nuevos, cálculo y datos comerciales conservados. Entorno local actualizado, tres vistas 200, QA descartado, capturas inspeccionadas y main sincronizada. Próximo paso concreto: dueño prueba en teléfono real filtros, horarios flotantes, fotos, avisos y apertura/retorno WhatsApp; valida datos/iframe externo y lectores, siguiendo README/QA. Infraestructura futura fuera de esta tarea.
+
+Este cierre documental marca roadmap y estado reales. Su hash y CI propios se consultan en Git/GitHub después de publicar; el run anterior verifica el último cambio funcional completo y no se incrusta el hash de un commit dentro de sí mismo.
