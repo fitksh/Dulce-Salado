@@ -223,3 +223,5 @@ Catálogo comercial en 360/390/430/768/1280, ocho fotografías existentes en vis
 Archivos de aplicación de esta iteración: static/css/site.css y catalog/pdf.py. Tests: catalog/test_pdf.py, tests/browser.spec.cjs y tests/browser_server.py (sólo fixture de condición extensa). Seguimiento: README, UX_UI, ARCHITECTURE, ROADMAP, EXECUTION_STATUS y QA. Sin cambios en models/migraciones, Admin/CSV, JS/templates de producto ni fotos. Las dos ediciones locales previas del propietario se mantienen fuera de commits.
 
 Prueba local concreta en README: Ctrl+F5, catálogo 1280/fotografías, carrito desde 800/cantidad/tarifa, Admin → Productos → filtros/orden → cuatro PDF. Visor/impresora propios, zoom nativo 200% y teléfono/lector son comprobaciones manuales pendientes; no se envió WhatsApp. Estado de publicación/CI registrado en EXECUTION_STATUS, sin anticipar trabajo futuro.
+
+Publicación final de QA: 3a6f97a, [CI success 38173168024](https://github.com/fitksh/Dulce-Salado/actions/runs/38173168024). Las cinco tareas y sus suites completas pasan en CI; roadmap completo. El commit de cierre sólo registra estos resultados y no cambia la implementación verificada.
