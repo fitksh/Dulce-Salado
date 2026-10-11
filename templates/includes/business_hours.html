@@ -1,4 +1,4 @@
-<div class="container business-hours">
+<div class="business-hours">
   {% if business_hours.initialized %}
     {{ business_hours.data|json_script:"business-hours-data" }}
     <details class="hours-panel">

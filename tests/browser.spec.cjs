@@ -29,6 +29,20 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.deepEqual(result.violations.map(v => ({ id: v.id, nodes: v.nodes.map(n => n.target) })), []);
   }
   async function waitCart(text) { await page.locator(".total").filter({ hasText: text }).waitFor(); }
+  async function headerLayout(width) {
+    const regions = await page.locator(".header-inner").evaluate(node => [".brand", ".business-hours", ".cart-link"].map(selector => {
+      const r = node.querySelector(selector).getBoundingClientRect();
+      return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2 };
+    }));
+    assert.ok(regions.every(r => r.left >= 16 && r.right <= width - 16));
+    if (width >= 800) {
+      assert.ok(regions.every(r => Math.abs(r.y - regions[0].y) < 2));
+      assert.ok(regions[0].right <= regions[1].left && regions[1].right <= regions[2].left);
+    } else {
+      assert.ok(regions.every(r => Math.abs(r.x - width / 2) < 2));
+      assert.ok(regions[0].bottom <= regions[1].top && regions[1].bottom <= regions[2].top);
+    }
+  }
   async function setQuantity(value) {
     const input = page.locator(".cart-quantity").first();
     await input.fill(value);
@@ -57,12 +71,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     for (const width of [360, 390, 430, 768, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-      const header = await page.locator(".header-inner").evaluate(node => {
-        const brand = node.querySelector(".brand").getBoundingClientRect();
-        const cart = node.querySelector(".cart-link").getBoundingClientRect();
-        return { sameRow: Math.abs((brand.top + brand.bottom) / 2 - (cart.top + cart.bottom) / 2) < 2, contained: cart.right <= node.getBoundingClientRect().right + 1 };
-      });
-      assert.equal(header.sameRow && header.contained, true);
+      await headerLayout(width);
       const targets = await page.locator("button, input:not([type=hidden]), select, .button, .chip").evaluateAll(nodes => nodes.filter(n => n.getBoundingClientRect().height > 0).map(n => ({ tag: n.tagName, height: n.getBoundingClientRect().height })));
       assert.equal(targets.every(target => target.height >= 44), true, JSON.stringify(targets));
       const steppers = await page.locator(".quantity-adjust").evaluateAll(nodes => nodes.map(n => n.getBoundingClientRect().width));
@@ -740,7 +749,8 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
         return { before, after, height: header.getBoundingClientRect().height, left: bounds.left, right: bounds.right };
       });
       assert.equal(layout.before, layout.after);
-      assert.ok(layout.height < 150);
+      assert.ok(layout.height < (width >= 800 ? 120 : 200));
+      await headerLayout(width);
       assert.ok(layout.left >= 0 && layout.right <= width);
       await page.screenshot({ path: `.qa/screenshots/hours-${width}.png`, fullPage: true });
     }
