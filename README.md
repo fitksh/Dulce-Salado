@@ -2,7 +2,7 @@
 
 Catálogo comercial mobile-first de repostería, dietética y cotillón. Catálogo público, carrito local y mensaje WhatsApp con precios estimados. El comercio confirma disponibilidad y condiciones; el sitio no registra pedidos ni gestiona stock, pagos o envíos.
 
-**Estado:** MVP y mejoras complementarias implementados; verificación y commits en [EXECUTION_STATUS](docs/EXECUTION_STATUS.md). Cargar y revisar información comercial real mediante Django Admin.
+**Estado:** MVP y dos iteraciones UX/UI implementados; verificación y commits en [EXECUTION_STATUS](docs/EXECUTION_STATUS.md). Cargar y revisar información comercial real mediante Django Admin.
 
 ## Inicio local en Windows (PowerShell)
 
@@ -45,13 +45,15 @@ Sólo se publican productos activos en categorías activas. Las categorías con 
 
 ## Probar el carrito y WhatsApp
 
-- Buscar por nombre, marca o descripción (prioridad en ese orden) y filtrar categorías. En móvil, elegir en el selector y pulsar Filtrar; conserva búsqueda sin JavaScript. Editar cantidad o usar −/+; minorista aparece por defecto.
+- Buscar por nombre, marca o descripción (prioridad en ese orden) y filtrar categorías. En móvil, el selector aplica el filtro automáticamente conservando búsqueda; sin JavaScript usar Filtrar. Editar cantidad o usar −/+; minorista aparece por defecto. Tocar una foto para ampliarla; cerrar por botón, Escape o fondo.
 - Agregar al carrito, cerrar/reabrir la pestaña y entrar a `/carrito/`. Modificar cantidades/tarifa, quitar productos y vaciar.
 - Cambiar un precio en Admin y volver al carrito: debe mostrar el dato vigente e informar el cambio. Desactivar un producto, quitar mayorista o cambiar unidad: debe exigir corrección.
-- Elegir **Revisar y preparar WhatsApp**, leer el aviso y comprobar el mensaje completo. **Volver al carrito** o Escape cancela; **Continuar a WhatsApp** revalida y abre el cliente con el texto preparado.
+- Elegir **Revisar y preparar WhatsApp**, leer el aviso y comprobar el mensaje completo. **Volver al carrito** o Escape cancela; **Continuar a WhatsApp** revalida y abre otro contexto, conservando la pestaña del carrito. Si el navegador bloquea la apertura, usar **Abrir WhatsApp con el mensaje preparado**. Ante cambios/errores se cierra la pestaña provisional y se requiere revisión.
 - El sitio no envía: el envío se hace desde WhatsApp. No se vacía automáticamente el carrito. Ante mensaje largo, copiar el texto completo desde la revisión.
 
 El carrito guarda selecciones y referencias en `localStorage`, nunca importes como autoridad. Al abrir, revisar y continuar se calculan importes actuales en Django con Decimal y redondeo a dos decimales (mitad hacia arriba); el total suma subtotales redondeados. Sin almacenamiento local o sin JavaScript, el carrito requiere habilitarlos; el catálogo sigue disponible.
+
+Los avisos flotantes aparecen arriba incluso con scroll, sin mover contenido ni foco. Éxitos/información duran cinco segundos; errores/advertencias ocho, con pausa por puntero/foco y cierre manual. Al agregar ofrecen Ver carrito. Los errores bloqueantes conservan la explicación junto al campo/producto hasta corregirlos.
 
 ## Verificaciones
 
@@ -103,10 +105,12 @@ En el listado de productos, «Exportar CSV» descarga todos los productos del co
 ## Dirección y Cómo llegar
 En Admin → Catálogo → Configuración comercial, crear una única configuración con la dirección real. El enlace exacto de Google Maps es opcional: pegar un enlace HTTPS compartido por Maps o dejarlo vacío para buscar la dirección. Luego editar ese mismo registro. La página pública `/como-llegar/` está enlazada desde el footer. Si falta dirección muestra un aviso sin destino ficticio. Migración nueva: `catalog.0003_business_settings`; ejecutar `docker compose exec web python manage.py migrate` al actualizar.
 
+La segunda iteración incorpora además el iframe fijo de Google Maps provisto por el dueño, también en móvil. Está en `templates/directions.html` y deberá actualizarse si cambia la ubicación; editar dirección/enlace Admin no modifica esa URL. Si Maps no carga, la dirección y el botón siguen funcionando. Sin configuración editable se conserva el aviso; el iframe fijo del comercio permanece disponible. No requiere API key ni Google Maps JavaScript API.
+
 ## Horarios comerciales
 En esa misma configuración, añadir intervalos indicando día, apertura y cierre (hora de Buenos Aires). Para un horario partido, añadir dos filas del mismo día. Se permiten más intervalos; deben terminar el mismo día y no superponerse. Tras completar la semana, activar «Publicar horario semanal» y guardar. Los días sin filas se mostrarán cerrados. Antes de publicar se verá «Horarios no disponibles», incluso si hay intervalos borrador. Una semana publicada sin filas significa todos los días cerrados.
 
-El desplegable debajo del header muestra la semana; el estado se basa en los horarios publicados, sin feriados/excepciones. Con JavaScript usa el reloj del dispositivo convertido a America/Argentina/Buenos_Aires y se actualiza cada 15 segundos sin peticiones. Sin JavaScript refleja el estado al cargar. Migración: `catalog.0004_opening_hours`; no crea dirección ni horarios ficticios.
+El desplegable dentro del header muestra la semana en un panel flotante que no desplaza contenido; cierra por el control, clic exterior o Escape. El estado se basa en los horarios publicados, sin feriados/excepciones. Con JavaScript usa el reloj del dispositivo convertido a America/Argentina/Buenos_Aires y se actualiza cada 15 segundos sin peticiones. Sin JavaScript refleja el estado al cargar y conserva el desplegable nativo. Migración: `catalog.0004_opening_hours`; no crea dirección ni horarios ficticios. La segunda iteración no agrega migraciones ni dependencias.
 
 ## Actualizar una instalación existente
 

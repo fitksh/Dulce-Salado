@@ -204,8 +204,8 @@
       if (event.target.closest("#review-continue")) review(true);
       if (event.target.closest("#copy-message")) {
         const field = document.getElementById("whatsapp-message");
-        try { await navigator.clipboard.writeText(field.value); event.target.textContent = "Mensaje copiado"; }
-        catch { field.focus(); field.select(); event.target.textContent = "Seleccionado: copiá el texto"; }
+        try { await navigator.clipboard.writeText(field.value); announce("Mensaje copiado.", "success"); }
+        catch { field.focus(); field.select(); announce("Copiá el texto seleccionado para pegarlo en WhatsApp.", "info"); }
       }
     });
     document.getElementById("cart-clear").addEventListener("click", () => { items = []; persist(); if (!storageFailed) announce("Carrito vacío.", "success"); refresh(); });

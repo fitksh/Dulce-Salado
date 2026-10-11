@@ -22,9 +22,9 @@ Tomar como referencia el logotipo provisto del comercio: naranja como color prin
 - CTA al carrito fácilmente accesible en móvil, considerando barra inferior pegajosa cuando no tape contenido o controles del sistema.
 - Estados vacíos, imagen ausente, producto inactivo, precios actualizados y datos inválidos claramente informados.
 - Evitar scroll horizontal, diálogos intrusivos repetidos y navegación innecesaria.
-- Feedback en flujo normal: éxito verde con «Ver carrito» al agregar, errores rojos, advertencias ámbar e información neutra. Roles de estado/alerta sin sustituir semántica de listas. Confirmaciones administrativas nativas.
+- Feedback flotante fijo superior: éxito verde con «Ver carrito» al agregar, errores rojos, advertencias ámbar e información neutra. Cinco/ocho segundos, cierre manual y pausa por hover/foco; errores que bloquean permanecen también junto al campo/producto. Un solo aviso live visible, sin duplicar anuncios. Confirmaciones administrativas nativas.
 - El recálculo conserva altura, controles, foco y scroll del carrito. Mientras se consulta se ocultan sólo importes y se bloquea revisión; ante fallo se mantienen controles y se permite reintentar.
-- Horario en franja compacta debajo del header. Details/summary nativo con estado textual y punto verde/neutro, siete días y todos sus intervalos. «Según horarios publicados» visible; sin configuración no se deduce cierre. El desplegable funciona sin JavaScript; el estado en ese caso corresponde a la carga de página.
+- Horario compacto dentro del header. Details/summary nativo con estado textual y punto verde/neutro, siete días y todos sus intervalos, sin textos auxiliares. Panel flotante responsive con scroll interno, cierre exterior/Escape y foco visible; sin configuración no se deduce cierre. Funciona sin JavaScript; el estado en ese caso corresponde a la carga de página.
 
 ## Rendimiento y accesibilidad
 HTML semántico, etiquetas y textos alternativos, contraste WCAG AA cuando corresponda. Imágenes responsive, lazy loading de fotos fuera de pantalla y tamaños optimizados. No bloquear render con dependencias grandes. Navegación por teclado y uso con VoiceOver/TalkBack deben funcionar en los flujos principales.

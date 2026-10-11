@@ -71,3 +71,24 @@ QA final publicada y CI success verificada: commit `61d5e52`, [run 38095362239](
 Un run posterior (38095501842) detectó una comprobación prematura de foco tras Escape. Se corrigió el foco explícito en close y se espera el recálculo antes de comprobarlo. Corrección verificada localmente y en [CI success run 38095823292](https://github.com/fitksh/Dulce-Salado/actions/runs/38095823292), commit `95e7926`: las 60 pruebas Django, 7 Node y 16 Chromium completas pasan. No quedan fallos conocidos de implementación/QA automatizado.
 
 Pendientes manuales del dueño: revisar dirección/enlace Maps, horario semanal y WhatsApp/catálogo reales. La instalación local ya tiene dirección y enlace exacto, 12 intervalos publicados y teléfono configurado; esta comprobación confirma presencia, no su exactitud comercial. En nuevas instalaciones cargar esos datos desde Admin/entorno. En teléfono Android/iOS probar teclado virtual, −/+, retorno de Maps/WhatsApp y lector TalkBack/VoiceOver. Abrir CSV en su Excel es-AR y revisar acentos, columnas, decimales y textos protegidos. Confirmar reloj del dispositivo; no hay feriados/excepciones.
+
+## Segunda iteración UX/UI — QA
+
+Historial de las etapas anteriores conservado. Verificación completa local: 63 pruebas Django, 7 Node y 22 comprobaciones Chromium (21 escenarios), check/Ruff correctos y makemigrations sin cambios. Sin nuevas dependencias o migraciones.
+
+| Ajuste | Evidencia |
+| --- | --- |
+| Header/horarios | Dentro de header, altura menor a 150 px, apertura no mueve main; cinco anchuras, siete días, intervalos/estado/zona intactos, cierre control/exterior/Escape y foco, fallback sin JS |
+| Catálogo/filtros | Textos retirados, h1 Nuestros productos, etiqueta oculta/placeholder; cambio automático conserva q/categoría/URL; GET sin JS conserva botón; búsqueda/paginación Django siguen correctas |
+| Footer/toolbar | Icono ubicación, centrado móvil, Instagram oficial abre otro contexto con opener null/referrer vacío; toolbar móvil igual ancho/alineación de tarjetas |
+| Maps | URL iframe fija exacta, title/lazy/referrerpolicy/allowfullscreen, cinco anchuras y altura responsive; recurso interceptado o bloqueado; dirección/link Admin y navegación externa conservados |
+| Fotos/condiciones | Un dialog reutilizable, mismo archivo/contain, botón/Escape/fondo y retorno de foco; sin foto no amplía; condición específica rosa suave sólo con mayorista seleccionado en carrito |
+| Avisos | Éxito con Ver carrito tras scroll >2000 px, sin cambiar foco/scroll; errores de tarifa/cantidad/red/storage, un aviso live visible, reemplazo, 5/8 segundos, pausa de 10 s con foco y cierre teclado; errores persistentes bloquean total/revisión tras ocultación del aviso |
+| WhatsApp | Contexto nuevo con opener null/referrer vacío; pestaña y storage intactos; fallback ante popup bloqueado abre enlace seguro; precios cambiados/cancelación/error/red/cambio en otra pestaña cierran provisional sin navegar; copia con éxito y fallback selecciona texto completo |
+| Regresión | Django Admin/permisos/CSV, búsqueda, precisión de importes, tarifas manuales, storage/sincronización, productos/unidades/precios cambiados, concurrencia/scroll, aviso obligatorio y mensaje completo |
+
+Responsive comprobado a 360, 390, 430, 768 y 1280 px. Axe WCAG A/AA sin infracciones en estados inspeccionados (catálogo, foto, avisos, carrito/revisión/vacío, Maps y horarios). QA usa exclusivamente base/media descartables; Google Maps, Instagram y WhatsApp interceptados. No se hicieron envíos reales. Capturas finales se inspeccionan antes de publicar; la CI final se registra en EXECUTION_STATUS.
+
+Pendientes manuales: Android/iOS con teclado real, TalkBack/VoiceOver, retorno de WhatsApp/Instagram/Maps y comportamiento de bloqueadores; verificar pertenencia del teléfono/datos comerciales e iframe real. Si cambia ubicación, actualizar tanto Admin como URL fija en templates/directions.html. Configuración existente conservada. Excel es-AR y feriados/excepciones siguen con los límites ya documentados. No hay bloqueo de implementación ni infraestructura nueva.
+
+Capturas finales inspeccionadas y entorno Docker reconstruido; migrate sin pendientes/check OK, HTTP 200 en tres vistas públicas. Servidor/base QA descartados (consulta sin filas). Configuración comercial real preservada, verificando únicamente presencia: dirección/enlace, 12 intervalos publicados y teléfono configurado. La exactitud comercial y carga externa Maps se validan manualmente.

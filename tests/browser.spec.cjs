@@ -68,6 +68,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       const steppers = await page.locator(".quantity-adjust").evaluateAll(nodes => nodes.map(n => n.getBoundingClientRect().width));
       assert.equal(steppers.every(width => width >= 44), true);
       await page.screenshot({ path: `.qa/screenshots/catalog-${width}.png`, fullPage: true });
+      await page.screenshot({ path: `.qa/screenshots/catalog-viewport-${width}.png` });
     }
     await accessible();
     await page.setViewportSize({ width: 390, height: 844 });
@@ -102,6 +103,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       assert.equal(await dialog.locator("img").evaluate(node => getComputedStyle(node).objectFit), "contain");
+      await page.screenshot({ path: `.qa/screenshots/image-${width}.png` });
     }
     await accessible();
     await page.screenshot({ path: ".qa/screenshots/image-expanded.png" });
@@ -116,6 +118,20 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await dialog.waitFor({ state: "hidden" });
     assert.equal(await trigger.evaluate(node => node === document.activeElement), true);
     await page.setViewportSize({ width: 390, height: 844 });
+  });
+
+  await t.test("Instagram oficial abre otro contexto seguro y conserva catálogo", async () => {
+    await context.route("https://www.instagram.com/_dulceysalado1/", route => route.fulfill({ contentType: "text/html", body: "<h1>Instagram interceptado de QA</h1>" }));
+    const original = page.url();
+    const opening = context.waitForEvent("page");
+    await page.getByRole("link", { name: /Instagram/ }).click();
+    const instagram = await opening;
+    await instagram.getByRole("heading", { name: "Instagram interceptado de QA" }).waitFor();
+    assert.equal(instagram.url(), "https://www.instagram.com/_dulceysalado1/");
+    assert.equal(await instagram.evaluate(() => window.opener), null);
+    assert.equal(await instagram.evaluate(() => document.referrer), "");
+    assert.equal(page.url(), original);
+    await instagram.close();
   });
 
   await t.test("categorías funcionan sin JavaScript y botones respetan decimales/mínimo", async () => {
@@ -166,6 +182,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
         assert.ok(bounds.x >= 16 && bounds.x + bounds.width <= width - 16);
       }
       await client.setViewportSize({ width: 390, height: 844 });
+      await client.screenshot({ path: ".qa/screenshots/floating-success.png" });
       await toast.getByRole("link", { name: "Ver carrito" }).focus();
       await client.mouse.move(0, 800);
       await client.clock.fastForward(10000);
@@ -196,6 +213,14 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       assert.ok((await toast.boundingBox()).y >= 16);
       await accessible(client);
       await client.screenshot({ path: ".qa/screenshots/floating-error.png" });
+      await first.locator('input[name="quantity"]').fill("0.15");
+      await first.getByRole("button", { name: "Agregar al carrito" }).click();
+      await first.locator(".quantity-error").waitFor();
+      assert.equal(await first.locator('input[name="quantity"]').getAttribute("aria-invalid"), "true");
+      await client.mouse.move(0, 800);
+      await client.clock.fastForward(8100);
+      assert.equal(await first.locator(".quantity-error").isVisible(), true);
+      assert.equal(await toast.count(), 0);
       await client.goto(`${base}/carrito/`);
       await client.locator(".total").waitFor();
       await client.locator(".cart-quantity").first().fill("0.15");
@@ -232,6 +257,20 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     const toolbar = await page.locator(".cart-toolbar > *").evaluateAll(nodes => nodes.map(n => ({ width: n.getBoundingClientRect().width, left: n.getBoundingClientRect().left })));
     assert.equal(toolbar[0].width, toolbar[1].width);
     assert.equal(toolbar[0].left, toolbar[1].left);
+    for (const width of [360, 390, 430, 768, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      if (width < 600) {
+        const layout = await page.evaluate(() => {
+          const buttons = Array.from(document.querySelectorAll(".cart-toolbar > *"), node => node.getBoundingClientRect());
+          const card = document.querySelector(".cart-item").getBoundingClientRect();
+          return { a: buttons[0].width, b: buttons[1].width, card: card.width, left: buttons[0].left, cardLeft: card.left };
+        });
+        assert.equal(layout.a, layout.b); assert.equal(layout.a, layout.card); assert.equal(layout.left, layout.cardLeft);
+      }
+      await page.screenshot({ path: `.qa/screenshots/cart-${width}.png`, fullPage: true });
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
     await accessible();
     await page.getByRole("button", { name: /Aumentar cantidad/ }).click();
     await waitCart("$ 36,20");
@@ -351,6 +390,16 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await page.locator("#review-title").evaluate(node => node === document.activeElement), true);
     await accessible();
     await page.screenshot({ path: ".qa/screenshots/review-mobile.png", fullPage: true });
+    await page.evaluate(() => { navigator.clipboard.writeText = async text => { window.qaCopied = text; }; });
+    await page.locator("#copy-message").click();
+    await page.getByRole("dialog").getByRole("status").filter({ hasText: "Mensaje copiado." }).waitFor();
+    assert.equal(await page.evaluate(() => window.qaCopied), await page.locator("#whatsapp-message").inputValue());
+    assert.equal(await page.locator("#copy-message").innerText(), "Copiar mensaje completo");
+    await page.evaluate(() => { navigator.clipboard.writeText = async () => { throw new Error("QA clipboard blocked"); }; });
+    await page.locator("#copy-message").click();
+    await page.getByRole("dialog").getByRole("status").filter({ hasText: /Copiá el texto seleccionado/ }).waitFor();
+    assert.equal(await page.locator("#whatsapp-message").evaluate(node => node === document.activeElement && node.selectionStart === 0 && node.selectionEnd === node.value.length), true);
+    await accessible();
     const afterClose = page.waitForResponse(response => response.url().endsWith("/carrito/recalcular/"));
     await page.keyboard.press("Escape");
     await page.getByRole("dialog").waitFor({ state: "hidden" });
@@ -465,6 +514,46 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       await waitCart("$ 60,15");
       assert.equal(JSON.parse(await page.evaluate(() => localStorage.getItem("dulce-salado.cart.v1"))).items.length, 1);
     } finally { await page.unroute("**/carrito/whatsapp/"); }
+  });
+
+  await t.test("cambio en otra pestaña durante validación cancela salida pendiente", async () => {
+    const second = await context.newPage();
+    await second.goto(base);
+    let release, reached;
+    const gate = new Promise(resolve => { release = resolve; });
+    const arrived = new Promise(resolve => { reached = resolve; });
+    const destinations = [];
+    const track = request => { if (request.url().startsWith("https://wa.me/")) destinations.push(request.url()); };
+    context.on("request", track);
+    await page.route("**/carrito/whatsapp/", async route => { reached(); await gate; await route.continue(); });
+    try {
+      await page.locator("#cart-review").click();
+      await page.getByRole("dialog").waitFor();
+      const opening = page.waitForEvent("popup");
+      await page.locator("#review-continue").click();
+      const provisional = await opening;
+      await arrived;
+      const closed = provisional.waitForEvent("close");
+      await second.evaluate(() => {
+        const cart = JSON.parse(localStorage.getItem("dulce-salado.cart.v1"));
+        cart.items[0].quantity = "0.4";
+        localStorage.setItem("dulce-salado.cart.v1", JSON.stringify(cart));
+      });
+      await closed;
+      await waitCart("$ 80,20");
+      const response = page.waitForResponse(response => response.url().endsWith("/carrito/whatsapp/"));
+      release(); await response;
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      assert.deepEqual(destinations, []);
+      assert.equal(await page.getByRole("dialog").isVisible(), false);
+      assert.equal(page.url(), `${base}/carrito/`);
+      await second.evaluate(() => {
+        const cart = JSON.parse(localStorage.getItem("dulce-salado.cart.v1"));
+        cart.items[0].quantity = "0.3";
+        localStorage.setItem("dulce-salado.cart.v1", JSON.stringify(cart));
+      });
+      await waitCart("$ 60,15");
+    } finally { release(); await page.unrouteAll({ behavior: "wait" }); context.off("request", track); await second.close(); }
   });
 
   await t.test("cambio de unidad exige cantidad nueva y sincroniza pestañas", async () => {
