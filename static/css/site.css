@@ -144,6 +144,10 @@ textarea { display: block; width: 100%; margin-block: .6rem; padding: .8rem; fon
 .dialog-actions button { flex: 1; }
 @media (min-width: 800px) { .cart-layout { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } .cart-summary { position: sticky; top: 1rem; } }
 @media (min-width: 800px) {
+  .cart-item:has(.cart-thumbnail) { position: relative; padding-left: calc(1.2rem + 132px + 1rem); min-height: calc(132px + 2.4rem); }
+  .cart-item .cart-thumbnail { position: absolute; left: 1.2rem; top: 1.2rem; width: 132px; height: 132px; }
+}
+@media (min-width: 800px) {
   .business-card { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
   .location-map { border-top: 0; border-left: 1px solid var(--line); }
   .header-inner { min-height: 92px; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 1rem; padding-block: 1rem; }
@@ -154,6 +158,7 @@ textarea { display: block; width: 100%; margin-block: .6rem; padding: .8rem; fon
 @media (min-width: 800px) and (max-width: 1099px) {
   .header-inner { grid-template-columns: minmax(0, 1fr) auto auto; gap: .65rem; }
   .header-actions { width: 300px; }
+  .cart-item:has(.cart-thumbnail) .product-controls { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 380px) { .search-controls { flex-wrap: wrap; } .search-controls button { width: 100%; } }
 @media (max-width: 600px) {

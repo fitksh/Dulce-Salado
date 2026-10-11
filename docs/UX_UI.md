@@ -78,4 +78,6 @@ Admin → Productos ofrece PDF con imágenes y PDF sin imágenes junto al CSV; l
 
 Quitar se representa con una papelera SVG inline, naranja secundario, objetivo 44×44 px y aria-label «Quitar [nombre] del carrito». El icono decorativo se oculta a lectores; el producto retirado dispone de una etiqueta contextual accesible. Se conservan handler, almacenamiento y avisos existentes.
 
+Desde 800 px, las filas del carrito con foto disponen de una columna de 132 px a la izquierda. Nombre/marca/precios/condición/controles/subtotal quedan a su derecha y la papelera arriba a la derecha. Entre 800 y 1099 px, los controles de estas filas se apilan para mantener espacio útil. Sin imagen se recupera todo el ancho, también si se elimina en Admin. Bajo 800 px se conserva la miniatura de 56 px junto al nombre y la distribución móvil previa. Fotos contain y visor compartido intactos.
+
 Los productos [DEMO] y sus marcas/precios son ficticios; se incorporan únicamente por el comando manual documentado en README, nunca durante navegación o arranque.

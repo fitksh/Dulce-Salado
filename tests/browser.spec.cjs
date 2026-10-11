@@ -354,11 +354,20 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await page.locator(".cart-item .wholesale-note").count(), 1);
     assert.equal(await page.locator("#cart-clear, .cart-toolbar").count(), 0);
     assert.equal(await page.locator("#cart-reset").isVisible(), false);
-    for (const width of [360, 390, 430, 768, 1280]) {
+    for (const width of [320, 360, 390, 430, 768, 800, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       const thumbnail = page.locator(".cart-thumbnail").first();
-      assert.equal((await thumbnail.boundingBox()).width, 56);
+      assert.equal((await thumbnail.boundingBox()).width, width >= 800 ? 132 : 56);
+      if (width >= 800) {
+        const aligned = await page.locator(".cart-item").first().evaluate(node => {
+          const photo = node.querySelector(".cart-thumbnail").getBoundingClientRect();
+          const fields = node.querySelectorAll("h2, .product-brand, [data-cart-amount], .wholesale-note, .product-controls, [data-cart-error]");
+          return Array.from(fields).filter(field => field.getBoundingClientRect().height > 0)
+            .every(field => field.getBoundingClientRect().left >= photo.right + 12);
+        });
+        assert.equal(aligned, true);
+      }
       const remove = page.getByRole("button", { name: "Quitar QA Chocolate (test) del carrito", exact: true });
       const bounds = await remove.boundingBox();
       assert.ok(bounds.width >= 44 && bounds.height >= 44);
@@ -923,7 +932,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.getByRole("button", { name: "Agregar al carrito" }).click();
     await page.goto(`${base}/carrito/`);
     await waitCart("$ 25,10");
-    for (const width of [360, 390, 430, 768, 1280]) {
+    for (const width of [320, 360, 390, 430, 768, 800, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       const layout = await page.locator(".cart-item-heading").evaluate(node => {
         const name = node.querySelector("h2").getBoundingClientRect();
@@ -950,8 +959,17 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.reload();
     await waitCart("$ 50,20");
     assert.equal(await page.locator(".cart-thumbnail, .cart-item .image-placeholder").count(), 0);
-    const aligned = await page.locator(".cart-item").evaluate(node => Math.abs(node.querySelector("h2").getBoundingClientRect().left - node.querySelector(".product-controls").getBoundingClientRect().left) < 1);
-    assert.equal(aligned, true);
+    for (const width of [320, 390, 800, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      const aligned = await page.locator(".cart-item").evaluate(node => {
+        const left = node.getBoundingClientRect().left;
+        const heading = node.querySelector("h2").getBoundingClientRect().left;
+        const controls = node.querySelector(".product-controls").getBoundingClientRect().left;
+        return Math.abs(heading - controls) < 1 && heading - left < 24 && document.documentElement.scrollWidth <= innerWidth;
+      });
+      assert.equal(aligned, true);
+      await page.screenshot({ path: `.qa/screenshots/cart-no-photo-${width}.png`, fullPage: true });
+    }
     await page.getByRole("button", { name: /Quitar QA Velas/ }).click();
     await page.getByRole("heading", { name: "Tu carrito está vacío" }).waitFor();
     assert.deepEqual(errors, []);
