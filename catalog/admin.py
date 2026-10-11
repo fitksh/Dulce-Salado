@@ -1,18 +1,41 @@
 import csv
 from decimal import Decimal
+from pathlib import Path
 
 from django import forms
+from django.conf import settings
 from django.contrib import admin
+from django.contrib import messages as admin_messages
 from django.contrib.admin.options import IncorrectLookupParameters
+from django.core import signing
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.forms.models import BaseInlineFormSet
 from django.http import HttpResponse, HttpResponseBadRequest
-from django.urls import path
+from django.shortcuts import redirect
+from django.template.response import TemplateResponse
+from django.urls import path, reverse
 from django.utils.decorators import method_decorator
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_http_methods
 
+from .csv_import import HEADERS, PreviewChanged, create_from_preview, preview_rows, read_csv
 from .models import BusinessSettings, Category, OpeningInterval, Product
 from .pdf import build_catalog_pdf, build_catalog_table_pdf
+
+IMPORT_SALT = "catalog.product.csv-preview"
+IMPORT_MAX_AGE = 15 * 60
+IMPORT_MAX_TOKEN = 2 * 1024 * 1024
+
+
+class CSVUploadForm(forms.Form):
+    csv_file = forms.FileField(label="Archivo CSV", widget=forms.ClearableFileInput(attrs={"accept": ".csv,text/csv"}),
+                               help_text="UTF-8, separador ;, máximo 256 KiB y 500 filas. Las 10 columnas de la plantilla son obligatorias.")
+
+    def clean_csv_file(self):
+        return read_csv(self.cleaned_data["csv_file"])
+
+
+class CSVConfirmationForm(forms.Form):
+    preview_token = forms.CharField(widget=forms.HiddenInput, max_length=IMPORT_MAX_TOKEN)
 
 
 class ProductAdminForm(forms.ModelForm):
@@ -62,6 +85,8 @@ class ProductAdmin(admin.ModelAdmin):
                  {"include_images": False, "table": True}, name="catalog_product_export_pdf_table_plain"),
             path("exportar-pdf-tabla-con-imagenes/", self.admin_site.admin_view(self.export_pdf),
                  {"include_images": True, "table": True}, name="catalog_product_export_pdf_table_images"),
+            path("importar-csv/", self.admin_site.admin_view(self.import_csv), name="catalog_product_import_csv"),
+            path("plantilla-csv/", self.admin_site.admin_view(self.csv_template), name="catalog_product_csv_template"),
         ] + super().get_urls()
 
     def export_queryset(self, request):
@@ -89,6 +114,68 @@ class ProductAdmin(admin.ModelAdmin):
                 csv_text(product.wholesale_condition), "Sí" if product.is_active else "No",
             ])
         return response
+
+    @method_decorator(require_GET)
+    def csv_template(self, request):
+        if not self.has_add_permission(request):
+            raise PermissionDenied
+        text = (Path(settings.BASE_DIR) / "docs" / "plantilla-productos.csv").read_text(encoding="utf-8")
+        response = HttpResponse("\ufeff" + text, content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = 'attachment; filename="dulce-y-salado-plantilla-productos.csv"'
+        return response
+
+    @method_decorator(require_http_methods(["GET", "POST"]))
+    def import_csv(self, request):
+        if not self.has_add_permission(request):
+            raise PermissionDenied
+        upload_form = CSVUploadForm()
+        confirmation_form = None
+        preview = None
+        records = None
+        import_errors = []
+        if request.method == "POST":
+            action = request.POST.get("action")
+            if action == "analyze":
+                upload_form = CSVUploadForm(request.POST, request.FILES)
+                if upload_form.is_valid():
+                    records = upload_form.cleaned_data["csv_file"]
+                    preview = preview_rows(records)
+            elif action == "confirm":
+                submitted = CSVConfirmationForm(request.POST)
+                if submitted.is_valid():
+                    try:
+                        data = signing.loads(submitted.cleaned_data["preview_token"], salt=IMPORT_SALT, max_age=IMPORT_MAX_AGE)
+                        if data["user_id"] != request.user.pk:
+                            raise PermissionDenied
+                        records = data["records"]
+                        created, omitted = create_from_preview(records, data["fingerprint"])
+                    except signing.BadSignature:
+                        import_errors.append("La vista previa venció o fue modificada. Volvé a analizar el CSV.")
+                    except ValidationError as error:
+                        import_errors.extend(error.messages)
+                    except PreviewChanged as error:
+                        preview = error.preview
+                        self.message_user(request, "Los datos cambiaron. Revisá esta nueva vista previa y confirmá nuevamente.",
+                                          level=admin_messages.WARNING)
+                    else:
+                        self.message_user(request, f"Importación completada: {created} productos creados y {omitted} duplicados omitidos."
+                                          " No se actualizaron productos existentes.", level=admin_messages.SUCCESS)
+                        return redirect(reverse("admin:catalog_product_import_csv"))
+                else:
+                    import_errors.append("Falta una vista previa válida. Volvé a analizar el CSV.")
+            else:
+                import_errors.append("Seleccioná Analizar archivo para preparar una vista previa.")
+        if preview is not None and not preview.error_count:
+            token = signing.dumps({"user_id": request.user.pk, "records": records, "fingerprint": preview.fingerprint},
+                                  salt=IMPORT_SALT, compress=False)
+            if len(token) <= IMPORT_MAX_TOKEN:
+                confirmation_form = CSVConfirmationForm(initial={"preview_token": token})
+            else:
+                import_errors.append("El lote supera el límite de confirmación. Dividí el CSV y analizalo nuevamente.")
+        context = {**self.admin_site.each_context(request), "opts": self.model._meta, "title": "Importar productos desde CSV",
+                   "upload_form": upload_form, "confirmation_form": confirmation_form, "preview": preview,
+                   "headers": HEADERS, "import_errors": import_errors, "can_view_products": self.has_view_or_change_permission(request)}
+        return TemplateResponse(request, "admin/catalog/product/import_csv.html", context)
 
     @method_decorator(require_GET)
     def export_pdf(self, request, *, include_images, table=False):

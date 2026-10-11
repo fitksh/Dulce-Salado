@@ -3,11 +3,16 @@ from decimal import Decimal
 from io import StringIO
 from unittest.mock import patch
 
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
+from django.core import signing
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
-from django.test import TestCase
+from django.test import Client, TestCase
+from django.urls import reverse
 
+from .admin import IMPORT_MAX_AGE, IMPORT_MAX_TOKEN, IMPORT_SALT
 from .csv_import import (
     HEADERS,
     MAX_FILE_BYTES,
@@ -20,9 +25,9 @@ from .csv_import import (
 from .models import Category, Product
 
 
-def csv_upload(rows, *, delimiter=";", bom=True, name="productos.csv"):
+def csv_upload(rows, *, delimiter=";", bom=True, name="productos.csv", quoting=csv.QUOTE_MINIMAL):
     stream = StringIO(newline="")
-    writer = csv.writer(stream, delimiter=delimiter)
+    writer = csv.writer(stream, delimiter=delimiter, quoting=quoting)
     writer.writerow(HEADERS)
     writer.writerows(rows)
     return SimpleUploadedFile(name, stream.getvalue().encode("utf-8-sig" if bom else "utf-8"), content_type="text/csv")
@@ -65,6 +70,12 @@ class CSVImportEngineTests(TestCase):
                     self.assertIsNone(product.wholesale_price)
                     self.assertEqual((product.brand, product.description, product.wholesale_condition), ("", "", ""))
                     self.assertEqual(product.is_active, expected)
+
+    def test_quoted_headers_in_comma_and_semicolon_files(self):
+        for separator in (",", ";"):
+            preview = self.preview([csv_row()], delimiter=separator, quoting=csv.QUOTE_ALL)
+            self.assertEqual(preview.new_count, 1)
+            self.assertEqual(preview.error_count, 0)
 
     def test_decimal_prices_zero_and_wholesale_above_retail_are_allowed(self):
         for value, expected in (("14500,00", "14500.00"), ("14500.00", "14500.00"), ("14500", "14500"), ("0", "0")):
@@ -204,3 +215,209 @@ class CSVImportEngineTests(TestCase):
         self.assertEqual(create_from_preview(records, preview.fingerprint), (0, 1))
         product.refresh_from_db()
         self.assertEqual(product.retail_price, Decimal("99.50"))
+
+
+class CSVImportAdminTests(TestCase):
+    def setUp(self):
+        self.category = Category.objects.create(name="Repostería", slug="reposteria")
+        self.real = Product.objects.create(category=self.category, name="Real QA", retail_price="100", brand="Marca QA")
+        self.demo = Product.objects.create(category=self.category, name="[DEMO] Existente", retail_price="50", is_active=False)
+        self.staff = get_user_model().objects.create_user("csv-import-staff", is_staff=True)
+        self.url = reverse("admin:catalog_product_import_csv")
+        self.template_url = reverse("admin:catalog_product_csv_template")
+
+    def allow(self, permission="add_product"):
+        self.staff.user_permissions.add(Permission.objects.get(codename=permission))
+        self.client.force_login(self.staff)
+
+    def analyze(self, rows=None, **options):
+        return self.client.post(self.url, {"action": "analyze", "csv_file": csv_upload(rows or [csv_row()], **options)})
+
+    def token(self, response):
+        return response.context["confirmation_form"].initial["preview_token"]
+
+    def confirm(self, token, *, follow=False):
+        return self.client.post(self.url, {"action": "confirm", "preview_token": token}, follow=follow)
+
+    def test_authentication_permissions_add_only_and_get_post_methods(self):
+        for url in (self.url, self.template_url):
+            self.assertEqual(self.client.get(url).status_code, 302)
+        self.client.force_login(self.staff)
+        for permission in (None, "view_product", "change_product"):
+            if permission:
+                self.allow(permission)
+            self.assertEqual(self.client.get(self.url).status_code, 403)
+            self.assertEqual(self.analyze().status_code, 403)
+            self.assertEqual(self.client.get(self.template_url).status_code, 403)
+            self.staff.user_permissions.clear()
+        self.allow()
+        self.assertContains(self.client.get(self.url), "Analizar archivo")
+        self.assertEqual(self.analyze().status_code, 200)
+        for method in ("put", "patch", "delete"):
+            self.assertEqual(getattr(self.client, method)(self.url).status_code, 405)
+        self.assertEqual(self.client.post(self.template_url).status_code, 405)
+        self.staff.is_staff = False
+        self.staff.save()
+        self.assertEqual(self.client.get(self.url).status_code, 302)
+
+    def test_import_button_is_visible_only_with_add_permission(self):
+        self.allow("view_product")
+        url = reverse("admin:catalog_product_changelist")
+        self.assertNotContains(self.client.get(url), "Importar CSV")
+        self.allow()
+        self.assertContains(self.client.get(url), f'href="{self.url}"')
+
+    def test_template_is_utf8_bom_canonical_and_only_contains_fictional_examples(self):
+        self.allow()
+        before = list(Product.objects.values())
+        response = self.client.get(self.template_url)
+        self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")
+        self.assertIn("plantilla-productos.csv", response["Content-Disposition"])
+        rows = list(csv.reader(StringIO(response.content.decode("utf-8-sig")), delimiter=";"))
+        self.assertEqual(tuple(rows[0]), HEADERS)
+        self.assertTrue(response.content.startswith(b"\xef\xbb\xbf"))
+        self.assertTrue(all("[EJEMPLO]" in row[1] and row[0] == "CATEGORÍA EXISTENTE" for row in rows[1:]))
+        self.assertTrue(all(len(row) == 10 for row in rows))
+        self.assertEqual(list(Product.objects.values()), before)
+
+    def test_preview_writes_nothing_and_confirmation_is_explicit(self):
+        self.allow()
+        before = list(Product.objects.values())
+        response = self.analyze([csv_row(), csv_row(column1=self.real.name, column2=self.real.brand)])
+        preview = response.context["preview"]
+        self.assertEqual((preview.new_count, preview.duplicate_count, preview.error_count), (1, 1, 0))
+        self.assertContains(response, "Confirmar importación")
+        self.assertContains(response, "14500,00")
+        self.assertEqual(list(Product.objects.values()), before)
+        self.client.post(self.url, {"preview_token": self.token(response)})
+        self.assertEqual(list(Product.objects.values()), before)
+        result = self.confirm(self.token(response), follow=True)
+        self.assertContains(result, "1 productos creados y 1 duplicados omitidos")
+        created = Product.objects.get(name="Producto ficticio QA")
+        self.assertEqual(created.retail_price, Decimal("14500.00"))
+        self.assertEqual(created.quantity_step, Decimal("0.10"))
+        self.assertIsNone(created.wholesale_price)
+        self.assertEqual(created.image.name, "")
+        self.assertEqual(list(Product.objects.filter(pk__in=[self.real.pk, self.demo.pk]).values()), before)
+
+    def test_errors_prevent_confirmation_show_row_numbers_and_escape_html(self):
+        self.allow()
+        response = self.analyze([csv_row(), csv_row(column1='<img src=x onerror="alert(1)">')])
+        self.assertEqual(response.context["preview"].error_count, 1)
+        self.assertIsNone(response.context["confirmation_form"])
+        self.assertNotContains(response, "Confirmar importación")
+        self.assertContains(response, "&lt;img")
+        self.assertNotContains(response, '<img src=x onerror="alert(1)">')
+        self.assertContains(response, '<th scope="row">3</th>')
+        self.assertEqual(Product.objects.count(), 2)
+
+    def test_missing_file_unknown_action_invalid_file_and_tokens_report_errors(self):
+        self.allow()
+        for data in ({"action": "analyze"}, {"action": "something"}, {"action": "confirm"},
+                     {"action": "confirm", "preview_token": "modified"},
+                     {"action": "confirm", "preview_token": "x" * (IMPORT_MAX_TOKEN + 1)}):
+            response = self.client.post(self.url, data)
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(response.context["import_errors"] or response.context["upload_form"].errors)
+        self.assertContains(self.analyze(name="bad.txt"), "extensión .csv")
+        self.assertEqual(Product.objects.count(), 2)
+
+    def test_signed_data_expiration_modification_other_user_and_removed_permission(self):
+        self.allow()
+        token = self.token(self.analyze())
+        self.assertContains(self.confirm(token + "x"), "fue modificada")
+        with patch("django.core.signing.time.time", return_value=0):
+            old = self.token(self.analyze())
+        self.assertContains(self.confirm(old), "venció")
+        data = signing.loads(token, salt=IMPORT_SALT, max_age=IMPORT_MAX_AGE)
+        data["user_id"] += 1000
+        self.assertEqual(self.confirm(signing.dumps(data, salt=IMPORT_SALT)).status_code, 403)
+        self.staff.user_permissions.clear()
+        self.assertEqual(self.confirm(token).status_code, 403)
+        self.assertEqual(Product.objects.count(), 2)
+
+    def test_csrf_is_required_for_analysis_and_confirmation(self):
+        self.allow()
+        guarded = Client(enforce_csrf_checks=True)
+        guarded.force_login(self.staff)
+        guarded.get(self.url)
+        self.assertEqual(guarded.post(self.url, {"action": "analyze", "csv_file": csv_upload([csv_row()])}).status_code, 403)
+        token = self.token(self.analyze())
+        self.assertEqual(guarded.post(self.url, {"action": "confirm", "preview_token": token}).status_code, 403)
+        response = guarded.post(self.url, {"action": "analyze", "csv_file": csv_upload([csv_row()]),
+                                           "csrfmiddlewaretoken": guarded.cookies["csrftoken"].value})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Product.objects.count(), 2)
+
+    def test_changes_between_steps_show_fresh_preview_and_never_overwrite(self):
+        self.allow()
+        token = self.token(self.analyze())
+        other = Product.objects.create(category=self.category, name="Producto ficticio QA", retail_price="123")
+        response = self.confirm(token)
+        self.assertContains(response, "Los datos cambiaron")
+        self.assertEqual(response.context["preview"].duplicate_count, 1)
+        self.assertEqual(Product.objects.count(), 3)
+        self.confirm(self.token(response), follow=True)
+        other.refresh_from_db()
+        self.assertEqual(other.retail_price, Decimal("123"))
+        self.assertEqual(Product.objects.count(), 3)
+
+    def test_deleted_duplicate_requires_preview_before_becoming_new(self):
+        self.allow()
+        token = self.token(self.analyze([csv_row(column1=self.demo.name)]))
+        self.demo.delete()
+        response = self.confirm(token)
+        self.assertContains(response, "Los datos cambiaron")
+        self.assertEqual(response.context["preview"].new_count, 1)
+        self.assertFalse(Product.objects.filter(name=self.demo.name).exists())
+
+    def test_new_category_ambiguity_between_steps_displays_errors_and_blocks_confirmation(self):
+        self.allow()
+        token = self.token(self.analyze())
+        Category.objects.create(name="REPOSTERIA", slug="reposteria-ambigua")
+        response = self.confirm(token)
+        self.assertEqual(response.context["preview"].error_count, 1)
+        self.assertContains(response, "Categoría: debe existir")
+        self.assertContains(response, '<th scope="row">2</th>')
+        self.assertNotContains(response, "Confirmar importación")
+        self.assertEqual(Product.objects.count(), 2)
+
+    def test_replay_does_not_duplicate_and_success_clears_uploaded_data(self):
+        self.allow()
+        token = self.token(self.analyze())
+        response = self.confirm(token, follow=True)
+        self.assertIsNone(response.context["preview"])
+        repeated = self.confirm(token)
+        self.assertEqual(repeated.context["preview"].duplicate_count, 1)
+        self.assertContains(repeated, "Los datos cambiaron")
+        self.assertEqual(Product.objects.count(), 3)
+        self.assertNotIn("records", self.client.session)
+
+    def test_transaction_failure_has_error_message_and_no_partial_creations(self):
+        self.allow()
+        token = self.token(self.analyze([csv_row(), csv_row(column1="Fallará QA")]))
+        original = Product.save
+
+        def save(product, *args, **kwargs):
+            if product.name == "Fallará QA":
+                raise IntegrityError("Fallo aislado de test")
+            return original(product, *args, **kwargs)
+
+        with patch.object(Product, "save", save):
+            self.assertContains(self.confirm(token), "No se importó ningún producto")
+        self.assertEqual(Product.objects.count(), 2)
+
+    def test_unicode_batch_near_file_limit_fits_signed_confirmation_and_preserves_rows(self):
+        self.allow()
+        rows = [csv_row(column1=f"Lote Unicode QA {index:02}", column3="ñ" * 4000) for index in range(30)]
+        upload = csv_upload(rows)
+        self.assertLessEqual(upload.size, MAX_FILE_BYTES)
+        self.assertGreater(upload.size, 230_000)
+        response = self.client.post(self.url, {"action": "analyze", "csv_file": upload})
+        self.assertEqual(response.context["preview"].new_count, 30)
+        token = self.token(response)
+        self.assertLessEqual(len(token), IMPORT_MAX_TOKEN)
+        self.assertEqual(Product.objects.count(), 2)
+        self.assertContains(self.confirm(token, follow=True), "30 productos creados y 0 duplicados omitidos")
+        self.assertEqual(Product.objects.filter(name__startswith="Lote Unicode QA").count(), 30)
+        self.assertEqual(Product.objects.get(name="Lote Unicode QA 00").description, "ñ" * 4000)

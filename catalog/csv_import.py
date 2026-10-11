@@ -48,8 +48,12 @@ def read_csv(upload):
     for separator in (";", ","):
         reader = csv.reader(StringIO(text, newline=""), delimiter=separator, strict=True)
         try:
-            if tuple(next(reader, ())) != HEADERS:
-                continue
+            headings = tuple(next(reader, ()))
+        except csv.Error:
+            continue
+        if headings != HEADERS:
+            continue
+        try:
             records = []
             while True:
                 number = reader.line_num + 1
@@ -207,10 +211,10 @@ def create_from_preview(records, expected_fingerprint):
     # sin añadir un modelo/historial ni una nueva regla de unicidad de productos.
     categories = list(Category.objects.select_for_update().order_by("pk"))
     preview = preview_rows(records, categories=categories)
-    if preview.error_count:
-        raise ValidationError("Hay filas con errores. No se importó ningún producto; corregí y analizá nuevamente el CSV.")
     if preview.fingerprint != expected_fingerprint:
         raise PreviewChanged(preview)
+    if preview.error_count:
+        raise ValidationError("Hay filas con errores. No se importó ningún producto; corregí y analizá nuevamente el CSV.")
     for row in preview.rows:
         if row.status != "nuevo":
             continue

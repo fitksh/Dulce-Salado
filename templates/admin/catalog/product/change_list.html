@@ -8,6 +8,7 @@
       <li><a href="{% url 'admin:catalog_product_export_pdf_plain' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">PDF sin imágenes</a></li>
       <li><a href="{% url 'admin:catalog_product_export_pdf_table_plain' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">PDF tabla compacta</a></li>
       <li><a href="{% url 'admin:catalog_product_export_pdf_table_images' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">PDF tabla con imágenes</a></li>
+      {% if has_add_permission %}<li><a href="{% url 'admin:catalog_product_import_csv' %}">Importar CSV</a></li>{% endif %}
       {{ block.super }}
     {% endblock %}
   </ul>

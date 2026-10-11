@@ -1,0 +1,50 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'admin/css/forms.css' %}"><link rel="stylesheet" href="{% static 'admin/css/changelists.css' %}"><link rel="stylesheet" href="{% static 'css/admin-csv-import.css' %}">{% endblock %}
+{% block breadcrumbs %}
+<div class="breadcrumbs"><a href="{% url 'admin:index' %}">{% translate 'Home' %}</a> &rsaquo; {% if can_view_products %}<a href="{% url 'admin:catalog_product_changelist' %}">Productos</a> &rsaquo; {% endif %}Importar CSV</div>
+{% endblock %}
+{% block content %}
+{% if import_errors %}<ul class="errorlist">{% for error in import_errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+<p>Esta importación sólo crea productos. Los duplicados se omiten; ningún producto existente se actualiza ni se borra. Las categorías deben existir previamente.</p>
+<p><a href="{% url 'admin:catalog_product_csv_template' %}">Descargar plantilla CSV</a>. Reemplazá la categoría y las filas ficticias por tus datos antes de analizarla. Las imágenes se cargan luego, producto por producto.</p>
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="analyze">
+  {{ upload_form.non_field_errors }}
+  <fieldset class="module aligned">
+    <div class="form-row">{{ upload_form.csv_file.errors }}{{ upload_form.csv_file.label_tag }}{{ upload_form.csv_file }}<div class="help" id="{{ upload_form.csv_file.auto_id }}_helptext">{{ upload_form.csv_file.help_text }}</div></div>
+  </fieldset>
+  <div class="submit-row"><input type="submit" class="default" value="Analizar archivo"></div>
+</form>
+{% if preview %}
+<h2>Vista previa</h2>
+<p>{{ preview.new_count }} nuevos · {{ preview.duplicate_count }} duplicados · {{ preview.error_count }} filas con errores.</p>
+{% if preview.error_count %}<p class="errornote">No se puede confirmar este lote. Corregí las filas con errores y volvé a analizar el archivo. No se guardó ningún producto.</p>{% else %}<p>Se crearán únicamente los registros marcados como nuevos. Revisá todos sus datos antes de confirmar. La vista previa vence en 15 minutos.</p>{% endif %}
+<div id="changelist" class="module">
+  <div class="results" role="region" aria-label="Vista previa de productos" tabindex="0">
+    <table id="result_list">
+      <caption>Productos del archivo y resultado de validación</caption>
+      <thead><tr><th scope="col">Fila</th><th scope="col">Resultado</th>{% for header in headers %}<th scope="col">{{ header }}</th>{% endfor %}</tr></thead>
+      <tbody>{% for row in preview.rows %}
+        <tr>
+          <th scope="row">{{ row.number }}</th>
+          <td>{{ row.status|capfirst }}{% if row.errors %}<ul class="errorlist">{% for error in row.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}{% if row.duplicate_reason %}<p>{{ row.duplicate_reason }}</p>{% endif %}</td>
+          {% if row.product %}
+            <td>{{ row.product.category.name }}</td><td>{{ row.product.name }}</td><td>{{ row.product.brand }}</td><td>{{ row.product.description|linebreaksbr }}</td><td>{{ row.product.sale_unit }}</td><td>{{ row.product.quantity_step }}</td><td>{{ row.product.retail_price }}</td><td>{{ row.product.wholesale_price|default_if_none:"" }}</td><td>{{ row.product.wholesale_condition }}</td><td>{{ row.product.is_active|yesno:"Sí,No" }}</td>
+          {% else %}{% for value in row.values %}<td>{{ value|linebreaksbr }}</td>{% endfor %}{% endif %}
+        </tr>
+      {% endfor %}</tbody>
+    </table>
+  </div>
+</div>
+{% if confirmation_form %}
+<form method="post">
+  {% csrf_token %}{{ confirmation_form.preview_token }}
+  <input type="hidden" name="action" value="confirm">
+  <div class="submit-row"><input type="submit" class="default" value="Confirmar importación"></div>
+</form>
+{% endif %}
+{% endif %}
+{% if can_view_products %}<p><a href="{% url 'admin:catalog_product_changelist' %}">Volver a productos</a></p>{% endif %}
+{% endblock %}

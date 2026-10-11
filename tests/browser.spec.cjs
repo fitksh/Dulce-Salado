@@ -461,6 +461,64 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     }
   });
 
+  await t.test("Admin importa sólo después de vista previa y confirmación, omite duplicados y muestra errores", async () => {
+    await admin.goto(`${base}/admin/catalog/product/`);
+    await admin.getByRole("link", { name: "Importar CSV", exact: true }).click();
+    const pending = admin.waitForEvent("download");
+    await admin.getByRole("link", { name: "Descargar plantilla CSV", exact: true }).click();
+    const template = await pending;
+    assert.equal(template.suggestedFilename(), "dulce-y-salado-plantilla-productos.csv");
+    assert.ok(readFileSync(await template.path()).toString("utf8").includes("CATEGORÍA EXISTENTE;[EJEMPLO]"));
+    const headers = "Categoría;Nombre;Marca;Descripción;Unidad de venta;Incremento de cantidad;Precio minorista;Precio mayorista;Condición mayorista;Activo\n";
+    const quoted = fields => fields.map(value => `"${value.replaceAll('"', '""')}"`).join(";");
+    const bad = headers + quoted(["QA Repostería (test)", '<img src=x onerror="alert(1)">', "", "", "kg", "", "1", "", "", "No"]);
+    await admin.locator("#id_csv_file").setInputFiles({ name: "invalid.csv", mimeType: "text/csv", buffer: Buffer.from(bad) });
+    assert.equal(await admin.getByRole("heading", { name: "Vista previa" }).count(), 0);
+    await admin.getByRole("button", { name: "Analizar archivo", exact: true }).click();
+    await admin.getByRole("heading", { name: "Vista previa" }).waitFor();
+    await admin.waitForLoadState("load");
+    assert.equal(await admin.getByRole("button", { name: "Confirmar importación", exact: true }).count(), 0);
+    assert.equal(await admin.locator("#result_list img").count(), 0);
+    assert.equal(await admin.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    await accessible(admin);
+    await admin.screenshot({ path: ".qa/screenshots/csv-import-error-390.png", fullPage: true });
+    const content = headers + [
+      ["QA Repostería (test)", "QA Importado (test)", "", 'QA ñ; "comillas"\nsegunda línea', "kg", "0,05", "14500,00", "", "", "No"],
+      ["QA Repostería (test)", "QA Chocolate (test)", "QA Marca", "", "kg", "", "9999,99", "", "", "Sí"],
+    ].map(quoted).join("\n");
+    await admin.locator("#id_csv_file").setInputFiles({ name: "productos.csv", mimeType: "text/csv", buffer: Buffer.from(content) });
+    await admin.getByRole("button", { name: "Analizar archivo", exact: true }).click();
+    await admin.getByRole("button", { name: "Confirmar importación", exact: true }).waitFor();
+    await admin.waitForLoadState("load");
+    assert.ok((await admin.locator("#content").innerText()).includes("1 nuevos · 1 duplicados · 0 filas con errores"));
+    assert.equal(await admin.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    const region = admin.getByRole("region", { name: "Vista previa de productos" });
+    await region.focus();
+    await region.press("ArrowRight");
+    await admin.waitForTimeout(150);
+    assert.ok(await region.evaluate(node => node.scrollLeft > 0));
+    await region.evaluate(node => { node.scrollLeft = 0; });
+    await accessible(admin);
+    await admin.screenshot({ path: ".qa/screenshots/csv-import-preview-390.png", fullPage: true });
+    const check = await context.newPage();
+    await check.goto(`${base}/admin/catalog/product/?q=QA+Importado`);
+    assert.equal(await check.locator("#result_list tbody tr").count(), 0);
+    await check.close();
+    await admin.setViewportSize({ width: 1280, height: 844 });
+    await admin.screenshot({ path: ".qa/screenshots/csv-import-preview-1280.png", fullPage: true });
+    await admin.getByRole("button", { name: "Confirmar importación", exact: true }).click();
+    await admin.getByText("Importación completada:", { exact: false }).waitFor();
+    assert.ok((await admin.locator(".messagelist").innerText()).includes("1 productos creados y 1 duplicados omitidos"));
+    assert.equal(await admin.getByRole("heading", { name: "Vista previa" }).count(), 0);
+    await admin.goto(`${base}/admin/catalog/product/?q=QA+Importado`);
+    assert.equal(await admin.locator("#result_list tbody tr").count(), 1);
+    await admin.locator("#result_list tbody tr th a").click();
+    assert.equal(await admin.locator("#id_quantity_step").inputValue(), "0.05");
+    assert.equal(await admin.locator("#id_retail_price").inputValue(), "14500.00");
+    assert.equal(await admin.locator("#id_is_active").isChecked(), false);
+    await admin.setViewportSize({ width: 390, height: 844 });
+  });
+
   await t.test("carrito largo conserva control, foco y scroll durante y después del recálculo", async () => {
     const isolated = await browser.newContext({ viewport: { width: 390, height: 844 } });
     const scrolled = await isolated.newPage();

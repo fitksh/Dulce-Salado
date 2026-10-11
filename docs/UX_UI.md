@@ -89,3 +89,7 @@ PDF tabla compacta y PDF tabla con imágenes se agregan junto al CSV y ambas lis
 ## Fotografías cuadradas del catálogo — disposición vigente
 
 Sustituye el marco histórico de 210 px: cada tarjeta reserva proporción 1:1, incluida Sin imagen. Miniatura cover/center, sin distorsión y sin bandas; recorta extremos no cuadrados. Visor siempre contain con foto completa, accesible por clic/teclado y enlace nativo sin JS; carrito/PDF también completos. Se contrastaron fotografías comerciales, incluyendo envases; su identificación central sigue visible. Etiquetas junto al borde pueden ocultarse en miniatura: abrir el visor y preferir fotos fuente cuadradas, bien encuadradas. Sin cambios físicos, modelos o editor.
+
+## Importación en Django Admin
+
+Importar CSV aparece junto a exportaciones sólo con permiso de agregar productos. Pantalla nativa del Admin, etiqueta de archivo/ayuda, enlace subrayado a plantilla y botón Analizar archivo; elegir un archivo no lo importa. Preview con tabla semántica desplazable horizontalmente, números de fila, valores efectivos y conteos nuevo/duplicado/error; mensajes escapados y descriptivos. Cualquier error oculta Confirmar importación y exige corregir/reanalizar. Sin errores, el botón explícito confirma los nuevos y omite duplicados sin sobrescribir. Vista previa vencida/modificada informa reanálisis; datos cambiados pueden presentar preview nueva para revisar/confirmar. Éxito usa mensaje nativo con creados/omitidos y carga vacía. Sin JavaScript adicional ni cambios al catálogo/carrito.

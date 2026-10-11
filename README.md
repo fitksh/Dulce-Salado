@@ -102,7 +102,7 @@ No usar `down -v` para conservar base e imágenes. Los volúmenes `postgres_data
 
 ## Exportar catálogo desde Admin
 
-En el listado de productos, «Exportar CSV» descarga todos los productos del conjunto actual, incluidas páginas no visibles. Conserva búsqueda y filtros por categoría, unidad y activo. Sin filtros incluye activos e inactivos. Requiere usuario staff con permiso de ver o cambiar productos. Archivo UTF-8 con BOM y separador `;`, importes con coma decimal para Excel es-AR. Los textos que podrían ejecutarse como fórmulas llevan un apóstrofo protector. No existe importación.
+En el listado de productos, «Exportar CSV» descarga todos los productos del conjunto actual, incluidas páginas no visibles. Conserva búsqueda y filtros por categoría, unidad y activo. Sin filtros incluye activos e inactivos. Requiere usuario staff con permiso de ver o cambiar productos. Archivo UTF-8 con BOM y separador `;`, importes con coma decimal para Excel es-AR. Los textos que podrían ejecutarse como fórmulas llevan un apóstrofo protector. La importación de altas tiene permiso independiente de agregar productos y no modifica esta exportación.
 
 Junto al CSV están «PDF con imágenes» y «PDF sin imágenes». Ambas descargas A4 conservan exactamente el mismo conjunto completo y orden del Admin, también inactivos y [DEMO] si el filtro los incluye. El PDF indica los inactivos, precios ARS estimativos y confirmación comercial. La variante con fotos usa miniaturas proporcionales; la otra ocupa todo el ancho con texto. Fotos faltantes/ilegibles muestran un aviso sin interrumpir la descarga. No se almacenan PDFs ni se alteran imágenes comerciales. ReportLab 5.x es la única biblioteca nueva: reconstruir Docker para instalarla.
 
@@ -111,6 +111,37 @@ QA PDF: CI instala Poppler para leer/renderizar los archivos. En entornos sin `p
 «PDF tabla compacta» añade una descarga A4 horizontal con producto, marca, descripción, unidad, $ Min., $ May. y Cond. mayorista. Sin categoría ni fotografías; filas de altura variable, encabezados repetidos, texto completo y las mismas reglas de permisos/filtros/orden. El script de QA también genera `catalogo-tabla-compacta.pdf`.
 
 «PDF tabla con imágenes» conserva los encabezados completos Imagen, Producto, Marca, Descripción, Unidad de venta, Precio minorista, Precio mayorista y Condición mayorista. A4 horizontal, fotos de unos 51 px con proporción completa, sin categoría. Ambas tablas conservan columnas monetarias ARS y legibilidad de 9 pt; descripción excepcionalmente larga continúa sin truncarse. El script genera `catalogo-tabla-con-imagenes.pdf` además de la compacta y las dos listas existentes.
+
+## Preparar e importar productos desde CSV
+
+Admin → Productos → **Importar CSV** requiere permiso de **agregar productos**. Un usuario con permiso exclusivamente de lectura puede exportar, pero no importar. La carga también está en `/admin/catalog/product/importar-csv/`; no hay importación pública. Sólo se crean productos, sin actualizar/borrar existentes, importar fotos, crear categorías ni ejecutar el seed.
+
+Descargar la plantilla desde esa pantalla o abrir [la plantilla versionada](docs/plantilla-productos.csv). Contiene únicamente ejemplos ficticios: reemplazar `CATEGORÍA EXISTENTE` por una categoría ya creada y retirar/reemplazar las filas `[EJEMPLO]` antes de preparar datos comerciales. La categoría ficticia impide que esos ejemplos se importen sin revisión. Guardar como `.csv`, UTF-8 con o sin BOM, **punto y coma** como formato canónico. Mantener las diez columnas en este orden exacto, aun cuando sus valores sean opcionales:
+
+```csv
+Categoría;Nombre;Marca;Descripción;Unidad de venta;Incremento de cantidad;Precio minorista;Precio mayorista;Condición mayorista;Activo
+CATEGORÍA EXISTENTE;[EJEMPLO] Producto por kg;;;kg;;14500,00;;;
+```
+
+- Obligatorios: Categoría existente, Nombre, Unidad de venta y Precio minorista. Unidad: `kg`, `unidad` o `paquete`; no se deduce del nombre.
+- Marca, Descripción y Condición mayorista vacías quedan como cadenas vacías; no escribir `null`. Precio mayorista vacío queda sin precio; no se inventan condiciones ni se exige que sea menor al minorista.
+- Incremento vacío: `kg` → `0.10`, `unidad`/`paquete` → `1.00`. `0.05` kg se admite expresamente (50 gramos y cantidades como 0.25 kg); unidades/paquetes requieren pasos enteros positivos. No se añade mínimo de venta.
+- Precios ARS: `14500,00`, `14500.00` o `14500`, sin símbolo ni separadores de miles. Se usa Decimal; `1.234`, `1,234`, `1.234,56`, negativos, expresiones y notación científica se rechazan. Máximo dos decimales y límites del modelo.
+- Activo vacío → Sí. Se admiten `Sí`/`No`, `True`/`False` y `1`/`0`, sin distinguir mayúsculas/acentos. Se conserva la categoría existente aun si está inactiva; no se la reactiva y sus productos no aparecen públicamente mientras siga inactiva.
+- Límites: 256 KiB por archivo, 500 filas de productos, 4.000 caracteres por descripción/campo y límites menores del modelo (nombre 180, marca 100, condición 300). Se permiten comillas, `;`, comas y saltos de línea dentro de campos correctamente entrecomillados. HTML, fórmulas y caracteres de control se rechazan; nunca se ejecuta contenido del CSV.
+
+En **Excel**, abrir/importar como UTF-8, conservar encabezados y columnas, preparar una sola hoja y guardar una copia como **CSV UTF-8**. El separador depende de la configuración regional: preferir `;`; si Excel genera comas, también se admite cuando los encabezados exactos permiten identificarlo. En **Google Sheets**, usar Archivo → Descargar → Valores separados por comas (.csv), hoja actual; el importador acepta ese delimitador con los mismos encabezados. Verificar que los precios no tengan separadores de miles. No reemplazar globalmente comas por punto y coma: dañaría decimales y campos entrecomillados.
+
+1. Seleccionar el CSV y pulsar **Analizar archivo**. Elegir el archivo no importa nada.
+2. Revisar la vista previa: números de fila, datos efectivos (incluidos defaults), nuevos, duplicados y errores. El número corresponde a la línea física inicial del registro; una descripción multilínea puede hacer que el siguiente registro empiece varias líneas después.
+3. Corregir todas las filas con errores en la planilla, exportar otra vez y analizar el archivo completo. Cualquier error bloquea todo el lote, aunque otras filas sean válidas.
+4. Los duplicados por categoría/nombre/marca se omiten sin sobrescribir. La comparación ignora mayúsculas, acentos y espacios repetidos. Categorías o identidades existentes múltiples, y filas de la misma identidad con datos diferentes, requieren revisión y bloquean el lote.
+5. Pulsar **Confirmar importación** sólo después de revisar los nuevos registros. La vista previa está firmada para el usuario, vence en 15 minutos y no guarda el archivo ni datos masivos en sesión. Si fue modificada/venció, volver a analizar. Si categorías o duplicados cambiaron, se revalida y puede pedirse confirmar una vista previa nueva; nunca se aplica la anterior silenciosamente.
+6. El guardado es atómico: si una fila falla, no se crea ninguna. El mensaje final informa creados/omitidos y vuelve a la carga sin archivo retenido. Repetir un lote omite coincidencias; no actualiza precios ni productos. Cargar después las fotos individualmente desde Admin y revisar datos comerciales antes de publicar productos activos.
+
+La confirmación permite hasta 2 MiB de payload firmado, por debajo del límite de POST de Django. Son lotes pequeños/medianos, sin historial, trabajos en segundo plano ni sincronización. Las importaciones se serializan mediante bloqueos de categorías PostgreSQL y revalidación; el modelo sigue permitiendo altas manuales homónimas, que deben revisarse comercialmente. Las fórmulas que la exportación protegió con apóstrofo tampoco se admiten al importar.
+
+Referencias de formato: [CSV y separadores en Excel](https://support.microsoft.com/es-es/excel/get-started/import-or-export-text-txt-or-csv-files), [UTF-8 en Excel](https://support.microsoft.com/es-es/excel/opening-csv-utf-8-files-correctly-in-excel) y [descarga CSV en Google Sheets](https://www.skills.google/focuses/5828?locale=es&parent=catalog).
 
 ## Ubicación
 En Admin → Catálogo → Configuración comercial, crear una única configuración con la dirección real. El enlace exacto de Google Maps es opcional: pegar un enlace HTTPS compartido por Maps o dejarlo vacío para buscar la dirección. Luego editar ese mismo registro. La página pública `/ubicacion/` está enlazada desde el footer. Si falta dirección muestra un aviso sin destino ficticio. Migración nueva: `catalog.0003_business_settings`; ejecutar `docker compose exec web python manage.py migrate` al actualizar.

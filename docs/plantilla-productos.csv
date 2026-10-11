@@ -1,0 +1,4 @@
+Categoría;Nombre;Marca;Descripción;Unidad de venta;Incremento de cantidad;Precio minorista;Precio mayorista;Condición mayorista;Activo
+CATEGORÍA EXISTENTE;[EJEMPLO] Producto por kg;;;kg;;14500,00;;;
+CATEGORÍA EXISTENTE;[EJEMPLO] Producto por unidad;;;unidad;;1000,00;;;
+CATEGORÍA EXISTENTE;[EJEMPLO] Producto con paso de 50 gramos;;;kg;0,05;2000,00;;;

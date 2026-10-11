@@ -1,0 +1,9 @@
+.breadcrumbs a,
+#content p a { text-decoration: underline; text-underline-offset: .15em; }
+#changelist .results { width: 100%; min-width: 0; overflow-x: auto; }
+#changelist .results:focus-visible { outline: 2px solid var(--link-fg); outline-offset: 2px; }
+#changelist table thead th { padding: 8px 10px; white-space: normal; }
+#result_list td { min-width: 7rem; max-width: 20rem; overflow-wrap: anywhere; }
+#result_list td:first-of-type { min-width: 12rem; }
+#result_list td:nth-child(6) { min-width: 14rem; }
+#content .submit-row input { min-height: 44px; }
