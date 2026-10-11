@@ -31,3 +31,9 @@ HTML semántico, etiquetas y textos alternativos, contraste WCAG AA cuando corre
 
 ## Criterio de aceptación UX
 En móvil se puede encontrar un artículo, identificar ambos precios/condición, ajustar cantidad, revisar y abrir WhatsApp sin zoom forzado ni campos inaccesibles; nunca se confunde la estimación con una compra confirmada.
+
+## Segunda iteración — navegación compacta
+
+Horarios integrados dentro del header en una segunda fila compacta, sin textos auxiliares. Details conserva teclado y fallback sin JS; panel absoluto con altura limitada, scroll interno y cierre exterior/Escape (restaura summary). Abrirlo no cambia altura del header ni posición del contenido. El reloj y la zona Buenos Aires permanecen iguales.
+
+Catálogo sin introducción comercial; Nuestros productos es el h1. Buscador conserva placeholder y etiqueta oculta. Selector móvil aplica GET automáticamente con JS y conserva búsqueda; Filtrar sólo sin JS. Footer móvil centrado, icono ubicación y enlace Instagram oficial con target blank/noopener/noreferrer. Toolbar móvil del carrito apilada, ambos controles de igual ancho. Escritorio conserva chips y disposición existente.

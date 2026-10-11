@@ -32,3 +32,13 @@ Conservar diseño y MVP. Ejecutar secuencialmente, sin ampliar precios, carrito,
 - [x] Tarea 7 — QA completo: 60 Django, 7 Node y 16 Chromium OK, responsive/axe/regresiones; publicado en main, CI success run 38095823292 (incluye corrección de foco tras Escape).
 
 Etapa complementaria completada y publicada. Historial MVP conservado. Siguiente paso: revisar datos comerciales y pruebas manuales reales de teléfono/lector/Maps/Excel según QA.md. Despliegue de producción permanece fuera de alcance.
+
+## Segunda iteración UX/UI autorizada
+
+- [x] Tarea 1 — Limpieza, header/horarios flotantes, categorías automáticas, footer y toolbar móvil; 28 Django, 7 Node y 16 Chromium OK.
+- [ ] Tarea 2 — Mapa embebido responsive y navegación externa.
+- [ ] Tarea 3 — Ampliación de imagen con dialog reutilizable.
+- [ ] Tarea 4 — Condiciones mayoristas con destacado suave.
+- [ ] Tarea 5 — Notificaciones flotantes y errores persistentes.
+- [ ] Tarea 6 — WhatsApp en nueva pestaña con fallback seguro.
+- [ ] Tarea 7 — QA, documentación y publicación final.

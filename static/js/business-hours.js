@@ -20,6 +20,17 @@
   const source = root.document.getElementById("business-hours-data");
   if (!source) return;
   const data = JSON.parse(source.textContent);
+  const panel = root.document.querySelector(".hours-panel");
+  root.document.addEventListener("click", event => {
+    if (panel.open && !panel.contains(event.target)) panel.open = false;
+  });
+  root.document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && panel.open) {
+      panel.open = false;
+      panel.querySelector("summary").focus({ preventScroll: true });
+      event.preventDefault();
+    }
+  });
   function update() {
     const status = currentStatus(data);
     const label = root.document.getElementById("business-status-text");

@@ -87,3 +87,9 @@ class CatalogViewTests(TestCase):
         self.assertContains(response, 'href="https://www.instagram.com/_dulceysalado1/"')
         self.assertNotContains(response, "Todo para tus ideas")
         self.assertNotContains(self.client.get(reverse("cart")), "Tu selección")
+        self.assertContains(response, '<h1 id="catalog-title">Nuestros productos</h1>')
+        self.assertContains(response, 'class="visually-hidden" for="catalog-search"')
+        for text in ("Encontrá lo que necesitás.", "Consultá nuestros productos y precios.", "Buscar por nombre, marca o descripción", "Precios en pesos argentinos (ARS)."):
+            self.assertNotContains(response, text)
+        self.assertNotContains(self.client.get(reverse("cart")), "Cantidades y precios estimados.")
+        self.assertNotContains(self.client.get(reverse("directions")), "Visitá Dulce y Salado.")

@@ -50,7 +50,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
   await t.test("responsive, sólo activos, búsqueda y WCAG automatizado", async () => {
     assert.equal(await page.locator(".product-card").count(), 12);
     assert.equal(await page.getByText("QA Invisible").count(), 0);
-    for (const width of [360, 390, 430, 1280]) {
+    for (const width of [360, 390, 430, 768, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       const header = await page.locator(".header-inner").evaluate(node => {
@@ -71,9 +71,14 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.getByRole("button", { name: "Buscar", exact: true }).click();
     assert.equal(await page.locator(".product-card").count(), 1);
     await page.locator("#category-filter").selectOption("qa-cotillon");
-    await page.getByRole("button", { name: "Filtrar", exact: true }).click();
     await page.getByRole("heading", { name: "No encontramos productos" }).waitFor();
     assert.equal(await page.locator("#catalog-search").inputValue(), "QA Marca");
+    assert.equal(await page.locator("#category-filter").inputValue(), "qa-cotillon");
+    assert.equal(new URL(page.url()).searchParams.get("categoria"), "qa-cotillon");
+    assert.equal(await page.getByRole("button", { name: "Filtrar", exact: true }).isVisible(), false);
+    const instagram = page.getByRole("link", { name: /Instagram/ });
+    assert.equal(await instagram.getAttribute("target"), "_blank");
+    assert.equal(await instagram.getAttribute("rel"), "noopener noreferrer");
     await page.goto(base);
   });
 
@@ -117,6 +122,9 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     page.on("pageerror", error => errors.push(error.message));
     await page.goto(`${base}/carrito/`);
     await waitCart("$ 27,15");
+    const toolbar = await page.locator(".cart-toolbar > *").evaluateAll(nodes => nodes.map(n => ({ width: n.getBoundingClientRect().width, left: n.getBoundingClientRect().left })));
+    assert.equal(toolbar[0].width, toolbar[1].width);
+    assert.equal(toolbar[0].left, toolbar[1].left);
     await accessible();
     await page.getByRole("button", { name: /Aumentar cantidad/ }).click();
     await waitCart("$ 36,20");
@@ -408,16 +416,36 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(backgroundRequests, 0);
     assert.equal(await page.locator("#business-status-dot").evaluate(node => node.classList.contains("open")), true);
     await page.locator(".hours-panel summary").click();
+    assert.equal(await page.locator("header .hours-panel").count(), 1);
     assert.equal(await page.locator(".weekly-hours > div").count(), 7);
     assert.match(await page.locator(".weekly-hours dd").first().innerText(), /09:00–12:00\s+15:00–18:00/);
     assert.equal(await page.locator(".weekly-hours dd").nth(1).innerText(), "Cerrado");
-    for (const width of [360, 390, 430, 1280]) {
+    for (const width of [360, 390, 430, 768, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      const layout = await page.evaluate(() => {
+        const panel = document.querySelector(".hours-panel"), header = document.querySelector("header");
+        const before = document.querySelector("main").getBoundingClientRect().top;
+        panel.open = false;
+        const after = document.querySelector("main").getBoundingClientRect().top;
+        panel.open = true;
+        const bounds = document.querySelector(".hours-details").getBoundingClientRect();
+        return { before, after, height: header.getBoundingClientRect().height, left: bounds.left, right: bounds.right };
+      });
+      assert.equal(layout.before, layout.after);
+      assert.ok(layout.height < 150);
+      assert.ok(layout.left >= 0 && layout.right <= width);
       await page.screenshot({ path: `.qa/screenshots/hours-${width}.png`, fullPage: true });
     }
     await accessible();
     await page.locator(".hours-panel summary").press("Enter");
+    assert.equal(await page.locator(".hours-panel").evaluate(node => node.open), false);
+    await page.locator(".hours-panel summary").press("Enter");
+    await page.keyboard.press("Escape");
+    assert.equal(await page.locator(".hours-panel").evaluate(node => node.open), false);
+    assert.equal(await page.locator(".hours-panel summary").evaluate(node => node === document.activeElement), true);
+    await page.locator(".hours-panel summary").click();
+    await page.locator(".site-footer p").first().click();
     assert.equal(await page.locator(".hours-panel").evaluate(node => node.open), false);
     const plain = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 360, height: 844 } });
     const plainPage = await plain.newPage();

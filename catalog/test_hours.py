@@ -36,6 +36,9 @@ class OpeningHoursTests(TestCase):
         self.assertEqual(state["week"][1]["intervals"], [])
         self.business.opening_intervals.all().delete()
         self.assertEqual(business_hours(self.business, self.now(10))["label"], "Cerrado")
+        response = self.client.get("/")
+        self.assertNotContains(response, "Según horarios publicados")
+        self.assertNotContains(response, "Hora de Buenos Aires. Horario semanal publicado por el comercio.")
 
     def test_multiple_intervals_exact_boundaries_and_buenos_aires_timezone(self):
         self.interval().save()
