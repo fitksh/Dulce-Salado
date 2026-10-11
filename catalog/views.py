@@ -28,7 +28,7 @@ def catalog_list(request):
             When(brand__icontains=query, then=Value(1)),
             default=Value(2), output_field=IntegerField(),
         )).order_by("search_rank", "name", "pk")
-    page = Paginator(products, 24).get_page(request.GET.get("page"))
+    page = Paginator(products, 12).get_page(request.GET.get("page"))
     for product in page:
         product.cart_revision = product_revision(product)
     return render(request, "home.html", {

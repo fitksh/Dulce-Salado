@@ -67,7 +67,7 @@ class CatalogViewTests(TestCase):
             for i in range(25)
         ])
         response = self.client.get("/", {"q": "Chocolate", "categoria": self.category.slug})
-        self.assertEqual(len(response.context["page"]), 24)
+        self.assertEqual(len(response.context["page"]), 12)
         self.assertContains(response, "page=2&amp;q=Chocolate&amp;categoria=reposteria")
 
     def test_product_content_is_escaped(self):
@@ -102,7 +102,9 @@ class CatalogViewTests(TestCase):
         self.assertContains(response, 'href="https://www.instagram.com/_dulceysalado1/"')
         self.assertNotContains(response, "Todo para tus ideas")
         self.assertNotContains(self.client.get(reverse("cart")), "Tu selección")
-        self.assertContains(response, '<h1 id="catalog-title">Nuestros productos</h1>')
+        self.assertContains(response, '<h1 id="catalog-title" class="visually-hidden">Nuestros productos</h1>')
+        self.assertContains(response, 'placeholder="Buscar productos, marcas y más..."')
+        self.assertContains(response, 'class="visually-hidden" for="category-filter"')
         self.assertContains(response, 'class="visually-hidden" for="catalog-search"')
         for text in ("Encontrá lo que necesitás.", "Consultá nuestros productos y precios.", "Buscar por nombre, marca o descripción", "Precios en pesos argentinos (ARS)."):
             self.assertNotContains(response, text)
@@ -117,3 +119,33 @@ class CatalogViewTests(TestCase):
                 self.assertContains(response, f'href="{reverse(name)}" aria-current="page"', count=1)
             else:
                 self.assertNotContains(response, 'aria-current="page"')
+
+    def test_45_products_have_four_stable_filtered_pages_and_ranges(self):
+        Product.objects.bulk_create([
+            Product(category=self.category, name=f"Chocolate {i // 2:02}", retail_price=1)
+            for i in range(44)
+        ])
+        other = Category.objects.create(name="Otra", slug="otra")
+        Product.objects.create(category=other, name="Chocolate excluido", retail_price=1)
+        seen = []
+        for number, start, end in ((1, 1, 12), (2, 13, 24), (3, 25, 36), (4, 37, 45)):
+            response = self.client.get("/", {"q": "Chocolate", "categoria": self.category.slug, "page": number})
+            self.assertContains(response, f"Mostrando {start}–{end} de 45 productos")
+            self.assertContains(response, f"Página {number} de 4")
+            self.assertNotContains(response, "Chocolate excluido")
+            seen.extend(product.pk for product in response.context["page"])
+            if number < 4:
+                self.assertContains(response, f"page={number + 1}&amp;q=Chocolate&amp;categoria=reposteria")
+        self.assertEqual(len(seen), len(set(seen)))
+        self.assertEqual(seen, list(Product.objects.filter(category=self.category).values_list("pk", flat=True)))
+        for invalid, expected in (("inexistente", 1), ("999", 4), ("0", 4), ("-1", 4)):
+            response = self.client.get("/", {"q": "Chocolate", "categoria": self.category.slug, "page": invalid})
+            self.assertEqual(response.context["page"].number, expected)
+
+    def test_empty_and_single_page_have_no_pagination(self):
+        response = self.client.get("/", {"q": "no existe"})
+        self.assertContains(response, "Mostrando 0 de 0 productos")
+        self.assertNotContains(response, 'class="pagination"')
+        response = self.client.get("/")
+        self.assertContains(response, "Mostrando 1–1 de 1 producto")
+        self.assertNotContains(response, 'class="pagination"')

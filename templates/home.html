@@ -5,13 +5,13 @@
   <form method="get" class="search-form" role="search">
     <label class="visually-hidden" for="catalog-search">Buscar productos</label>
     <div class="search-controls">
-      <input type="search" id="catalog-search" name="q" value="{{ query }}" placeholder="¿Qué estás buscando?" maxlength="180">
+      <input type="search" id="catalog-search" name="q" value="{{ query }}" placeholder="Buscar productos, marcas y más..." maxlength="180">
       {% if selected_category %}<input type="hidden" name="categoria" value="{{ selected_category.slug }}">{% endif %}
       <button type="submit">Buscar</button>
     </div>
   </form>
   <form method="get" class="category-select">
-    <label for="category-filter">Categoría</label>
+    <label class="visually-hidden" for="category-filter">Categoría</label>
     <input type="hidden" name="q" value="{{ query }}">
     <div class="search-controls"><select id="category-filter" name="categoria">
       <option value="">Todas las categorías</option>
@@ -25,8 +25,8 @@
     {% endfor %}
   </nav>
   <div class="section-heading">
-    <h1 id="catalog-title">Nuestros productos</h1>
-    <p>{{ page.paginator.count }} producto{{ page.paginator.count|pluralize:"s" }}{% if query %} para “{{ query }}”{% endif %}</p>
+    <h1 id="catalog-title" class="visually-hidden">Nuestros productos</h1>
+    <p>Mostrando {% if page.paginator.count %}{{ page.start_index }}–{{ page.end_index }} de{% else %}0 de{% endif %} {{ page.paginator.count }} producto{{ page.paginator.count|pluralize:"s" }}{% if query %} para “{{ query }}”{% endif %}</p>
   </div>
   <div class="product-grid">
     {% for product in page %}
