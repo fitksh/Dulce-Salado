@@ -24,6 +24,12 @@
   root.document.addEventListener("click", event => {
     if (panel.open && !panel.contains(event.target)) panel.open = false;
   });
+  // Los clics dentro de un iframe no se propagan al documento principal.
+  root.addEventListener("blur", () => {
+    root.setTimeout(() => {
+      if (panel.open && root.document.activeElement?.tagName === "IFRAME") panel.open = false;
+    }, 0);
+  });
   root.document.addEventListener("keydown", event => {
     if (event.key === "Escape" && panel.open) {
       panel.open = false;

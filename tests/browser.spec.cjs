@@ -713,6 +713,10 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.locator(".hours-panel summary").click();
     await page.locator(".site-footer p").first().click();
     assert.equal(await page.locator(".hours-panel").evaluate(node => node.open), false);
+    await page.locator(".hours-panel summary").click();
+    await page.frameLocator(".location-map iframe").getByRole("heading", { name: "Mapa interceptado de QA" }).click();
+    await page.waitForFunction(() => !document.querySelector(".hours-panel").open);
+    assert.equal(await page.evaluate(() => document.activeElement.tagName), "IFRAME");
     const plain = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 360, height: 844 } });
     const plainPage = await plain.newPage();
     await plain.route("https://www.google.com/maps/embed?*", route => route.abort());
