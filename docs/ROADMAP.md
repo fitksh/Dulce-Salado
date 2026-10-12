@@ -97,3 +97,11 @@ Las seis tareas están completas y publicadas en origin/main, todas con CI succe
 - [x] Tarea 5 — QA completa: 130 Django, 7 Node, 26 Chromium, 19 páginas PDF y capturas web correctos; publicación con CI success.
 
 Iteración completa y publicada en origin/main, cinco tareas con CI success (detalle en EXECUTION_STATUS). Conserva arquitectura, datos/reglas comerciales, CSV y archivos de fotos. Cambios locales previos del propietario excluidos de commits. Próximo paso: Ctrl+F5, catálogo/visor/carrito y cuatro PDF filtrados desde Admin según README; impresión física, teléfono/lector y zoom nativo quedan para el entorno del usuario.
+
+## Seed manual con fotografías locales
+
+- [x] Ampliar seed_demo_catalog con --images-dir opcional, lectura inmediata validada y reparto reproducible/equilibrado; copias WebP independientes mediante el procesamiento existente, originales intactos.
+- [x] Conservar DEBUG/simulación/--apply, 45 especificaciones, categorías y datos existentes; manifiesto compatible, idempotencia y limpieza conservadora de copias propias tras commit. Rollback de altas/archivos y restauración del manifiesto ante errores comprobados.
+- [x] Validación en Docker local: 146 Django completos (26 seed y 7 imágenes), check/Ruff correctos y sin migraciones. Fixtures temporales prueban nueve fotos cinco veces cada una, conversión/EXIF/transparencia, validación, permisos/enlaces, simulación, repetición, fallos de base/storage/conversión/manifiesto y limpieza de compartidas/ediciones/ajenos.
+
+Sólo comando, tests, README y este seguimiento; sin fotos añadidas a Git, dependencias/modelos/migraciones ni cambios de Docker/interfaz. No se aplicó el seed al catálogo comercial. Próximo paso: disponer del código actualizado en el contenedor Raspberry Pi/Portainer y seguir README: simular la limpieza si ya hay demos, confirmar los borrados deseados y luego simular/aplicar --images-dir /app/demo-images con DJANGO_DEBUG=1. Montaje de origen sólo lectura y media persistente existentes.

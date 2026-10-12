@@ -188,6 +188,27 @@ docker compose exec web python manage.py seed_demo_catalog --remove --apply
 
 Son precios y marcas ficticios en ARS. Repetir el alta no duplica ni sobrescribe productos, incluidas ediciones manuales de demos. Las condiciones mayoristas requieren selección y confirmación comercial como cualquier producto. Buscar `[DEMO]` permite revisar las cuatro páginas de los 45 registros, con 12 por página; productos comerciales existentes cuentan adicionalmente en el catálogo general.
 
+### Crear demos con fotografías locales
+
+`--images-dir` es opcional; sin él las altas siguen sin fotos. En la Raspberry Pi/Portainer, el montaje de entrada es `/mnt/datos/docker/dulce-salado/demo-images:/app/demo-images:ro`; `/app/media` conserva su volumen persistente. Las fotos se mantienen fuera del checkout/Git. No hace falta cambiar dependencias, modelos ni migraciones. El comando sigue requiriendo `DJANGO_DEBUG=1` y categorías existentes activas.
+
+```sh
+# Validar directorio/fotos y simular, sin escribir productos ni archivos.
+docker compose exec -T web python manage.py seed_demo_catalog --images-dir /app/demo-images
+# Confirmar las nuevas altas con copias independientes.
+docker compose exec -T web python manage.py seed_demo_catalog --images-dir /app/demo-images --apply
+```
+
+Desde la consola de Portainer del contenedor web, ubicado en `/app`, ejecutar directamente `python manage.py seed_demo_catalog --images-dir /app/demo-images` y después el mismo comando con `--apply`.
+
+Se leen sólo archivos inmediatos con extensión `.jpg`, `.jpeg`, `.png` o `.webp` (sin distinguir mayúsculas), validando también su formato real, tamaño, dimensiones y ausencia de animación. No hay búsqueda recursiva; otros archivos/subdirectorios se ignoran y los enlaces se rechazan. Un candidato corrupto/inválido, error de lectura o directorio sin fotos válidas aborta todo antes de las altas. Los originales sólo se leen.
+
+Se ordenan los nombres y se usa una semilla interna fija para un reparto pseudoaleatorio reproducible con el mismo conjunto de archivos. Sobre 45 nuevas altas, cada fuente aparece la misma cantidad de veces o con diferencia máxima de una: nueve fotos producen cinco copias cada una. Con más de 45 fuentes se eligen 45 distintas. Cada copia pasa por el procesamiento existente, conserva orientación/transparencia, se limita a 1200 px y se guarda como WebP sin metadatos bajo un nombre UUID propio en media; la base nunca apunta al original.
+
+Los demos existentes, incluso los que no tienen foto, no se actualizan. Para regenerarlos, revisar primero la limpieza controlada (`docker compose exec -T web python manage.py seed_demo_catalog --remove`) y aplicarla explícitamente con `--remove --apply`; después ejecutar el alta con `--images-dir ... --apply`. La limpieza no necesita el directorio de entrada y no admite combinar `--remove` con `--images-dir`. Si conserva un demo editado o de identidad dudosa, ese producto también se conserva durante la siguiente alta.
+
+El manifiesto mantiene compatibilidad con los demos anteriores; para fotos nuevas registra su ruta propia y huella de bytes. La limpieza sólo elimina copias de productos efectivamente borrados después del commit; conserva demos/fotos editados, compartidos, faltantes o sin procedencia comprobable. Errores de conversión, guardado o manifiesto revierten altas y retiran sus copias, incluidas escrituras parciales, restaurando el manifiesto anterior. Si el almacenamiento impide la limpieza/restauración, el error identifica los archivos que requieren revisión. Los originales nunca se mueven ni se borran.
+
 La limpieza sólo borra altas propias sin modificaciones ni nombres duplicados. `MEDIA_ROOT/.seed_demo_catalog.json`, dentro del volumen de media ignorado por Git, registra PK, fecha de creación y huella de datos. Conservá este manifiesto junto con la base: si falta, está corrupto o no corresponde a los registros, el comando conserva los productos o aborta. Los demos editados se conservan y deben revisarse manualmente en Admin. No usa el prefijo como permiso de borrado. Las escrituras de productos son transaccionales; el archivo se reemplaza atómicamente. Una interrupción entre archivo y commit puede dejar identidad dudosa, que se conserva por seguridad. No hay nuevos modelos, migraciones ni dependencias.
 
 Capturas de QA en `.qa/screenshots`: `photo-*`, `expanded-*`, `catalog-viewport-*`, `hours-*`, `directions-*` y `footer-*`. Las capturas `live-*` corresponden al entorno comercial local inspeccionado sólo en lectura. Actualizar con los comandos de instalación existente anteriores; no hay migraciones nuevas.
