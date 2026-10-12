@@ -143,6 +143,41 @@
     const dialog = document.getElementById("cart-review-dialog");
     const reviewContents = document.getElementById("cart-review-contents");
     let pendingWindow = null;
+    let copyingField = null;
+    function legacyCopy(field) {
+      const focused = document.activeElement;
+      const selection = [field.selectionStart, field.selectionEnd, field.selectionDirection];
+      const fieldScroll = field.scrollTop, dialogScroll = dialog.scrollTop;
+      let copied = false;
+      field.focus({ preventScroll: true });
+      field.select();
+      field.setSelectionRange(0, field.value.length);
+      try { copied = document.execCommand("copy") === true; } catch { /* Selección manual disponible. */ }
+      if (copied) {
+        field.setSelectionRange(...selection);
+        if (focused?.isConnected && dialog.contains(focused)) focused.focus({ preventScroll: true });
+      }
+      field.scrollTop = fieldScroll;
+      dialog.scrollTop = dialogScroll;
+      return copied;
+    }
+    async function copyMessage(field) {
+      if (!field || copyingField === field) return;
+      copyingField = field;
+      try {
+        let copied = false;
+        try {
+          if (typeof navigator.clipboard?.writeText === "function") {
+            await navigator.clipboard.writeText(field.value);
+            copied = true; // La promesa resuelta confirma la escritura moderna.
+          }
+        } catch { /* Intentar el fallback si el diálogo sigue vigente. */ }
+        if (!dialog.open || !field.isConnected || !reviewContents.contains(field)) return;
+        // Sin Clipboard API no hubo await: conserva el clic/activación del usuario.
+        if (!copied) copied = legacyCopy(field);
+        announce(copied ? "Mensaje copiado." : "Copiá el texto seleccionado para pegarlo en WhatsApp.", copied ? "success" : "info");
+      } finally { if (copyingField === field) copyingField = null; }
+    }
     function closePendingWindow() {
       if (pendingWindow && !pendingWindow.closed) pendingWindow.close();
       pendingWindow = null;
@@ -209,13 +244,11 @@
       document.getElementById("cart-review")?.focus({ preventScroll: true });
       refresh();
     });
-    dialog.addEventListener("click", async event => {
+    dialog.addEventListener("click", event => {
       if (event.target.closest("#review-cancel")) dialog.close();
       if (event.target.closest("#review-continue")) review(true);
       if (event.target.closest("#copy-message")) {
-        const field = document.getElementById("whatsapp-message");
-        try { await navigator.clipboard.writeText(field.value); announce("Mensaje copiado.", "success"); }
-        catch { field.focus(); field.select(); announce("Copiá el texto seleccionado para pegarlo en WhatsApp.", "info"); }
+        copyMessage(document.getElementById("whatsapp-message"));
       }
     });
     app.addEventListener("click", event => {

@@ -103,3 +103,9 @@ Catálogo conserva el contenedor de 1120 px: mínimo de tarjeta 250 px, cuatro c
 Carrito desde 800 px centra verticalmente la foto de 132 px respecto de toda la tarjeta, incluidos nombres/condiciones largos. Datos y controles permanecen a su derecha; sin foto recupera ancho. Bajo 800 px no cambia la disposición de 56 px.
 
 Los cuatro PDF muestran el logo existente completo/proporcional de 16 mm arriba a la izquierda, nombre a su derecha y título debajo; encabezado en cada página, con fallback textual. Sólo las listas cambian etiquetas a negrita/valores normales; descripción normal. Foto de lista centrada, datos TOP; si el texto necesita varias páginas, se centra en el fragmento visible que contiene la foto, sin duplicarla. Tablas conservan columnas/encabezados/distribución anteriores salvo marco comercial.
+
+## Mensaje WhatsApp y copiado — disposición vigente
+
+Cada producto tiene título numerado en negrita WhatsApp, marca opcional, tarifa/precio unitario, cantidad/unidad y subtotal destacado en líneas separadas. Divisor Unicode de 12 caracteres y líneas en blanco separan productos/total; total en negrita, advertencia comercial exacta y cierre conservados. El textarea permanece de texto plano y usa exactamente el mensaje generado por el servidor, igual que el copiado y el enlace.
+
+Copiar mensaje completo intenta Clipboard API y, si no está disponible, copy alternativo síncrono dentro del clic sobre el textarea existente. Tras un rechazo moderno se intenta también el alternativo. Éxito sólo con promesa resuelta o retorno true; restaura selección/foco/scroll al copiar mediante fallback. Si no se confirma, el campo queda enfocado y completamente seleccionado con el aviso manual existente. No hay nuevos nodos, cierres, navegación ni cambios del carrito por copiar; clics pendientes duplicados y avisos tras cerrar la revisión se descartan. Las políticas del navegador pueden impedir ambos métodos.

@@ -699,10 +699,15 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.getByRole("dialog").getByRole("status").filter({ hasText: "Mensaje copiado." }).waitFor();
     assert.equal(await page.evaluate(() => window.qaCopied), await page.locator("#whatsapp-message").inputValue());
     assert.equal(await page.locator("#copy-message").innerText(), "Copiar mensaje completo");
-    await page.evaluate(() => { navigator.clipboard.writeText = async () => { throw new Error("QA clipboard blocked"); }; });
+    await page.evaluate(() => {
+      navigator.clipboard.writeText = async () => { throw new Error("QA clipboard blocked"); };
+      window.qaNativeCopy = document.execCommand;
+      document.execCommand = () => false;
+    });
     await page.locator("#copy-message").click();
     await page.getByRole("dialog").getByRole("status").filter({ hasText: /Copiá el texto seleccionado/ }).waitFor();
     assert.equal(await page.locator("#whatsapp-message").evaluate(node => node === document.activeElement && node.selectionStart === 0 && node.selectionEnd === node.value.length), true);
+    await page.evaluate(() => { document.execCommand = window.qaNativeCopy; });
     await accessible();
     const afterClose = page.waitForResponse(response => response.url().endsWith("/carrito/recalcular/"));
     await page.keyboard.press("Escape");
@@ -720,7 +725,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     if (!provisional.isClosed()) await provisional.waitForEvent("close");
     assert.equal(provisional.isClosed(), true);
     assert.equal(page.url(), `${base}/carrito/`);
-    assert.match(await page.locator("#whatsapp-message").inputValue(), /Total estimado: \$ 60,15/);
+    assert.match(await page.locator("#whatsapp-message").inputValue(), /\*TOTAL ESTIMADO: \$ 60,15\*/);
   });
 
   await t.test("WhatsApp interceptado incluye mensaje completo; no envía ni borra carrito", async () => {
@@ -738,9 +743,11 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await whatsapp.evaluate(() => document.referrer), "");
     const url = new URL(destination);
     assert.equal(url.pathname, "/5491100000000");
-    assert.match(url.searchParams.get("text"), /precio minorista \$ 200,50\/kg/);
-    assert.match(url.searchParams.get("text"), /cantidad 0,3 kg/);
-    assert.match(url.searchParams.get("text"), /Total estimado: \$ 60,15/);
+    assert.match(url.searchParams.get("text"), /- Precio minorista: \$ 200,50\/kg/);
+    assert.match(url.searchParams.get("text"), /- Cantidad: 0,3 kg/);
+    assert.match(url.searchParams.get("text"), /\*TOTAL ESTIMADO: \$ 60,15\*/);
+    assert.equal(url.searchParams.get("text"), await page.locator("#whatsapp-message").inputValue());
+    assert.equal(new URL(await page.locator("#whatsapp-ready").getAttribute("href")).searchParams.get("text"), url.searchParams.get("text"));
     const stored = JSON.parse(await page.evaluate(() => localStorage.getItem("dulce-salado.cart.v1")));
     assert.equal(stored.items.length, 1);
     await whatsapp.close();
@@ -1197,5 +1204,193 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(new URL(plainPage.url()).searchParams.get("q"), "[DEMO]");
     await plain.close();
     assert.deepEqual(errors, []);
+  });
+});
+
+test("Copiar mensaje completo: APIs, selección y origen HTTP no seguro", { timeout: 90000 }, async t => {
+  const browser = await chromium.launch();
+  t.after(() => browser.close());
+  mkdirSync(".qa/screenshots", { recursive: true });
+  async function reviewPage(insecure = false) {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await context.addInitScript(() => {
+      const addListener = EventTarget.prototype.addEventListener;
+      EventTarget.prototype.addEventListener = function (type, callback, options) {
+        if (type === "click" && this.id === "cart-review-dialog") {
+          return addListener.call(this, type, function (event) {
+            window.qaInCartClick = true;
+            try { return callback.call(this, event); }
+            finally { window.qaInCartClick = false; }
+          }, options);
+        }
+        return addListener.call(this, type, callback, options);
+      };
+    });
+    const origin = new URL(base);
+    if (insecure) {
+      origin.protocol = "http:";
+      origin.hostname = "qa-copy.invalid";
+      // Sólo red de QA: URL visible insegura, servidor aislado y CSRF normales.
+      // No cambia settings Django ni declara el origen seguro en Chromium.
+      await context.route(`${origin.origin}/**`, async route => {
+        const target = new URL(route.request().url());
+        target.protocol = new URL(base).protocol;
+        target.host = new URL(base).host;
+        const headers = { ...route.request().headers(), host: target.host };
+        if (headers.origin) headers.origin = new URL(base).origin;
+        if (headers.referer) headers.referer = headers.referer.replace(origin.origin, new URL(base).origin);
+        const response = await route.fetch({ url: target.href, headers });
+        await route.fulfill({ response });
+      });
+    }
+    const page = await context.newPage();
+    const errors = [];
+    page.on("pageerror", error => errors.push(error.message));
+    await page.goto(origin.href);
+    await page.locator(".add-product").first().waitFor();
+    await page.evaluate(() => {
+      const entries = [...document.querySelectorAll(".add-product")].map(form => ({
+        id: Number(form.dataset.id), quantity: form.elements.quantity.value, price_type: "retail",
+        sale_unit: form.dataset.unit, revision: form.dataset.revision,
+      }));
+      window.CartCore.write(localStorage, entries);
+    });
+    await page.goto(`${origin.origin}/carrito/`);
+    await page.locator("#cart-review").click();
+    await page.locator("#cart-review-dialog[open]").waitFor();
+    const message = await page.locator("#whatsapp-message").inputValue();
+    assert.ok(message.length > 1500);
+    const storage = await page.evaluate(() => localStorage.getItem("dulce-salado.cart.v1"));
+    await page.locator("#copy-message").focus();
+    return { context, page, message, storage, errors };
+  }
+  async function result(state, copied) {
+    const { page, message, storage, errors } = state;
+    const notice = copied ? "Mensaje copiado." : "Copiá el texto seleccionado para pegarlo en WhatsApp.";
+    await page.locator("#cart-review-dialog").getByRole("status").filter({ hasText: notice }).waitFor();
+    assert.equal(await page.getByRole("status").filter({ hasText: notice }).count(), 1);
+    assert.equal(await page.locator("#cart-review-dialog").evaluate(node => node.open), true);
+    assert.equal(await page.locator("textarea").count(), 1);
+    assert.equal(await page.locator("#whatsapp-message").inputValue(), message);
+    assert.equal(await page.evaluate(() => localStorage.getItem("dulce-salado.cart.v1")), storage);
+    if (copied) assert.equal(await page.evaluate(() => document.activeElement?.id), "copy-message");
+    else assert.equal(await page.locator("#whatsapp-message").evaluate(node => node === document.activeElement
+      && node.selectionStart === 0 && node.selectionEnd === node.value.length), true);
+    assert.deepEqual(errors, []);
+  }
+  async function legacyInstrumentation(page, modernRejected = false) {
+    await page.evaluate(rejected => {
+      if (rejected) navigator.clipboard.writeText = async () => { throw new Error("QA rechazo moderno"); };
+      else Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
+      const field = document.getElementById("whatsapp-message");
+      field.setSelectionRange(4, 15, "backward");
+      field.scrollTop = 35;
+      window.qaFieldScroll = field.scrollTop;
+      document.execCommand = command => {
+        window.qaLegacyCommand = command;
+        window.qaSynchronous = window.qaInCartClick;
+        window.qaCopied = field.value.slice(field.selectionStart, field.selectionEnd);
+        return true;
+      };
+    }, modernRejected);
+  }
+  await t.test("Clipboard API copia realmente el texto completo y conserva el foco", async () => {
+    const state = await reviewPage();
+    try {
+      await state.context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: new URL(base).origin });
+      await state.page.evaluate(() => { document.execCommand = () => { throw new Error("No debe utilizar fallback"); }; });
+      await state.page.locator("#copy-message").click();
+      await result(state, true);
+      // Windows normaliza LF a CRLF en el portapapeles del sistema.
+      assert.equal((await state.page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, "\n"), state.message);
+      await state.page.screenshot({ path: ".qa/screenshots/whatsapp-copy-modern-390.png" });
+      await state.page.setViewportSize({ width: 1280, height: 800 });
+      assert.equal(await state.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      await state.page.screenshot({ path: ".qa/screenshots/whatsapp-copy-modern-1280.png" });
+    } finally { await state.context.close(); }
+  });
+  for (const rejected of [false, true]) {
+    await t.test(rejected ? "rechazo moderno intenta fallback confirmado" : "sin Clipboard API ejecuta fallback dentro del mismo clic", async () => {
+      const state = await reviewPage();
+      try {
+        await legacyInstrumentation(state.page, rejected);
+        await state.page.locator("#copy-message").click();
+        await result(state, true);
+        assert.equal(await state.page.evaluate(() => window.qaCopied), state.message);
+        assert.equal(await state.page.evaluate(() => window.qaLegacyCommand), "copy");
+        if (!rejected) assert.equal(await state.page.evaluate(() => window.qaSynchronous), true);
+        assert.deepEqual(await state.page.locator("#whatsapp-message").evaluate(node => [node.selectionStart, node.selectionEnd, node.selectionDirection]), [4, 15, "backward"]);
+        assert.equal(await state.page.locator("#whatsapp-message").evaluate(node => node.scrollTop === window.qaFieldScroll), true);
+      } finally { await state.context.close(); }
+    });
+  }
+  for (const failure of ["false", "exception", "unavailable"]) {
+    await t.test(`sin confirmación de copiado (${failure}) mantiene selección manual`, async () => {
+      const state = await reviewPage();
+      try {
+        await state.page.evaluate(mode => {
+          if (mode === "unavailable") {
+            navigator.clipboard.writeText = async () => { throw new Error("QA clipboard bloqueado"); };
+            document.execCommand = undefined;
+          } else {
+            Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
+            document.execCommand = () => { if (mode === "exception") throw new Error("QA copy bloqueado"); return false; };
+          }
+        }, failure);
+        await state.page.locator("#copy-message").click();
+        await result(state, false);
+        assert.equal(await state.page.getByRole("status").filter({ hasText: "Mensaje copiado." }).count(), 0);
+        if (failure === "false") await state.page.screenshot({ path: ".qa/screenshots/whatsapp-copy-manual-390.png" });
+      } finally { await state.context.close(); }
+    });
+  }
+  await t.test("clics repetidos anuncian una vez y cerrar durante una promesa impide avisos tardíos", async () => {
+    const state = await reviewPage();
+    try {
+      await state.page.evaluate(() => {
+        window.qaCalls = 0; window.qaNotices = [];
+        const notice = document.querySelector("#cart-review-dialog [data-notification-message]");
+        new MutationObserver(() => window.qaNotices.push(notice.textContent)).observe(notice, { childList: true });
+        navigator.clipboard.writeText = () => { window.qaCalls++; return new Promise(resolve => { window.qaResolve = resolve; }); };
+      });
+      await state.page.locator("#copy-message").click();
+      await state.page.locator("#copy-message").click();
+      assert.equal(await state.page.evaluate(() => window.qaCalls), 1);
+      await state.page.evaluate(() => window.qaResolve());
+      await result(state, true);
+      assert.deepEqual(await state.page.evaluate(() => window.qaNotices), ["Mensaje copiado."]);
+      await state.page.locator("#copy-message").click();
+      await state.page.keyboard.press("Escape");
+      await state.page.locator("#cart-review-dialog").waitFor({ state: "hidden" });
+      await state.page.evaluate(() => window.qaResolve());
+      assert.equal(await state.page.getByRole("status").filter({ hasText: "Mensaje copiado." }).count(), 0);
+      assert.deepEqual(await state.page.evaluate(() => window.qaNotices), ["Mensaje copiado."]);
+      assert.deepEqual(state.errors, []);
+    } finally { await state.context.close(); }
+  });
+  await t.test("HTTP no seguro: copy nativo síncrono copia el texto íntegro sin Clipboard API", async () => {
+    const state = await reviewPage(true);
+    try {
+      assert.equal(await state.page.evaluate(() => window.isSecureContext), false);
+      assert.equal(await state.page.evaluate(() => typeof navigator.clipboard), "undefined");
+      await state.page.evaluate(() => {
+        const nativeCopy = document.execCommand.bind(document);
+        document.execCommand = command => {
+          window.qaSynchronous = window.qaInCartClick;
+          window.qaNativeResult = nativeCopy(command);
+          return window.qaNativeResult;
+        };
+      });
+      await state.page.locator("#copy-message").click();
+      await result(state, true);
+      assert.equal(await state.page.evaluate(() => window.qaSynchronous && window.qaNativeResult), true);
+      await state.page.screenshot({ path: ".qa/screenshots/whatsapp-copy-http-390.png" });
+      // Lectura independiente del portapapeles real desde un origen seguro del mismo navegador.
+      await state.context.grantPermissions(["clipboard-read"], { origin: new URL(base).origin });
+      const reader = await state.context.newPage();
+      await reader.goto(base);
+      await reader.bringToFront();
+      assert.equal((await reader.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, "\n"), state.message);
+    } finally { await state.context.close(); }
   });
 });

@@ -42,14 +42,23 @@ Decisiones autorizadas el 2026-10-10: kg, unidad y paquete. Incremento inicial 0
 ```
 Hola! Quisiera realizar el siguiente pedido:
 
-- Dulce de leche repostero - Marca ElNoNo - precio mayorista $10.000/kg - cantidad 3 kg - subtotal estimado: $30.000
-- Otros productos...
+*1. Dulce de leche repostero*
+- Marca: ElNoNo
+- Precio mayorista: $ 10.000,00/kg
+- Cantidad: 3 kg
+- *Subtotal estimado: $ 30.000,00*
 
-Total estimado: $30.000
+────────────
+
+*TOTAL ESTIMADO: $ 30.000,00*
+
+Los precios mostrados son estimados y pueden cambiar. La disponibilidad y la aplicación del precio mayorista están sujetas a confirmación del comercio por WhatsApp.
 
 Gracias, espero su respuesta!
 ```
 En el mensaje final, las cantidades, precios y subtotales deben corresponder a datos actuales y selección explícita. Marca opcional: omitir el segmento cuando no existe. El número WhatsApp se configura por entorno o ajustes seguros, no se incorpora un número ficticio en producción. El mensaje puede ser largo; en ese caso no cortar productos de manera silenciosa. El enlace abre el cliente WhatsApp disponible; el sitio no sabe si se envió.
+
+Formato vigente: productos numerados en el orden del carrito, título/subtotal/total con un par de asteriscos de WhatsApp, campos en líneas separadas y divisor Unicode corto entre productos y antes del total. Nombre/marca se preparan como texto de una línea y sus marcadores de formato se neutralizan sólo en la presentación, sin editar los valores almacenados. Vista previa, copiado y parámetro text de wa.me usan el mismo mensaje completo del servidor.
 
 ## 9. Aviso previo obligatorio
 “Los precios mostrados son estimados y pueden cambiar. La disponibilidad y la aplicación del precio mayorista están sujetas a confirmación del comercio por WhatsApp.”

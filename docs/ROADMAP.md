@@ -105,3 +105,11 @@ Iteración completa y publicada en origin/main, cinco tareas con CI success (det
 - [x] Validación en Docker local: 146 Django completos (26 seed y 7 imágenes), check/Ruff correctos y sin migraciones. Fixtures temporales prueban nueve fotos cinco veces cada una, conversión/EXIF/transparencia, validación, permisos/enlaces, simulación, repetición, fallos de base/storage/conversión/manifiesto y limpieza de compartidas/ediciones/ajenos.
 
 Sólo comando, tests, README y este seguimiento; sin fotos añadidas a Git, dependencias/modelos/migraciones ni cambios de Docker/interfaz. No se aplicó el seed al catálogo comercial. Próximo paso: disponer del código actualizado en el contenedor Raspberry Pi/Portainer y seguir README: simular la limpieza si ya hay demos, confirmar los borrados deseados y luego simular/aplicar --images-dir /app/demo-images con DJANGO_DEBUG=1. Montaje de origen sólo lectura y media persistente existentes.
+
+## Copiado y formato del mensaje WhatsApp
+
+- [x] Clipboard API principal y fallback copy síncrono sobre el textarea existente cuando falta la API; rechazo moderno también intenta fallback. Éxito sólo confirmado, selección manual si falla, foco/scroll conservados y avisos duplicados/tardíos descartados.
+- [x] Formato del servidor con títulos numerados/negrita, marca opcional, tarifa/precio/cantidad/subtotal en líneas separadas, divisor Unicode y total destacado; aviso/cierre exactos y mismo texto íntegro en vista previa, copia y wa.me. Marcadores de nombres/marcas neutralizados sólo al presentar.
+- [x] 19 Django afectados y 149 completos, 7 Node y 35 Chromium correctos; check/Ruff y migraciones OK. Copiado real moderno y HTTP no seguro sin Clipboard API, errores/fallback/manual, contenido largo, foco/modal y regresiones de navegación/comercio verificados. Capturas 390/1280 inspeccionadas; detalle en QA.
+
+Cambios limitados a cart.js/whatsapp.py, sus pruebas y documentación; sin modelos/dependencias/configuración de seguridad ni Docker, cálculos o localStorage nuevos. Pruebas sólo sobre datos aislados, sin enviar WhatsApp. Próximo paso: actualizar el mismo proyecto/stack Raspberry Pi conservando PostgreSQL/media según README, Ctrl+F5 y copiar/pegar desde la IP local o Tailscale; la política del navegador puede exigir selección manual.

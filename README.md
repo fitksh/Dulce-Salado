@@ -237,3 +237,19 @@ Para probar ahora: Ctrl+F5 y Admin → Productos → aplicar filtros/búsqueda/o
 5. En Admin → Productos, aplicar filtros/orden y descargar las cuatro variantes PDF. Todas llevan logo completo de 16 mm y nombre a su derecha en cada página; las listas tienen etiquetas en negrita/valores normales y la fotografía centrada. Revisar textos extensos, ARS/acentos y vista previa A4. Las tablas mantienen sus columnas anteriores.
 
 Validación actual: 130 Django, 7 Node y 26 Chromium completos, check/Ruff y migraciones correctos. Las 19 páginas de cuatro ejemplos ficticios se renderizaron e inspeccionaron; visor en seis viewports y tres proporciones, carrito y catálogo responsive revisados. Cinco anchuras del catálogo comercial y sus ocho fotos inspeccionadas sólo en lectura. Todos los registros y fotos conservan sus huellas iniciales; QA descartada. Zoom nativo, impresión física y teléfono/lector propios siguen como comprobaciones manuales. Evidencia y CI en los documentos de seguimiento.
+
+## Copiar y preparar el mensaje de WhatsApp
+
+El texto usa títulos numerados/subtotales/total con negrita de WhatsApp (un par de asteriscos), marca opcional, precio/tarifa y cantidades en líneas separadas, con divisores Unicode discretos. Los importes y el mensaje completo se generan en Django; vista previa, copiado y enlace wa.me coinciden. Nombres y marcas se muestran en una línea y sustituyen sólo sus marcadores `*`, `_`, `~` y backtick por `∗`, `＿`, `∼` y `ˋ` para no romper el formato; los datos almacenados no se modifican.
+
+Copiar usa Clipboard API cuando se encuentra disponible. Si falta (por ejemplo HTTP de una IP local/Tailscale), intenta `document.execCommand("copy")` síncronamente desde el clic y el mismo textarea; también lo intenta tras un rechazo moderno. Sólo confirma «Mensaje copiado.» con éxito del método. Si el navegador bloquea ambos, selecciona todo y avisa «Copiá el texto seleccionado para pegarlo en WhatsApp.». El fallback es obsoleto y depende del navegador; no garantiza compatibilidad absoluta ni modifica su seguridad. Referencia: [Clipboard API y eventos, W3C](https://www.w3.org/TR/clipboard-apis/).
+
+Para actualizar la Raspberry Pi, ejecutar desde el checkout y el mismo proyecto/archivo Compose que utiliza la instalación existente:
+
+```sh
+git pull --ff-only origin main
+docker compose up -d --build --no-deps web
+docker compose ps
+```
+
+Se reconstruye/recrea sólo web, conservando PostgreSQL y sus volúmenes/montajes de media, incluidas las imágenes de demos. Mantener el mismo nombre de proyecto/stack y su configuración local. Con Portainer, actualizar el código/imagen y redeplegar el stack existente conservando sus volúmenes y montajes. No hay migraciones/dependencias nuevas por esta mejora. Después hacer Ctrl+F5, abrir un carrito con varios productos y probar copiar/pegar en HTTP local/Tailscale y en HTTPS; revisar saltos, títulos, importes y total. Continuar sólo prepara el mensaje en otra pestaña; el envío lo hace el cliente.
