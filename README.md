@@ -1,8 +1,8 @@
 # Dulce y Salado
 
-Actualización del catálogo compacto (17/10/2026): **requiere migración 0005**. Sumar agrega directamente una presentación; alta repetida precargada y seis unidades. [Comportamiento, compatibilidad y pasos manuales de despliegue](docs/CATALOGO_COMPACTO.md). Las instrucciones históricas «sin migraciones» de iteraciones anteriores no aplican a este cambio.
+Actualización de pedidos (18/10/2026): **requiere migración aditiva 0010**. Formulario de cliente/entrega, solicitud persistida con código y detalle privado, limpieza posterior y reenvío del mismo mensaje. [Flujo y configuración](docs/PEDIDOS.md). Conserva las seis presentaciones y el catálogo compacto de 0005.
 
-Catálogo comercial mobile-first de repostería, dietética y cotillón. Catálogo público, carrito local y mensaje WhatsApp con precios estimados. El comercio confirma disponibilidad y condiciones; el sitio no registra pedidos ni gestiona stock, pagos o envíos.
+Catálogo comercial mobile-first de repostería, dietética y cotillón. Catálogo público, carrito local y mensaje WhatsApp con precios estimados. El comercio confirma disponibilidad y condiciones; el sitio guarda solicitudes con una instantánea de productos y precios, sin gestionar estados, stock, pagos ni logística de envíos.
 
 **Estado:** MVP y mejoras UX/UI implementados, con cuatro variantes PDF, miniaturas cuadradas e importación CSV de altas con vista previa en Admin; verificación y commits en [EXECUTION_STATUS](docs/EXECUTION_STATUS.md). Cargar y revisar información comercial real mediante Django Admin.
 
@@ -24,7 +24,7 @@ docker compose run --rm --no-deps web python -c "import secrets; print(secrets.t
 
 Copiar la clave en `DJANGO_SECRET_KEY` dentro de `.env` y configurar `POSTGRES_PASSWORD` antes del primer inicio de la base. Las claves locales ya existentes se conservan; cambiar la variable de contraseña no cambia la contraseña de una base ya creada. No versionar ni compartir `.env`.
 
-Configurar `WHATSAPP_PHONE` con el número internacional real del comercio, sólo dígitos, sin `+`, espacios ni guiones. Vacío permite probar catálogo/carrito y copiar el mensaje, pero deshabilita abrir WhatsApp. Django rechaza claves vacías y teléfonos configurados con formato inválido.
+Configurar `WHATSAPP_PHONE` con el número internacional real del comercio, sólo dígitos, sin `+`, espacios ni guiones. Vacío permite probar catálogo/carrito, pero deshabilita preparar el pedido. Django rechaza claves vacías y teléfonos configurados con formato inválido. Para pruebas locales configurar `PUBLIC_BASE_URL=http://localhost:8000` y `ORDER_ALLOW_LOCAL_URLS=1` (incluidos en `.env.example`). Para publicación real usar el dominio HTTPS y `ORDER_ALLOW_LOCAL_URLS=0`; ver [PEDIDOS.md](docs/PEDIDOS.md).
 
 ```powershell
 docker compose up --build -d
@@ -50,8 +50,8 @@ Sólo se publican productos activos en categorías activas. Las categorías con 
 - Buscar por nombre, marca o descripción (prioridad en ese orden) y filtrar categorías. En móvil, el selector aplica el filtro automáticamente conservando búsqueda; sin JavaScript usar Filtrar. Tocar + agrega una presentación minorista; con una aparece basura y con más aparece −. Cada pulsación cambia de a 1. Tocar una foto para ampliarla; cerrar por botón, Escape o fondo.
 - Agregar al carrito, cerrar/reabrir la pestaña y entrar a `/carrito/`. Modificar cantidades; con 1, la papelera quita el producto; con más de 1, − resta una presentación. + siempre disponible y controles a la derecha. Las fotos pequeñas también se amplían. Catálogo y Carrito permanecen accesibles en el header.
 - Cambiar un precio en Admin y volver al carrito: debe mostrar el dato vigente e informar el cambio. Desactivar un producto o cambiar unidad exige corrección. Cambios sólo mayoristas no afectan el carrito público.
-- Elegir **Revisar y preparar WhatsApp**, leer el aviso y comprobar el mensaje completo. **Volver al carrito** o Escape cancela; **Continuar a WhatsApp** revalida y abre otro contexto, conservando la pestaña del carrito. Si el navegador bloquea la apertura, usar **Abrir WhatsApp con el mensaje preparado**. Ante cambios/errores se cierra la pestaña provisional y se requiere revisión.
-- El sitio no envía: el envío se hace desde WhatsApp. No se vacía automáticamente el carrito. Ante mensaje largo, copiar el texto completo desde la revisión.
+- Elegir **Enviar Pedido**, completar nombre y seleccionar retiro o envío. Envío requiere calle, número y ciudad (Viedma inicial editable); puerta opcional. **Cancelar** o Escape antes del envío conserva el carrito. **Enviar** revalida y guarda la solicitud; cambios exigen nueva revisión y conservan los datos.
+- Después de guardar, el carrito se vacía y el resultado muestra el código y el enlace privado del detalle. **Reenviar pedido** abre exactamente el mensaje guardado, sin crear otro registro; también sirve si el popup fue bloqueado. **Cerrar** vuelve al carrito vacío. El sitio intenta abrir WhatsApp: el envío efectivo lo decide el cliente allí. Sin textarea ni botón de copiar.
 
 El carrito guarda selecciones y referencias en `localStorage`, nunca importes como autoridad. Al abrir, revisar y continuar se calculan importes actuales en Django con Decimal en pesos enteros; el total suma subtotales exactos. Sin almacenamiento local o sin JavaScript, el carrito requiere habilitarlos; el catálogo sigue disponible.
 

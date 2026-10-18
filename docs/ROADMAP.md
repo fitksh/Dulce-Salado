@@ -257,8 +257,14 @@ El registro documental se incorpora a main y a la imagen final; no cambia funcio
 - [x] Publicación main 623d130 y CI success 39168319212.
 - [x] Respaldo/restauración, ensayo con pedido histórico y renovación de 45 demos con fotos originales conservadas.
 - [x] Migración real 0010 y actualización sólo web, preservando otros 13 contenedores.
-- [ ] Corrección de tipo MIME WebP detectada en Raspberry y prueba funcional real final.
+- [x] Tipo MIME WebP corregido y verificado HTTP en las 45 fotografías reales.
+- [x] CI f5ddd0a success 39169933812: 220 Django, 9 Node, 84 Chromium.
+- [x] Prueba real de retiro/envío, persistencia, detalle, vaciado y reenvío idéntico; sin envíos reales.
+- [x] Un usuario, permisos, configuración, horarios y 45 originales fotográficos preservados; otros 13 contenedores intactos.
 - [ ] Dominio HTTPS público futuro; actualmente prueba local expresamente autorizada.
 
 
 CI fb1d148 pasó 220 Django, Node, lint/check y migraciones, pero canceló por timeout de 60 s la preparación de Presentaciones compactas, sin llegar a sus subpruebas. Se confirma la sesión Admin y el mensaje de alta correcta antes de cerrar la página que crea el fixture, con diagnóstico de etapas y timeout de acción acotado. No se aumentó el timeout general ni se eliminaron aserciones. Regresión local repetida: 84 Chromium correctos, cero fallos/omisiones. CI posterior y prueba funcional Raspberry pendientes antes de declarar cierre.
+
+
+Cierre funcional de pedidos Raspberry: revisión f5ddd0a verificada en imagen ARM64, migración 0010 aplicada, 45 productos/3 categorías/45 asociaciones correctas. DYS-000001 y DYS-000002 son pedidos técnicos con datos ficticios, guardados y conservados; sus cuatro aperturas WhatsApp fueron interceptadas. Se verificó accesibilidad automatizada en formulario y detalle, y detalle responsive a 320/390/768/1280 px. Enlace de consulta por UUID4, noindex/no-store y sin listado público. Snapshot completo de tablas posterior y respaldo adicional de PostgreSQL guardados privadamente. Sin dominio público: permanece el modo LAN solicitado; dominio/HTTPS futuro sigue fuera de esta instalación de prueba.

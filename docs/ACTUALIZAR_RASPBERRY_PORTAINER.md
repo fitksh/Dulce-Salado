@@ -1,5 +1,23 @@
 # Raspberry y Portainer: instalacion verificada el 18/10/2026
 
+## Actualización posterior: solicitudes de pedido
+
+El flujo nuevo requiere 0010_order, además de las migraciones anteriores. Código funcional f5ddd0a verificado en ARM64 el 18/10/2026; CI [39169933812](https://github.com/fitksh/Dulce-Salado/actions/runs/39169933812) con 220 Django, 9 Node y 84 Chromium correctos. Las descripciones inferiores de copiar mensaje/conservar carrito y no renovar demos corresponden al despliegue anterior; ahora rige [PEDIDOS.md](PEDIDOS.md).
+
+Se renovaron exclusivamente los 45 demos y tres categorías tras inspección de manifiesto v1/PK/fecha/fotos, respaldo y restauración íntegra en base independiente. Nuevo seed: Dietética 12, Repostería 30, Cotillón 3. Las nueve fotos se identificaron visualmente y sus SHA-256 coinciden con las fuentes locales ya identificadas; 45 asociaciones nuevas verificadas. Se conservaron las 45 fotos originales sin limpieza de huérfanos. El seeder mantiene su guard normal DEBUG; la excepción privada se ejecutó sólo en un proceso temporal con override explícito, sin activar DEBUG del servicio para el seed.
+
+Respaldo nuevo: /home/pi/backups/dulce-salado/20261018-orders/ (directorio 700, archivos privados 600). Incluye postgres.dump, postgres-before-apply.dump, postgres-after-live.dump, media.tar.gz, configuración Portainer, inventarios/huellas, mapa y staging, planes de simulación, ensayo y comparaciones. Copia adicional local ignorada en .qa/backups/raspberry-20261018-orders/. No publicar estos archivos. La base descartable del ensayo se retira después de verificar; las copias permanecen.
+
+Sólo web se recreó al actualizar la imagen local dulce-salado:raspi. Se mantuvieron el archivo real del stack, bind de PostgreSQL/media, puerto 8003 y todas las variables comerciales. Se añadieron únicamente PUBLIC_BASE_URL=http://192.168.0.80:8003 y ORDER_ALLOW_LOCAL_URLS=1 al entorno de Portainer y al servicio web. Otros 13 contenedores, incluido PostgreSQL, conservaron ID, imagen, inicio y reinicios. Imágenes de rollback conservadas: dulce-salado:rollback-orders-20261018 y tags por revisión.
+
+Prueba real: catálogo y 45 fotos HTTP image/webp, datos obligatorios, retiro/envío, preparación y persistencia de dos pedidos técnicos, detalle privado responsive, carrito vacío y reenvío del mismo enlace. Cero errores JS y cero infracciones axe en formulario/detalle comprobados; Admin login 200. Aperturas externas interceptadas, sin enviar mensajes. Usuarios/permisos/configuración/horarios comparados íntegramente; ninguna modificación ajena a la tabla nueva y catálogo autorizado. Dos pedidos técnicos conservados en la base real; el ensayo comprobó además un pedido histórico que sobrevivió al borrado de sus productos, sin reiniciar la secuencia.
+
+Para futuras actualizaciones desde Portainer: primero respaldo y CI, fast-forward en source, construir allí dulce-salado:raspi con etiqueta de revisión, ensayar/aplicar migraciones mediante proceso temporal con las variables actuales y media correctas, y actualizar el stack existente conservando su archivo y entorno. Mantener pull_policy: never y desactivar la descarga de imágenes al actualizar; Restart solamente no reconstruye ni sustituye la imagen. Comprobar que sólo web cambió y DB sigue healthy; no eliminar/recrear el stack, no usar el compose.yaml de desarrollo ni down -v. Los scripts excepcionales de recambio de demos son privados y no son un procedimiento automático de futuras actualizaciones.
+
+Para dominio real: preparar HTTPS y servidor de static/media, configurar PUBLIC_BASE_URL=https://<dominio-real>, ORDER_ALLOW_LOCAL_URLS=0, DJANGO_DEBUG=0 y hosts permitidos concretos, y recrear sólo web con la configuración actual. Los pedidos nuevos usarán ese dominio; las instantáneas anteriores conservan su mensaje/enlace original. La URL 192.168.0.80 es únicamente LAN; no afirmar acceso de clientes externos hasta disponer de dominio/HTTPS real.
+
+## Registro del despliegue anterior
+
 El stack existente se actualizo por SSH y por la API de Portainer con autorizacion expresa del propietario. La configuracion real difiere del Compose de desarrollo del repositorio.
 
 ## Configuracion real que debe conservarse
@@ -46,4 +64,4 @@ docker exec dulce_salado_web python manage.py check
 docker exec dulce_salado_web python manage.py showmigrations catalog
 ```
 
-El hash Git debe coincidir con la revision de la imagen activa. Deben figurar 0001-0009 aplicadas. En Portainer, web debe estar iniciado y db healthy. Para futuras actualizaciones, construir desde `source` y conservar la configuracion real anterior: **Restart** no sustituye una imagen; descargar una imagen tampoco actualiza el checkout ni reconstruye el Dockerfile. [Acciones de contenedores](https://docs.portainer.io/user/docker/containers/view) y [gestion de stacks](https://docs.portainer.io/user/docker/stacks/edit).
+El hash Git debe coincidir con la revision de la imagen activa. En la versión actual deben figurar 0001-0010 aplicadas. En Portainer, web debe estar iniciado y db healthy. Para futuras actualizaciones, construir desde `source` y conservar la configuracion real anterior: **Restart** no sustituye una imagen; descargar una imagen tampoco actualiza el checkout ni reconstruye el Dockerfile. [Acciones de contenedores](https://docs.portainer.io/user/docker/containers/view) y [gestion de stacks](https://docs.portainer.io/user/docker/stacks/edit).

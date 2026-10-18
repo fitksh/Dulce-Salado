@@ -120,6 +120,8 @@ test("Pedidos persistidos: datos, errores, resultado, reenvío y privacidad", { 
         const detail = await s.context.newPage();
         await detail.goto(detailUrl);
         assert.match(await detail.locator("h1").innerText(), /DYS-/);
+        const detailAxe = await new AxeBuilder({ page: detail }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
+        assert.deepEqual(detailAxe.violations.map(v => v.id), []);
         assert.equal(await detail.locator("body").evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
         await detail.close(); await popup.close();
         const resend = s.context.waitForEvent("page");
