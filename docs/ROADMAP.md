@@ -252,8 +252,10 @@ El registro documental se incorpora a main y a la imagen final; no cambia funcio
 
 - [x] Order/0010: instantánea, token privado, código PostgreSQL e idempotencia concurrente.
 - [x] Formulario de cliente/entrega, detalle privado y resultado/reenvío normal e iframe.
-- [x] 219 pruebas Django y 9 Node correctas; 14 escenarios nuevos Chromium correctos a cuatro anchos.
+- [x] 220 pruebas Django y 9 Node correctas; 14 escenarios nuevos Chromium correctos a cuatro anchos.
 - [x] Regresión Chromium completa: 84 pruebas, sin fallos ni omisiones.
-- [ ] Publicación main y CI posterior.
-- [ ] Respaldo/restauración/ensayo Raspberry, renovación de demos y actualización sólo web.
+- [x] Publicación main 623d130 y CI success 39168319212.
+- [x] Respaldo/restauración, ensayo con pedido histórico y renovación de 45 demos con fotos originales conservadas.
+- [x] Migración real 0010 y actualización sólo web, preservando otros 13 contenedores.
+- [ ] Corrección de tipo MIME WebP detectada en Raspberry y prueba funcional real final.
 - [ ] Dominio HTTPS público futuro; actualmente prueba local expresamente autorizada.

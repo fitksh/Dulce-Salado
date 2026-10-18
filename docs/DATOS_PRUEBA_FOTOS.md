@@ -55,3 +55,13 @@ Respaldos en .qa/backups/20261017-real-photos/: database-before-apply.dump y med
 Archivos: catalog/management/demo_products.json, management/commands/seed_demo_catalog.py, catalog/test_seed.py, tests/browser.spec.cjs y documentación. Cambios locales en main; sin commit/push/despliegue en esta iteración.
 
 El 18/10/2026 los precios del seed pasan a pesos enteros. 0008 conserva las 45 fichas/fotos locales y descarta centavos por decisión del dueño; no se ejecuta seed ni limpieza. Manifiesto previo intacto: --apply preserva fichas identificadas sin duplicarlas y --remove conserva cualquier huella que ya no coincida, sin asumir propiedad nueva. Ver PRECIOS_ENTEROS.md.
+
+## Renovación Raspberry — 18/10/2026
+
+Se confirmó la procedencia de los 45 registros [DEMO] por manifiesto v1, PK/fecha/ruta/huella fotográfica; no había productos comerciales ajenos. Las asociaciones antiguas eran un reparto de pruebas: se identificaron visualmente los nueve contenidos y se creó un mapa exacto para los ocho títulos del seed (dos vistas del baño con leche). 45 fichas nuevas: Dietética 12, Repostería 30, Cotillón 3. Cada ficha tiene archivo propio; nueve contenidos fotográficos distintos.
+
+Operación privada autorizada en /home/pi/backups/dulce-salado/20261018-orders: PostgreSQL, media completa, manifiesto anterior, configuración Portainer, inventarios SHA-256 y staging. Restauración verificada en dys_orders_rehearsal_20261018, migración 0010 ensayada y pedido histórico sintético conservado tras borrar sus productos. Repetir el seed creó cero fichas; no se reiniciaron secuencias.
+
+El proceso excepcional ejecutó el comando normal bajo override_settings(DEBUG=True) únicamente dentro de un contenedor temporal con DJANGO_DEBUG=0, después de validar la procedencia y respaldos. No se activó DEBUG en el servicio para correr el seed ni se cambió su restricción normal. Se desconectó la limpieza de fotos sólo durante el borrado de esos demos en el proceso privado: los 45 archivos originales permanecen intactos, además del respaldo y staging. Sin limpieza de huérfanos. Usuarios, permisos, configuración, horarios y pedidos se compararon íntegramente antes/después. Nuevos IDs no reutilizan los antiguos.
+
+La comprobación HTTP real detectó que la imagen mínima no reconocía el tipo MIME WebP; catalog.apps registra image/webp explícitamente y la prueba de respuesta está en catalog/test_images.py. Ver estado de despliegue y verificación final en el informe de la tarea.

@@ -117,7 +117,7 @@ class WhatsAppFormatMigrationTests(TransactionTestCase):
             self.assertEqual(module.NEW_PRODUCT, DEFAULT_PRODUCT_TEMPLATE)
             self.assertEqual(module.NEW_MESSAGE, DEFAULT_MESSAGE_TEMPLATE)
         finally:
-            MigrationExecutor(connection).migrate(current)
+            MigrationExecutor(connection).migrate(MigrationExecutor(connection).loader.graph.leaf_nodes())
 
     def test_known_defaults_update_without_changing_products_or_other_settings(self):
         self.check_migration()

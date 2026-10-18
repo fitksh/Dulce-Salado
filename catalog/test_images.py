@@ -4,11 +4,12 @@ from pathlib import Path
 
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, override_settings
+from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
+from django.views.static import serve
 from PIL import Image
 
 from .admin import ProductAdminForm
-from .images import MAX_IMAGE_BYTES, validate_product_image
+from .images import MAX_IMAGE_BYTES, optimize_product_image, validate_product_image
 from .models import Category, Product
 
 
@@ -100,3 +101,18 @@ class ProductImageTests(TestCase):
         with self.captureOnCommitCallbacks(execute=True):
             Product.objects.filter(pk=product.pk).delete()
         self.assertFalse(Path(old).exists())
+
+
+class ProductPhotoResponseTests(SimpleTestCase):
+    def test_optimized_photo_is_served_inline_as_webp(self):
+        with tempfile.TemporaryDirectory() as directory:
+            photo = optimize_product_image(upload())
+            Path(directory, "photo.webp").write_bytes(photo.read())
+            response = serve(RequestFactory().get("/media/photo.webp"), "photo.webp", document_root=directory)
+            try:
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response["Content-Type"], "image/webp")
+                self.assertTrue(response["Content-Disposition"].startswith("inline;"))
+                self.assertTrue(b"".join(response.streaming_content).startswith(b"RIFF"))
+            finally:
+                response.close()

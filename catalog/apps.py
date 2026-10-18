@@ -1,3 +1,5 @@
+import mimetypes
+
 from django.apps import AppConfig
 
 
@@ -7,4 +9,6 @@ class CatalogConfig(AppConfig):
     verbose_name = "Catálogo"
 
     def ready(self):
+        # La imagen mínima de Raspberry puede no incluir /etc/mime.types.
+        mimetypes.add_type("image/webp", ".webp")
         from . import checks, signals  # noqa: F401
