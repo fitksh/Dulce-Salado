@@ -22,7 +22,9 @@
     const focus = opener?.isConnected && opener.getClientRects().length ? opener : document.querySelector(".cart-link");
     focus?.focus({ preventScroll: true });
   }
-  function close() { finishClose(); if (dialog.open) dialog.close(); restoreFocus(); }
+  function close() {
+    if (frame.contentDocument?.getElementById("cart-app")?.dataset.orderSubmitting === "true") return;
+    finishClose(); if (dialog.open) dialog.close(); restoreFocus(); }
   document.addEventListener("click", event => {
     const link = event.target.closest("a[href]");
     if (!link || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || (link.target && link.target !== "_self")) return;

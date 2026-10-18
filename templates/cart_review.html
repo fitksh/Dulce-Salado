@@ -1,19 +1,31 @@
 {{ cart.items|json_script:"review-current-items" }}
 <input type="hidden" id="whatsapp-message-revision" value="{{ message_revision }}">
-<h2 id="review-title" class="visually-hidden" tabindex="-1">Antes de abrir WhatsApp</h2>
-{% if cart.notices %}<div class="visually-hidden" data-review-notice><ul>{% for notice in cart.notices %}<li>{{ notice }}</li>{% endfor %}</ul></div>{% endif %}
-{% if cart.valid %}
-  <div class="review-message-heading">
-    <label for="whatsapp-message">Mensaje que vas a preparar</label>
-    <button type="button" class="secondary" id="copy-message" aria-label="Copiar mensaje completo" title="Copiar mensaje completo"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3"/></svg></button>
+<input type="hidden" id="order-confirmation-token" value="{{ confirmation_token }}">
+<h2 id="review-title" tabindex="-1">Completá tus datos</h2>
+{% if cart.notices %}<div data-review-notice class="notice"><ul>{% for notice in cart.notices %}<li>{{ notice }}</li>{% endfor %}</ul></div>{% endif %}
+{% if review_required %}<p data-review-required class="notice">Volvé al carrito para revisar los cambios. Conservamos tus datos.</p>{% endif %}
+{% if not cart.valid %}<p data-review-error class="notice error">El carrito requiere correcciones. Volvé para revisar los artículos indicados.</p>{% endif %}
+{% if not whatsapp_configured %}<p data-review-error class="notice error">El comercio todavía no habilitó su número de WhatsApp en el catálogo.</p>{% endif %}
+{% if configuration_error %}<p data-review-error class="notice error">{{ configuration_error }}</p>{% endif %}
+<form id="order-customer-form" novalidate>
+  {% if customer_form.non_field_errors %}<div class="notice error" role="alert">{{ customer_form.non_field_errors }}</div>{% endif %}
+  <div class="customer-field">
+    <label for="id_full_name">Nombre completo *</label>{{ customer_form.full_name }}
+    <div id="id_full_name_error" class="field-error" aria-live="polite">{{ customer_form.full_name.errors }}</div>
   </div>
-  <textarea id="whatsapp-message" readonly rows="10">{{ message }}</textarea>
-{% else %}
-  <p class="visually-hidden" data-review-error>El carrito requiere correcciones. Volvé para revisar los artículos indicados.</p>
-{% endif %}
-{% if not whatsapp_configured %}<p class="visually-hidden" data-review-error>El comercio todavía no habilitó su número de WhatsApp en el catálogo.</p>{% endif %}
-<div class="dialog-actions">
-  <button type="button" class="secondary" id="review-cancel">Volver</button>
-  <button type="button" id="review-continue" {% if not cart.valid or not whatsapp_configured %}disabled{% endif %}>Enviar a WhatsApp</button>
-</div>
-{% if ready_url %}<p class="muted">Si no se abrió WhatsApp, usá este enlace. El envío lo hacés vos desde la aplicación.</p><a class="button" id="whatsapp-ready" href="{{ ready_url }}" target="_blank" rel="noopener noreferrer">Abrir WhatsApp con el mensaje preparado</a>{% endif %}
+  <fieldset class="delivery-options"><legend>Modalidad de entrega</legend>{{ customer_form.delivery_mode }}
+    <div id="id_delivery_mode_error" class="field-error" aria-live="polite">{{ customer_form.delivery_mode.errors }}</div>
+  </fieldset>
+  <fieldset id="delivery-address" hidden disabled><legend>Dirección de envío</legend>
+    {% for field in customer_form %}{% if field.name != 'full_name' and field.name != 'delivery_mode' %}
+      <div class="customer-field"><label for="{{ field.id_for_label }}">{{ field.label }}{% if field.name != 'door' %} *{% endif %}</label>{{ field }}
+        <div id="{{ field.id_for_label }}_error" class="field-error" aria-live="polite">{{ field.errors }}</div>
+      </div>
+    {% endif %}{% endfor %}
+  </fieldset>
+  <p class="muted">Prepararemos una solicitud. Los precios y la disponibilidad quedan sujetos a confirmación del comercio.</p>
+  <div class="dialog-actions">
+    <button type="button" class="secondary" id="review-cancel">Cancelar</button>
+    <button type="submit" id="review-continue" {% if not cart.valid or not whatsapp_configured or configuration_error or review_required %}disabled{% endif %}>Enviar</button>
+  </div>
+</form>

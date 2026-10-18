@@ -11,6 +11,8 @@ from uuid import uuid4
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 os.environ["DJANGO_DEBUG"] = "1"
+os.environ["PUBLIC_BASE_URL"] = os.environ.get("QA_PUBLIC_BASE_URL", "http://127.0.0.1:8001")
+os.environ["ORDER_ALLOW_LOCAL_URLS"] = "1"
 os.environ["WHATSAPP_PHONE"] = "5491100000000"  # Fixture interceptada por Playwright.
 
 import django  # noqa: E402

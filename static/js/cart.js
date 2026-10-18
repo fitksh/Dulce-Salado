@@ -162,7 +162,7 @@
     count();
   }
   async function refresh() {
-    if (app) { const dialog = document.getElementById("cart-review-dialog"); if (dialog.open) dialog.close(); }
+    if (reviewing) return;
     if (!app) return;
     if (storageFailed) { ++serial; document.getElementById("cart-loading").textContent = ""; document.getElementById("cart-contents").replaceChildren(); return; }
     const requestNumber = ++serial;
@@ -265,40 +265,54 @@
       if (dialog.open) dialog.close();
     });
     window.addEventListener("pagehide", () => { ++serial; closePendingWindow(); });
-    let copyingField = null;
-    function legacyCopy(field) {
-      const focused = document.activeElement;
-      const selection = [field.selectionStart, field.selectionEnd, field.selectionDirection];
-      const fieldScroll = field.scrollTop, dialogScroll = dialog.scrollTop;
-      let copied = false;
-      field.focus({ preventScroll: true });
-      field.select();
-      field.setSelectionRange(0, field.value.length);
-      try { copied = document.execCommand("copy") === true; } catch { /* Selección manual disponible. */ }
-      if (copied) {
-        field.setSelectionRange(...selection);
-        if (focused?.isConnected && dialog.contains(focused)) focused.focus({ preventScroll: true });
-      }
-      field.scrollTop = fieldScroll;
-      dialog.scrollTop = dialogScroll;
-      return copied;
+    // Sólo memoria de esta pestaña: los datos personales no van a localStorage.
+    const draftHost = window.parent === window ? window : window.parent;
+    const draftFields = ["full_name", "delivery_mode", "street", "number", "door", "city"];
+    let attempt = null, completedItems = null;
+    function rememberDraft() {
+      const form = reviewContents.querySelector("#order-customer-form");
+      if (!form) return;
+      const draft = {};
+      draftFields.forEach(name => {
+        draft[name] = name === "delivery_mode" ? form.querySelector('[name="delivery_mode"]:checked')?.value : form.elements[name].value;
+      });
+      draftHost.__dysOrderDraft = draft;
     }
-    async function copyMessage(field) {
-      if (!field || copyingField === field) return;
-      copyingField = field;
+    function addressMode() {
+      const form = reviewContents.querySelector("#order-customer-form");
+      if (!form) return;
+      const delivery = form.querySelector('[name="delivery_mode"]:checked')?.value === "delivery";
+      const address = form.querySelector("#delivery-address");
+      address.hidden = !delivery; address.disabled = !delivery;
+      ["street", "number", "city"].forEach(name => { form.elements[name].required = delivery; });
+    }
+    function initializeForm() {
+      const form = reviewContents.querySelector("#order-customer-form");
+      if (!form) return;
+      const draft = draftHost.__dysOrderDraft;
+      if (draft) draftFields.forEach(name => {
+        if (name === "delivery_mode") form.querySelectorAll('[name="delivery_mode"]').forEach(radio => { radio.checked = radio.value === draft[name]; });
+        else { form.elements[name].value = draft[name] || ""; form.elements[name].disabled = false; }
+      });
+      addressMode();
       try {
-        let copied = false;
-        try {
-          if (typeof navigator.clipboard?.writeText === "function") {
-            await navigator.clipboard.writeText(field.value);
-            copied = true; // La promesa resuelta confirma la escritura moderna.
-          }
-        } catch { /* Intentar el fallback si el diálogo sigue vigente. */ }
-        if (!dialog.open || !field.isConnected || !reviewContents.contains(field)) return;
-        // Sin Clipboard API no hubo await: conserva el clic/activación del usuario.
-        if (!copied) copied = legacyCopy(field);
-        announce(copied ? "Mensaje copiado." : "Copiá el texto seleccionado para pegarlo en WhatsApp.", copied ? "success" : "info");
-      } finally { if (copyingField === field) copyingField = null; }
+        window.sessionStorage.setItem("dys-order-confirmation", JSON.stringify({
+          items: JSON.stringify(items), token: reviewContents.querySelector("#order-confirmation-token").value
+        }));
+      } catch { /* El token del formulario sigue disponible durante el reintento. */ }
+    }
+    function validateCustomer() {
+      const form = reviewContents.querySelector("#order-customer-form");
+      let first = null;
+      ["full_name", "street", "number", "door", "city"].forEach(name => {
+        const field = form.elements[name], error = form.querySelector(`#id_${name}_error`);
+        const value = field.value.trim().replace(/\s+/g, " ");
+        const invalid = !field.disabled && ((field.required && !value) || value.length > field.maxLength);
+        error.textContent = invalid ? (!value ? "Completá este campo." : `Usá hasta ${field.maxLength} caracteres.`) : "";
+        field.toggleAttribute("aria-invalid", invalid);
+        if (invalid && !first) first = field;
+      });
+      first?.focus(); return !first;
     }
     function closePendingWindow() {
       if (pendingWindow && !pendingWindow.closed) pendingWindow.close();
@@ -307,7 +321,6 @@
     function prepareWindow() {
       closePendingWindow();
       try {
-        // Se inicia en el clic, antes del await. Conservamos el handle para cancelar.
         pendingWindow = window.open("about:blank", "_blank");
         if (!pendingWindow) return;
         pendingWindow.opener = null;
@@ -319,66 +332,123 @@
         pendingWindow.document.body.textContent = "Verificando precios y cantidades antes de abrir WhatsApp…";
       } catch { closePendingWindow(); }
     }
+    function clearPreparedItems() {
+      try {
+        // Conserva productos añadidos/modificados desde otra pestaña durante el envío.
+        const current = core.read(window.localStorage);
+        items = current.filter(item => !completedItems.some(sent => JSON.stringify(sent) === JSON.stringify(item)));
+        core.write(window.localStorage, items);
+        storageFailed = false; count();
+        reviewContents.querySelector("#cart-clear-error").hidden = true;
+        return true;
+      } catch {
+        reviewContents.querySelector("#cart-clear-error").hidden = false;
+        return false;
+      }
+    }
+    function setSubmitting(busy) {
+      app.dataset.orderSubmitting = String(busy);
+      reviewContents.setAttribute("aria-busy", String(busy));
+      reviewContents.querySelectorAll("#review-cancel, #review-continue").forEach(button => { button.disabled = busy; });
+    }
     async function review(accepted = false) {
       if (storageFailed || reviewing) return;
+      if (accepted && !attempt && !validateCustomer()) return;
+      rememberDraft();
       const requestNumber = ++serial;
       reviewing = true;
-      const data = new FormData();
-      data.set("items", JSON.stringify(items));
-      data.set("csrfmiddlewaretoken", document.querySelector("#cart-token input").value);
-      if (accepted) {
-        data.set("accepted", "yes");
-        data.set("message_revision", reviewContents.querySelector("#whatsapp-message-revision")?.value || "");
+      let data;
+      if (accepted && attempt) data = attempt.data;
+      else {
+        data = accepted ? new FormData(reviewContents.querySelector("#order-customer-form")) : new FormData();
+        data.set("items", JSON.stringify(items));
+        data.set("csrfmiddlewaretoken", document.querySelector("#cart-token input").value);
+        if (accepted) {
+          data.set("accepted", "yes");
+          data.set("message_revision", reviewContents.querySelector("#whatsapp-message-revision").value);
+          data.set("confirmation_token", reviewContents.querySelector("#order-confirmation-token").value);
+          attempt = { data, items: items.map(item => ({ ...item })) };
+        } else {
+          try {
+            const previous = JSON.parse(window.sessionStorage.getItem("dys-order-confirmation"));
+            if (previous?.items === JSON.stringify(items)) data.set("confirmation_token", previous.token);
+          } catch { /* La revisión genera un token nuevo si no existe. */ }
+        }
       }
-      if (accepted) { document.getElementById("review-continue").disabled = true; prepareWindow(); }
+      if (accepted) { setSubmitting(true); prepareWindow(); }
       try {
         const response = await fetch(accepted ? app.dataset.whatsappUrl : app.dataset.reviewUrl, { method: "POST", body: data, cache: "no-store", credentials: "same-origin" });
         const html = await response.text();
-        if (requestNumber !== serial) return;
-        if (accepted && !dialog.open) { closePendingWindow(); return; }
-        if (!response.ok) throw new Error("No se pudo verificar el mensaje. Volvé al carrito y reintentá.");
+        if (requestNumber !== serial && !accepted) return;
+        if (!response.ok) throw new Error("No se pudo completar la preparación. Reintentá con la misma solicitud.");
         reviewContents.innerHTML = html;
-        items = JSON.parse(reviewContents.querySelector("#review-current-items").textContent);
-        persist();
         const ready = reviewContents.querySelector("#whatsapp-ready");
-        if (ready && !storageFailed) {
-          let opened = false;
+        if (ready) {
+          completedItems = attempt.items; attempt = null;
+          clearPreparedItems();
+          draftHost.__dysOrderDraft = null;
+          try { window.sessionStorage.removeItem("dys-order-confirmation"); } catch { /* Sin datos personales. */ }
           if (pendingWindow && !pendingWindow.closed) {
-            try { pendingWindow.location.replace(ready.href); opened = true; }
-            catch { closePendingWindow(); }
+            try { pendingWindow.location.replace(ready.href); } catch { closePendingWindow(); }
           }
           pendingWindow = null;
-          document.getElementById("review-continue").hidden = true;
-          announce(opened ? "Mensaje preparado. Conservás el carrito en esta pestaña." : "Mensaje preparado. Usá el enlace para abrir WhatsApp en otra pestaña.", "info");
-          return;
+          reviewing = false; setSubmitting(false);
+          // La actualización del fondo no cierra el resultado ni vuelve a crear el pedido.
+          refresh();
+        } else {
+          attempt = null; closePendingWindow();
+          items = JSON.parse(reviewContents.querySelector("#review-current-items").textContent);
+          // Si cambió otra pestaña, no sobrescribir su carrito al volver de una revisión.
+          if (JSON.stringify(core.read(window.localStorage)) === data.get("items")) persist();
+          initializeForm(); cartMessages(reviewContents);
+          if (reviewContents.querySelector("[data-review-required]")) {
+            try { window.sessionStorage.removeItem("dys-order-confirmation"); } catch { /* Revisión nueva requerida. */ }
+          }
         }
-        closePendingWindow();
-        if (ready) ready.remove();
         if (!dialog.open) dialog.showModal();
-        if (storageFailed) document.getElementById("review-continue").disabled = true;
-        else cartMessages(reviewContents);
         document.getElementById("review-title").focus({ preventScroll: true });
         dialog.scrollTop = 0;
-      } catch (error) { if (requestNumber === serial) { closePendingWindow(); if (dialog.open) dialog.close(); announce(error instanceof TypeError ? "No se pudo verificar el mensaje. Revisá la conexión y reintentá desde el carrito." : error.message); } }
-      finally { if (requestNumber === serial) reviewing = false; }
+      } catch (error) {
+        closePendingWindow();
+        // Puede haberse guardado aunque se pierda la respuesta: repetir exactamente la misma confirmación.
+        if (accepted && attempt) {
+          reviewContents.querySelectorAll("#order-customer-form input").forEach(field => { field.disabled = true; });
+          announce("No pudimos obtener la respuesta. Conservamos el carrito y tus datos. Presioná Enviar para recuperar el mismo pedido sin duplicarlo.", "error");
+        } else announce(error instanceof TypeError ? "No se pudo verificar el carrito. Revisá la conexión y reintentá." : error.message);
+      } finally {
+        reviewing = false;
+        app.dataset.orderSubmitting = "false";
+        reviewContents.setAttribute("aria-busy", "false");
+        // No rehabilitar el envío si la respuesta exige una nueva revisión.
+        if (attempt) setSubmitting(false);
+      }
     }
+    dialog.addEventListener("cancel", event => {
+      if (app.dataset.orderSubmitting === "true") event.preventDefault();
+    });
     dialog.addEventListener("close", () => {
-      closePendingWindow();
+      rememberDraft(); closePendingWindow();
       window.Notifications.close(false, dialog);
       reviewing = false; ++serial;
       if (panelClosing) return;
       document.getElementById("cart-review")?.focus({ preventScroll: true });
       refresh();
     });
+    dialog.addEventListener("input", rememberDraft);
+    dialog.addEventListener("change", () => { rememberDraft(); addressMode(); });
+    dialog.addEventListener("submit", event => {
+      if (event.target.id === "order-customer-form") { event.preventDefault(); review(true); }
+    });
     dialog.addEventListener("click", event => {
-      if (event.target.closest("#review-cancel")) dialog.close();
-      if (event.target.closest("#review-continue")) review(true);
-      if (event.target.closest("#copy-message")) {
-        copyMessage(document.getElementById("whatsapp-message"));
-      }
+      if (event.target.closest("#review-cancel") && app.dataset.orderSubmitting !== "true") dialog.close();
+      if (event.target.closest("#retry-cart-clear")) { clearPreparedItems(); refresh(); }
     });
     app.addEventListener("click", event => {
-      if (event.target.closest("#cart-review")) { review(); return; }
+      if (event.target.closest("#cart-review")) {
+        if (attempt) { dialog.showModal(); document.getElementById("review-title").focus(); }
+        else review();
+        return;
+      }
       const button = event.target.closest(".cart-adjust, .remove-item");
       if (!button) return;
       event.stopPropagation();
@@ -427,7 +497,15 @@
     });
     refresh();
   }
-  window.addEventListener("storage", event => { if (event.key === core.STORAGE_KEY || event.key === null) { load(); refresh(); } });
+  window.addEventListener("storage", event => {
+    if (event.key !== core.STORAGE_KEY && event.key !== null) return;
+    if (app?.dataset.orderSubmitting === "true") return;
+    const dialog = document.getElementById("cart-review-dialog");
+    if (dialog?.open && !document.getElementById("order-result")) {
+      dialog.close(); announce("El carrito cambió en otra pestaña. Revisalo nuevamente.", "warning");
+    }
+    load(); refresh();
+  });
   window.addEventListener("pageshow", event => { if (event.persisted) { load(); refresh(); } });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && !reviewing) { load(); refresh(); } });
 })();

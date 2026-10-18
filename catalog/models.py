@@ -1,5 +1,6 @@
 from decimal import Decimal
 from urllib.parse import urlencode, urlsplit
+from uuid import uuid4
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -215,3 +216,44 @@ class OpeningInterval(models.Model):
 
     def __str__(self):
         return f"{self.get_weekday_display()}: {self.opens_at:%H:%M}–{self.closes_at:%H:%M}"
+
+
+class Order(models.Model):
+    """Solicitud inmutable; la secuencia PostgreSQL es el código comercial."""
+
+    class Delivery(models.TextChoices):
+        PICKUP = "pickup", "Retiro en el local"
+        DELIVERY = "delivery", "Envío a domicilio"
+
+    token = models.UUIDField(default=uuid4, unique=True, editable=False)
+    confirmation_key = models.UUIDField(unique=True, editable=False)
+    request_hash = models.CharField(max_length=64, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    full_name = models.CharField("nombre completo", max_length=120)
+    delivery_mode = models.CharField("modalidad", max_length=8, choices=Delivery.choices)
+    street = models.CharField("calle", max_length=160, blank=True)
+    number = models.CharField("número", max_length=30, blank=True)
+    door = models.CharField("puerta", max_length=80, blank=True)
+    city = models.CharField("ciudad", max_length=100, blank=True)
+    items = models.JSONField("productos y precios originales", editable=False)
+    total = models.DecimalField("total", max_digits=24, decimal_places=0, editable=False)
+    detail_url = models.URLField(max_length=500, editable=False)
+    message = models.TextField("mensaje preparado", editable=False)
+    whatsapp_url = models.TextField("enlace preparado", editable=False)
+
+    class Meta:
+        ordering = ["-pk"]
+        verbose_name = "solicitud de pedido"
+        verbose_name_plural = "solicitudes de pedidos"
+
+    @property
+    def code(self):
+        return f"DYS-{self.pk:06d}"
+
+    def __str__(self):
+        return self.code
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ValidationError("Los pedidos preparados conservan su instantánea original.")
+        return super().save(*args, **kwargs)

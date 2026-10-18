@@ -1,11 +1,13 @@
 # Arquitectura y decisiones
 
+> Decisión vigente 18/10/2026: solicitudes persistidas, formulario de datos y limpieza posterior al guardado, según [PEDIDOS.md](PEDIDOS.md). Esta decisión reemplaza las referencias históricas a no persistir pedidos, conservar el carrito después de preparar y copiar/vista previa del mensaje. Continúan fuera de alcance pagos, stock, estados y cuentas de clientes.
+
 ## Principio
 Monolito Django renderizado en servidor. Mantener el número de servicios, abstracciones y dependencias al mínimo para un catálogo pequeño. Docker Compose local incluye `web` y `db`; Nginx, HTTPS, VPS y backups remotos se diseñarán cuando corresponda producción, no ahora.
 
 ## Componentes
 - Django 5.2 LTS en Python 3.12: templates, rutas, validación, ORM, Django Admin.
-- PostgreSQL: categorías, productos, usuarios administradores y precios. No fotos binarias, carritos ni pedidos.
+- PostgreSQL: categorías, productos, usuarios administradores y precios. No fotos binarias ni carritos. Order conserva solicitudes mínimas con instantánea JSON, sin relaciones a productos borrables.
 - JavaScript vanilla: selección, actualización de cantidades, persistencia `localStorage`, advertencia y enlace WhatsApp.
 - CSS propio sin frameworks obligatorios.
 - Media: un archivo de imagen local por producto, almacenado en `MEDIA_ROOT` dentro de volumen persistente Docker; DB guarda la ruta mediante `ImageField`. La optimización/validación WebP se hará en la fase de administración.
@@ -19,7 +21,7 @@ Catálogo con Category/Product, Django Admin, PostgreSQL, Docker Compose y CI co
 2. El frontend gestiona carrito en localStorage (IDs y cantidades; price_type=retail se conserva por compatibilidad v1).
 3. Al mostrar, revisar o continuar, un POST protegido por CSRF a una vista Django devuelve HTML con datos vigentes y calcula importes con Decimal. No existe API REST pública. localStorage sólo guarda ID, cantidad, price_type compatible, unidad y hash de revisión; el hash comunica cambios sin guardar precios.
 4. Usuario revisa y acepta advertencia en un diálogo nativo; se verifica nuevamente el catálogo. Si cambió, exige nueva revisión. Se genera URL `https://api.whatsapp.com/send?phone=<telefono>&text=<mensaje_codificado>` con el texto completo y teléfono de entorno. Sin teléfono se bloquea la salida.
-5. El usuario decide enviar desde WhatsApp. Sin historial de pedidos.
+5. Se persiste Order antes de abrir WhatsApp y vaciar artículos preparados. El usuario decide enviar desde WhatsApp. Consulta histórica sólo por token privado; no hay listado público ni estados. Ver [PEDIDOS.md](PEDIDOS.md).
 
 ## Seguridad básica
 SECRET_KEY obligatoria desde variable de entorno; DEBUG desactivable; hosts permitidos explícitos; CSRF/sesiones estándar Django. Credenciales de PostgreSQL sólo en `.env` local ignorado. Django Admin requiere un usuario activo con `is_staff`; cada modelo requiere sus permisos correspondientes. Un superusuario activo tiene todos los permisos y es la opción inicial para el dueño. Upload de imágenes debe restringirse por tipo real, tamaño y dimensiones; sanitizar nombres y metadata. No habilitar uploads al público.

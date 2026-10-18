@@ -777,186 +777,29 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await page.locator("[data-cart-error]:visible, #cart-notices li").count(), 0);
   });
 
-  await t.test("diálogo accesible, Escape cancela, cambio posterior exige nueva revisión", async () => {
+  await t.test("formulario accesible, Escape cancela y precio posterior exige nueva revisión", async () => {
     await page.locator("#cart-review").click();
-    await page.getByRole("dialog").waitFor();
-    assert.equal(await page.locator("#review-title").evaluate(node => node === document.activeElement), true);
+    await page.locator("#cart-review-dialog[open]").waitFor();
+    assert.equal(await page.locator("#review-title").innerText(), "Completá tus datos");
+    assert.equal(await page.locator("#whatsapp-message, #copy-message").count(), 0);
     await accessible();
-    await page.screenshot({ path: ".qa/screenshots/review-mobile.png", fullPage: true });
-    await page.evaluate(() => { navigator.clipboard.writeText = async text => { window.qaCopied = text; }; });
-    await page.locator("#copy-message").click();
-    await page.getByRole("dialog").getByRole("status").filter({ hasText: "Mensaje copiado." }).waitFor();
-    assert.equal(await page.evaluate(() => window.qaCopied), await page.locator("#whatsapp-message").inputValue());
-    assert.equal(await page.locator("#copy-message").getAttribute("aria-label"), "Copiar mensaje completo");
-    assert.equal((await page.locator("#copy-message").innerText()).trim(), "");
-    assert.equal(await page.locator("#copy-message svg").count(), 1);
-    await page.evaluate(() => {
-      navigator.clipboard.writeText = async () => { throw new Error("QA clipboard blocked"); };
-      window.qaNativeCopy = document.execCommand;
-      document.execCommand = () => false;
-    });
-    await page.locator("#copy-message").click();
-    await page.getByRole("dialog").getByRole("status").filter({ hasText: /Copiá el texto seleccionado/ }).waitFor();
-    assert.equal(await page.locator("#whatsapp-message").evaluate(node => node === document.activeElement && node.selectionStart === 0 && node.selectionEnd === node.value.length), true);
-    await page.evaluate(() => { document.execCommand = window.qaNativeCopy; });
-    await accessible();
-    const afterClose = page.waitForResponse(response => response.url().endsWith("/carrito/recalcular/"));
+    await page.locator("#id_full_name").fill("Ana QA");
     await page.keyboard.press("Escape");
-    await page.getByRole("dialog").waitFor({ state: "hidden" });
-    await afterClose;
-    await page.waitForFunction(() => document.activeElement?.id === "cart-review" && !document.getElementById("cart-review")?.disabled);
-    assert.equal(await page.evaluate(() => document.activeElement?.id), "cart-review");
+    await page.locator("#cart-review-dialog[open]").waitFor({ state: "hidden" });
+    await page.locator("#cart-review:not([disabled])").waitFor();
     await page.locator("#cart-review").click();
-    await page.getByRole("dialog").waitFor();
+    await page.locator("#id_full_name").waitFor();
+    assert.equal(await page.locator("#id_full_name").inputValue(), "Ana QA");
     await editPrices("200", "90");
-    const changedPopup = page.waitForEvent("popup");
-    await page.locator("#review-continue").click();
-    const provisional = await changedPopup;
-    await page.locator("[data-review-notice]").filter({ hasText: /cambió la información/ }).waitFor();
-    if (!provisional.isClosed()) await provisional.waitForEvent("close");
-    assert.equal(provisional.isClosed(), true);
-    assert.equal(page.url(), `${base}/carrito/`);
-    assert.match(await page.locator("#whatsapp-message").inputValue(), /\*💰 Total: \$ 600\*/);
-  });
-
-  await t.test("WhatsApp interceptado incluye mensaje completo; no envía ni borra carrito", async () => {
-    let destination;
-    await context.route(/^https:\/\/api\.whatsapp\.com\/send\?/, async route => {
-      destination = route.request().url();
-      await route.fulfill({ contentType: "text/html; charset=utf-8", body: "<h1>Salida interceptada de QA</h1>" });
-    });
-    const opening = page.waitForEvent("popup");
-    await page.locator("#review-continue").click();
-    const whatsapp = await opening;
-    await whatsapp.getByRole("heading", { name: "Salida interceptada de QA" }).waitFor();
-    assert.equal(page.url(), `${base}/carrito/`);
-    assert.equal(await whatsapp.evaluate(() => window.opener), null);
-    assert.equal(await whatsapp.evaluate(() => document.referrer), "");
-    const url = new URL(destination);
-    assert.equal(url.pathname, "/send");
-    assert.equal(url.searchParams.get("phone"), "5491100000000");
-    assert.match(url.searchParams.get("text"), /Precio: \$ 200 por kg/);
-    assert.match(url.searchParams.get("text"), /Cantidad: 3 kg/);
-    assert.match(url.searchParams.get("text"), /\*💰 Total: \$ 600\*/);
-    assert.equal(url.searchParams.get("text"), await page.locator("#whatsapp-message").inputValue());
-    assert.equal(new URL(await page.locator("#whatsapp-ready").getAttribute("href")).searchParams.get("text"), url.searchParams.get("text"));
-    const stored = JSON.parse(await page.evaluate(() => localStorage.getItem("dulce-salado.cart.v1")));
-    assert.equal(stored.items.length, 1);
-    await whatsapp.close();
-    await page.goto(`${base}/carrito/`);
-    await waitCart("$ 600");
-  });
-
-  await t.test("bloqueo de popup conserva enlace validado seguro y apertura manual", async () => {
-    await page.evaluate(() => { window.qaNativeOpen = window.open; window.open = () => null; });
-    try {
-      await page.locator("#cart-review").click();
-      await page.getByRole("dialog").waitFor();
-      const before = context.pages().length;
-      await page.locator("#review-continue").click();
-      const ready = page.locator("#whatsapp-ready");
-      await ready.waitFor();
-      assert.equal(context.pages().length, before);
-      assert.equal(await ready.getAttribute("target"), "_blank");
-      assert.equal(await ready.getAttribute("rel"), "noopener noreferrer");
-      assert.equal(await page.locator("#review-continue").isVisible(), false);
-      await accessible();
-      const opening = context.waitForEvent("page");
-      await ready.click();
-      const whatsapp = await opening;
-      await whatsapp.getByRole("heading", { name: "Salida interceptada de QA" }).waitFor();
-      assert.equal(await whatsapp.evaluate(() => window.opener), null);
-      assert.equal(await whatsapp.evaluate(() => document.referrer), "");
-      assert.equal(page.url(), `${base}/carrito/`);
-      await whatsapp.close();
-      await page.locator("#review-cancel").click();
-      await waitCart("$ 600");
-    } finally { await page.evaluate(() => { window.open = window.qaNativeOpen; }); }
-  });
-
-  await t.test("cancelar mientras se revalida impide salir a WhatsApp", async () => {
-    let pending;
-    const reached = new Promise(resolve => { pending = resolve; });
-    let release;
-    const released = new Promise(resolve => { release = resolve; });
-    await page.route("**/carrito/whatsapp/", async route => {
-      pending();
-      await released;
-      await route.continue();
-    });
-    await page.locator("#cart-review").click();
-    await page.getByRole("dialog").waitFor();
     const opening = page.waitForEvent("popup");
     await page.locator("#review-continue").click();
     const provisional = await opening;
-    await reached;
-    const closed = provisional.waitForEvent("close");
+    await page.locator("[data-review-required]").waitFor();
+    if (!provisional.isClosed()) await provisional.waitForEvent("close");
+    assert.equal(await page.locator("#id_full_name").inputValue(), "Ana QA");
+    assert.equal(await page.locator("#review-continue").isDisabled(), true);
     await page.locator("#review-cancel").click();
-    await closed;
     await waitCart("$ 600");
-    assert.equal(provisional.isClosed(), true);
-    const cancelledResponse = page.waitForResponse(response => response.url().endsWith("/carrito/whatsapp/"));
-    release();
-    await cancelledResponse;
-    await page.unroute("**/carrito/whatsapp/");
-    assert.equal(page.url(), `${base}/carrito/`);
-    assert.equal(await page.getByRole("dialog").isVisible(), false);
-  });
-
-  await t.test("error al preparar WhatsApp cierra pestaña provisional y conserva carrito", async () => {
-    await page.route("**/carrito/whatsapp/", route => route.abort());
-    try {
-      await page.locator("#cart-review").click();
-      await page.getByRole("dialog").waitFor();
-      const opening = page.waitForEvent("popup");
-      await page.locator("#review-continue").click();
-      const provisional = await opening;
-      if (!provisional.isClosed()) await provisional.waitForEvent("close");
-      await page.getByRole("alert").filter({ hasText: /fetch|verificar/ }).waitFor();
-      assert.equal(page.url(), `${base}/carrito/`);
-      await waitCart("$ 600");
-      assert.equal(JSON.parse(await page.evaluate(() => localStorage.getItem("dulce-salado.cart.v1"))).items.length, 1);
-    } finally { await page.unroute("**/carrito/whatsapp/"); }
-  });
-
-  await t.test("cambio en otra pestaña durante validación cancela salida pendiente", async () => {
-    const second = await context.newPage();
-    await second.goto(base);
-    let release, reached;
-    const gate = new Promise(resolve => { release = resolve; });
-    const arrived = new Promise(resolve => { reached = resolve; });
-    const destinations = [];
-    const track = request => { if (request.url().startsWith("https://api.whatsapp.com/send?")) destinations.push(request.url()); };
-    context.on("request", track);
-    await page.route("**/carrito/whatsapp/", async route => { reached(); await gate; await route.continue(); });
-    try {
-      await page.locator("#cart-review").click();
-      await page.getByRole("dialog").waitFor();
-      const opening = page.waitForEvent("popup");
-      await page.locator("#review-continue").click();
-      const provisional = await opening;
-      await arrived;
-      const closed = provisional.waitForEvent("close");
-      await second.evaluate(() => {
-        const cart = JSON.parse(localStorage.getItem("dulce-salado.cart.v1"));
-        cart.items[0].quantity = "4";
-        localStorage.setItem("dulce-salado.cart.v1", JSON.stringify(cart));
-      });
-      await closed;
-      await waitCart("$ 800");
-      const response = page.waitForResponse(response => response.url().endsWith("/carrito/whatsapp/"));
-      release(); await response;
-      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-      assert.deepEqual(destinations, []);
-      assert.equal(await page.getByRole("dialog").isVisible(), false);
-      assert.equal(page.url(), `${base}/carrito/`);
-      await second.evaluate(() => {
-        const cart = JSON.parse(localStorage.getItem("dulce-salado.cart.v1"));
-        cart.items[0].quantity = "3";
-        localStorage.setItem("dulce-salado.cart.v1", JSON.stringify(cart));
-      });
-      await waitCart("$ 600");
-    } finally { release(); await page.unrouteAll({ behavior: "wait" }); context.off("request", track); await second.close(); }
   });
 
   await t.test("cambio de unidad exige cantidad nueva y sincroniza pestañas", async () => {
@@ -1366,193 +1209,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
   });
 });
 
-test("Copiar mensaje completo: APIs, selección y origen HTTP no seguro", { timeout: 90000 }, async t => {
-  const browser = await chromium.launch();
-  t.after(() => browser.close());
-  mkdirSync(".qa/screenshots", { recursive: true });
-  async function reviewPage(insecure = false) {
-    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
-    await context.addInitScript(() => {
-      const addListener = EventTarget.prototype.addEventListener;
-      EventTarget.prototype.addEventListener = function (type, callback, options) {
-        if (type === "click" && this.id === "cart-review-dialog") {
-          return addListener.call(this, type, function (event) {
-            window.qaInCartClick = true;
-            try { return callback.call(this, event); }
-            finally { window.qaInCartClick = false; }
-          }, options);
-        }
-        return addListener.call(this, type, callback, options);
-      };
-    });
-    const origin = new URL(base);
-    if (insecure) {
-      origin.protocol = "http:";
-      origin.hostname = "qa-copy.invalid";
-      // Sólo red de QA: URL visible insegura, servidor aislado y CSRF normales.
-      // No cambia settings Django ni declara el origen seguro en Chromium.
-      await context.route(`${origin.origin}/**`, async route => {
-        const target = new URL(route.request().url());
-        target.protocol = new URL(base).protocol;
-        target.host = new URL(base).host;
-        const headers = { ...route.request().headers(), host: target.host };
-        if (headers.origin) headers.origin = new URL(base).origin;
-        if (headers.referer) headers.referer = headers.referer.replace(origin.origin, new URL(base).origin);
-        const response = await route.fetch({ url: target.href, headers });
-        await route.fulfill({ response });
-      });
-    }
-    const page = await context.newPage();
-    const errors = [];
-    page.on("pageerror", error => errors.push(error.message));
-    await page.goto(origin.href);
-    await page.locator(".add-product").first().waitFor();
-    await page.evaluate(() => {
-      const entries = [...document.querySelectorAll(".add-product")].map(form => ({
-        id: Number(form.dataset.id), quantity: "1", price_type: "retail",
-        sale_unit: form.dataset.unit, revision: form.dataset.revision,
-      }));
-      window.CartCore.write(localStorage, entries);
-    });
-    await page.goto(`${origin.origin}/carrito/`);
-    await page.locator("#cart-review").click();
-    await page.locator("#cart-review-dialog[open]").waitFor();
-    const message = await page.locator("#whatsapp-message").inputValue();
-    assert.ok(message.length > 1500);
-    const storage = await page.evaluate(() => localStorage.getItem("dulce-salado.cart.v1"));
-    await page.locator("#copy-message").focus();
-    return { context, page, message, storage, errors };
-  }
-  async function result(state, copied) {
-    const { page, message, storage, errors } = state;
-    const notice = copied ? "Mensaje copiado." : "Copiá el texto seleccionado para pegarlo en WhatsApp.";
-    await page.locator("#cart-review-dialog").getByRole("status").filter({ hasText: notice }).waitFor();
-    assert.equal(await page.getByRole("status").filter({ hasText: notice }).count(), 1);
-    assert.equal(await page.locator("#cart-review-dialog").evaluate(node => node.open), true);
-    assert.equal(await page.locator("textarea").count(), 1);
-    assert.equal(await page.locator("#whatsapp-message").inputValue(), message);
-    assert.equal(await page.evaluate(() => localStorage.getItem("dulce-salado.cart.v1")), storage);
-    if (copied) assert.equal(await page.evaluate(() => document.activeElement?.id), "copy-message");
-    else assert.equal(await page.locator("#whatsapp-message").evaluate(node => node === document.activeElement
-      && node.selectionStart === 0 && node.selectionEnd === node.value.length), true);
-    assert.deepEqual(errors, []);
-  }
-  async function legacyInstrumentation(page, modernRejected = false) {
-    await page.evaluate(rejected => {
-      if (rejected) navigator.clipboard.writeText = async () => { throw new Error("QA rechazo moderno"); };
-      else Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
-      const field = document.getElementById("whatsapp-message");
-      field.setSelectionRange(4, 15, "backward");
-      field.scrollTop = 35;
-      window.qaFieldScroll = field.scrollTop;
-      document.execCommand = command => {
-        window.qaLegacyCommand = command;
-        window.qaSynchronous = window.qaInCartClick;
-        window.qaCopied = field.value.slice(field.selectionStart, field.selectionEnd);
-        return true;
-      };
-    }, modernRejected);
-  }
-  await t.test("Clipboard API copia realmente el texto completo y conserva el foco", async () => {
-    const state = await reviewPage();
-    try {
-      await state.context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: new URL(base).origin });
-      await state.page.evaluate(() => { document.execCommand = () => { throw new Error("No debe utilizar fallback"); }; });
-      await state.page.locator("#copy-message").click();
-      await result(state, true);
-      // Windows normaliza LF a CRLF en el portapapeles del sistema.
-      assert.equal((await state.page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, "\n"), state.message);
-      await state.page.screenshot({ path: ".qa/screenshots/whatsapp-copy-modern-390.png" });
-      await state.page.setViewportSize({ width: 1280, height: 800 });
-      assert.equal(await state.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-      await state.page.screenshot({ path: ".qa/screenshots/whatsapp-copy-modern-1280.png" });
-    } finally { await state.context.close(); }
-  });
-  for (const rejected of [false, true]) {
-    await t.test(rejected ? "rechazo moderno intenta fallback confirmado" : "sin Clipboard API ejecuta fallback dentro del mismo clic", async () => {
-      const state = await reviewPage();
-      try {
-        await legacyInstrumentation(state.page, rejected);
-        await state.page.locator("#copy-message").click();
-        await result(state, true);
-        assert.equal(await state.page.evaluate(() => window.qaCopied), state.message);
-        assert.equal(await state.page.evaluate(() => window.qaLegacyCommand), "copy");
-        if (!rejected) assert.equal(await state.page.evaluate(() => window.qaSynchronous), true);
-        assert.deepEqual(await state.page.locator("#whatsapp-message").evaluate(node => [node.selectionStart, node.selectionEnd, node.selectionDirection]), [4, 15, "backward"]);
-        assert.equal(await state.page.locator("#whatsapp-message").evaluate(node => node.scrollTop === window.qaFieldScroll), true);
-      } finally { await state.context.close(); }
-    });
-  }
-  for (const failure of ["false", "exception", "unavailable"]) {
-    await t.test(`sin confirmación de copiado (${failure}) mantiene selección manual`, async () => {
-      const state = await reviewPage();
-      try {
-        await state.page.evaluate(mode => {
-          if (mode === "unavailable") {
-            navigator.clipboard.writeText = async () => { throw new Error("QA clipboard bloqueado"); };
-            document.execCommand = undefined;
-          } else {
-            Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
-            document.execCommand = () => { if (mode === "exception") throw new Error("QA copy bloqueado"); return false; };
-          }
-        }, failure);
-        await state.page.locator("#copy-message").click();
-        await result(state, false);
-        assert.equal(await state.page.getByRole("status").filter({ hasText: "Mensaje copiado." }).count(), 0);
-        if (failure === "false") await state.page.screenshot({ path: ".qa/screenshots/whatsapp-copy-manual-390.png" });
-      } finally { await state.context.close(); }
-    });
-  }
-  await t.test("clics repetidos anuncian una vez y cerrar durante una promesa impide avisos tardíos", async () => {
-    const state = await reviewPage();
-    try {
-      await state.page.evaluate(() => {
-        window.qaCalls = 0; window.qaNotices = [];
-        const notice = document.querySelector("#cart-review-dialog [data-notification-message]");
-        new MutationObserver(() => window.qaNotices.push(notice.textContent)).observe(notice, { childList: true });
-        navigator.clipboard.writeText = () => { window.qaCalls++; return new Promise(resolve => { window.qaResolve = resolve; }); };
-      });
-      await state.page.locator("#copy-message").click();
-      await state.page.locator("#copy-message").click();
-      assert.equal(await state.page.evaluate(() => window.qaCalls), 1);
-      await state.page.evaluate(() => window.qaResolve());
-      await result(state, true);
-      assert.deepEqual(await state.page.evaluate(() => window.qaNotices), ["Mensaje copiado."]);
-      await state.page.locator("#copy-message").click();
-      await state.page.keyboard.press("Escape");
-      await state.page.locator("#cart-review-dialog").waitFor({ state: "hidden" });
-      await state.page.evaluate(() => window.qaResolve());
-      assert.equal(await state.page.getByRole("status").filter({ hasText: "Mensaje copiado." }).count(), 0);
-      assert.deepEqual(await state.page.evaluate(() => window.qaNotices), ["Mensaje copiado."]);
-      assert.deepEqual(state.errors, []);
-    } finally { await state.context.close(); }
-  });
-  await t.test("HTTP no seguro: copy nativo síncrono copia el texto íntegro sin Clipboard API", async () => {
-    const state = await reviewPage(true);
-    try {
-      assert.equal(await state.page.evaluate(() => window.isSecureContext), false);
-      assert.equal(await state.page.evaluate(() => typeof navigator.clipboard), "undefined");
-      await state.page.evaluate(() => {
-        const nativeCopy = document.execCommand.bind(document);
-        document.execCommand = command => {
-          window.qaSynchronous = window.qaInCartClick;
-          window.qaNativeResult = nativeCopy(command);
-          return window.qaNativeResult;
-        };
-      });
-      await state.page.locator("#copy-message").click();
-      await result(state, true);
-      assert.equal(await state.page.evaluate(() => window.qaSynchronous && window.qaNativeResult), true);
-      await state.page.screenshot({ path: ".qa/screenshots/whatsapp-copy-http-390.png" });
-      // Lectura independiente del portapapeles real desde un origen seguro del mismo navegador.
-      await state.context.grantPermissions(["clipboard-read"], { origin: new URL(base).origin });
-      const reader = await state.context.newPage();
-      await reader.goto(base);
-      await reader.bringToFront();
-      assert.equal((await reader.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, "\n"), state.message);
-    } finally { await state.context.close(); }
-  });
-});
+
 
 test("Presentaciones compactas: sincronización, precio publicado, errores y alta repetida", { timeout: 60000 }, async t => {
   const browser = await chromium.launch();
@@ -1798,21 +1455,8 @@ test("Mensaje editable en Administración: emojis, validación, revisión y enla
     await page.locator("#cart-review").click();
     await page.locator("#cart-review-dialog[open]").waitFor();
 
-    await t.test("carrito usa el texto guardado y copia el mismo mensaje completo", async () => {
-      assert.equal(await page.locator(".catalog-bar").getByRole("link", { name: "Catálogo", exact: true }).count(), 1);
-      assert.equal(await page.getByText("El carrito se guarda sólo en este navegador. No confirma un pedido.", { exact: true }).count(), 0);
-      const message = await page.locator("#whatsapp-message").inputValue();
-      assert.ok(message.startsWith("Hola de prueba 👋"));
-      assert.ok(message.endsWith("Gracias 🍫"));
-      assert.match(message, /1\. 🛍️/);
-      await page.evaluate(() => { navigator.clipboard.writeText = async text => { window.qaCustomCopy = text; }; });
-      await page.locator("#copy-message").click();
-      await page.getByRole("dialog").getByRole("status").filter({ hasText: "Mensaje copiado." }).waitFor();
-      assert.equal(await page.evaluate(() => window.qaCustomCopy), message);
-      await page.screenshot({ path: ".qa/screenshots/whatsapp-custom-review-390.png", fullPage: true });
-    });
-
-    await t.test("cambio durante revisión exige revisar otra vez y enlace coincide sin enviar", async () => {
+    await t.test("formulario conserva datos y exige nueva revisión del formato editable", async () => {
+      await page.locator("#id_full_name").fill("Ana plantilla QA");
       await admin.locator("#id_whatsapp_message_template").fill(generalFormat.replace("Hola de prueba 👋", "Mensaje actualizado ✅"));
       await save();
       let destination;
@@ -1823,20 +1467,28 @@ test("Mensaje editable en Administración: emojis, validación, revisión y enla
       const first = page.waitForEvent("popup");
       await page.locator("#review-continue").click();
       const provisional = await first;
-      await page.locator("[data-review-notice]").filter({ hasText: /El mensaje del comercio cambió/ }).waitFor();
+      await page.locator("[data-review-required]").waitFor();
       if (!provisional.isClosed()) await provisional.waitForEvent("close");
       assert.equal(destination, undefined);
-      const current = await page.locator("#whatsapp-message").inputValue();
-      assert.ok(current.startsWith("Mensaje actualizado ✅"));
+      assert.equal(await page.locator("#id_full_name").inputValue(), "Ana plantilla QA");
+      await page.locator("#review-cancel").click();
+      await page.locator("#cart-review:not([disabled])").waitFor();
+      await page.locator("#cart-review").click();
+      await page.locator("#id_full_name").waitFor();
       const next = page.waitForEvent("popup");
       await page.locator("#review-continue").click();
       const whatsapp = await next;
       await whatsapp.getByRole("heading", { name: "WhatsApp interceptado" }).waitFor();
-      assert.equal(new URL(destination).searchParams.get("text"), current);
-      assert.equal(new URL(await page.locator("#whatsapp-ready").getAttribute("href")).searchParams.get("text"), current);
+      const message = new URL(destination).searchParams.get("text");
+      assert.match(message, /Mensaje actualizado ✅/);
+      assert.match(message, /1\. 🛍️/);
+      assert.match(message, /Gracias 🍫/);
+      assert.match(message, /Ana plantilla QA/);
+      assert.equal(new URL(await page.locator("#whatsapp-ready").getAttribute("href")).searchParams.get("text"), message);
       await whatsapp.close();
       assert.deepEqual(errors, []);
     });
+
   } finally {
     if (settingsUrl) {
       await admin.goto(settingsUrl);
@@ -2059,7 +1711,7 @@ test("Carrito lateral en iframe: apertura, scroll, revisión y retorno", { timeo
     assert.equal(await drawer.locator(".drawer-cross").isVisible(), false);
     await frame.locator("#cart-review").click();
     await frame.locator("#cart-review-dialog[open]").waitFor();
-    assert.ok(await frame.locator("#whatsapp-message").inputValue());
+    assert.equal(await frame.locator("#review-title").innerText(), "Completá tus datos");
     await page.screenshot({ path: ".qa/screenshots/cart-drawer-review-390.png" });
     await frame.locator("#review-cancel").click();
     await frame.locator("#cart-review-dialog[open]").waitFor({ state: "hidden" });
@@ -2072,35 +1724,20 @@ test("Carrito lateral en iframe: apertura, scroll, revisión y retorno", { timeo
     await close();
     assert.deepEqual(errors, []);
   });
-  await t.test("Escape vuelve de revisión, copiar funciona en iframe y cerrar cancela salida pendiente", async () => {
+  await t.test("Escape vuelve del formulario y conserva los datos en el iframe", async () => {
     await open();
     await frame.locator("#cart-review").click();
-    await frame.locator("#cart-review-dialog[open]").waitFor();
-    await frame.locator("#whatsapp-message").press("Escape");
+    await frame.locator("#id_full_name").waitFor();
+    await frame.locator("#id_full_name").fill("Ana iframe QA");
+    await frame.locator("#id_full_name").press("Escape");
     await frame.locator("#cart-review-dialog[open]").waitFor({ state: "hidden" });
     assert.equal(await drawer.evaluate(node => node.open), true);
+    await frame.locator("#cart-review:not([disabled])").waitFor();
     await frame.locator("#cart-review").click();
-    await frame.locator("#cart-review-dialog[open]").waitFor();
-    await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: new URL(base).origin });
-    const message = await frame.locator("#whatsapp-message").inputValue();
-    await frame.locator("#copy-message").click();
-    await frame.getByRole("status").filter({ hasText: "Mensaje copiado." }).waitFor();
-    assert.equal((await page.evaluate(() => navigator.clipboard.readText())).replace(/\r\n/g, "\n"), message);
-    let release, arrived;
-    const held = new Promise(resolve => { release = resolve; });
-    const received = new Promise(resolve => { arrived = resolve; });
-    await page.route("**/carrito/whatsapp/", async route => { arrived(); await held; await route.continue().catch(() => {}); });
-    const popupPromise = page.waitForEvent("popup");
-    await frame.locator("#review-continue").click();
-    const popup = await popupPromise;
-    await received;
-    const closed = popup.waitForEvent("close");
+    await frame.locator("#id_full_name").waitFor();
+    assert.equal(await frame.locator("#id_full_name").inputValue(), "Ana iframe QA");
+    await frame.locator("#review-cancel").click();
     await close();
-    await closed;
-    release();
-    assert.equal(popup.isClosed(), true);
-    assert.equal(new URL(page.url()).pathname, "/");
-    await page.unroute("**/carrito/whatsapp/");
   });
 
   await t.test("toque móvil cierra con volver y Agregar productos sin navegar", async () => {
@@ -2420,27 +2057,23 @@ test("Carrito silencioso y estable con muchos productos", { timeout: 60000 }, as
     }
   });
 
-  await t.test("vista previa compacta con copiar a la derecha y total sólo en el mensaje", async () => {
+  await t.test("formulario de datos compacto y accesible en el panel", async () => {
     for (const width of [1920, 390]) {
       await page.setViewportSize({ width, height: 1080 });
       await cart.locator("#cart-review").click();
       await cart.locator("#cart-review-dialog[open]").waitFor();
-      const copy = cart.getByRole("button", { name: "Copiar mensaje completo", exact: true });
-      assert.equal((await copy.innerText()).trim(), "");
-      assert.equal(await copy.locator("svg").count(), 1);
-      const button = await copy.boundingBox(), label = await cart.locator('label[for="whatsapp-message"]').boundingBox();
-      assert.ok(button.x >= label.x + label.width && Math.abs(button.y + button.height / 2 - label.y - label.height / 2) < 1);
-      assert.ok((await cart.locator("#whatsapp-message").inputValue()).includes("💰 Total:"));
-      assert.equal(await cart.locator("#cart-review-contents > p").filter({ hasText: /^Total estimado:/ }).count(), 0);
-      assert.equal(await cart.getByText("WhatsApp abrirá con el texto preparado.", { exact: false }).count(), 0);
+      assert.equal(await cart.locator("#review-title").innerText(), "Completá tus datos");
+      assert.equal(await cart.locator("textarea, #copy-message").count(), 0);
       const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
       assert.deepEqual(axe.violations.map(v => v.id), []);
-      await page.screenshot({ path: `.qa/screenshots/cart-copy-icon-${width}.png` });
+      await page.screenshot({ path: `.qa/screenshots/cart-customer-${width}.png` });
       await cart.locator("#review-cancel").click();
       await settled();
     }
     assert.deepEqual(errors, []);
   });
+
+
 });
 
 test("Zoom sin marco, revisión simple y cantidades enteras", { timeout: 60000 }, async t => {
@@ -2537,31 +2170,26 @@ test("Zoom sin marco, revisión simple y cantidades enteras", { timeout: 60000 }
     }
   });
 
-  await t.test("revisión: Total, Volver, Enviar, textarea mayor y copiar junto al label", async () => {
+  await t.test("formulario simple sin textarea, responsive y accesible", async () => {
     await page.goto(`${base}/carrito/`);
     await page.locator("#cart-review:not([disabled])").waitFor();
-    assert.equal(await page.getByRole("heading", { name: "Total", exact: true }).count(), 1);
     for (const width of [1920, 390]) {
       await page.setViewportSize({ width, height: 1080 });
       await page.locator("#cart-review").click();
       await page.locator("#cart-review-dialog[open]").waitFor();
-      assert.equal(await page.locator("#review-warning").count(), 0);
-      assert.equal(await page.getByRole("button", { name: "Volver", exact: true }).count(), 1);
-      assert.equal(await page.getByRole("button", { name: "Enviar a WhatsApp", exact: true }).count(), 1);
-      assert.equal(await page.locator("#whatsapp-message").getAttribute("rows"), "10");
-      const text = await page.locator("#whatsapp-message").inputValue();
-      assert.ok(text.includes("Subtotal:"));
-      assert.ok(!text.includes("Subtotal estimado:"));
-      const label = await page.locator('label[for="whatsapp-message"]').boundingBox(), copy = await page.locator("#copy-message").boundingBox();
-      assert.ok(copy.x - label.x - label.width >= 0 && copy.x - label.x - label.width < 8);
+      assert.equal(await page.getByRole("button", { name: "Cancelar", exact: true }).count(), 1);
+      assert.equal(await page.getByRole("button", { name: "Enviar", exact: true }).count(), 1);
+      assert.equal(await page.locator("textarea, #copy-message").count(), 0);
       const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
       assert.deepEqual(axe.violations.map(v => v.id), []);
-      await page.screenshot({ path: `.qa/screenshots/review-simplified-${width}.png` });
+      await page.screenshot({ path: `.qa/screenshots/order-form-${width}.png` });
       await page.locator("#review-cancel").click();
       await page.locator("#cart-review:not([disabled])").waitFor();
     }
     assert.deepEqual(errors, []);
   });
+
+
 });
 
 
@@ -2689,12 +2317,17 @@ test("WhatsApp: emojis íntegros en apertura directa y enlace de respaldo", { ti
     await t.test(`${panel ? "panel móvil" : "carrito desktop"}: botón y fallback conservan Unicode`, async () => {
       await page.setViewportSize({ width, height: 1080 });
       let cart;
-      if (panel) { await page.goto(`${base}/?q=QA%20Unicode`); await page.locator(".cart-link").click(); cart = page.frameLocator("#cart-drawer iframe"); }
+      if (panel) { await page.goto(`${base}/?q=QA%20Unicode`); await page.locator(".catalog-increase").first().click(); await page.locator(".catalog-amount").first().fill("3"); await page.locator(".catalog-amount").first().press("Tab"); await page.evaluate(() => Notifications.close()); await page.locator(".cart-link").click(); cart = page.frameLocator("#cart-drawer iframe"); }
       else { await page.goto(`${base}/carrito/`); cart = page; }
       await cart.locator("#cart-contents:not([aria-busy]) #cart-review:not([disabled])").waitFor();
       await cart.locator("#cart-review").click();
-      await cart.locator("#whatsapp-message").waitFor();
-      const original = await cart.locator("#whatsapp-message").inputValue();
+      await cart.locator("#id_full_name").waitFor();
+      await cart.locator("#id_full_name").fill("Ana Unicode QA");
+      const opening = context.waitForEvent("page");
+      await cart.locator("#review-continue").click();
+      const popup = await opening;
+      await popup.getByRole("heading", { name: "WhatsApp interceptado sin enviar" }).waitFor({ timeout: 5000 });
+      const original = new URL(destination).searchParams.get("text");
       assert.ok(original.includes("🛍️") && original.includes("👩🏽‍🍳") && original.includes("🇦🇷") && original.includes("📌"));
       assert.ok(!original.includes("�"));
       assert.ok(original.includes("*1. QA Unicode 🛍️ 👩🏽‍🍳 🇦🇷*"));
@@ -2702,11 +2335,6 @@ test("WhatsApp: emojis íntegros en apertura directa y enlace de respaldo", { ti
       assert.ok(original.includes("Precio: $ 100 por caja"));
       assert.ok(original.includes("*Subtotal: $ 300*"));
       assert.ok(!original.includes("minorista") && !original.includes("mayorista"));
-      const opening = context.waitForEvent("page");
-      await cart.locator("#review-continue").click();
-      const popup = await opening;
-      await popup.getByRole("heading", { name: "WhatsApp interceptado sin enviar" }).waitFor({ timeout: 5000 });
-      assert.equal(new URL(destination).searchParams.get("text"), original);
       assert.ok(destination.includes("%F0%9F%9B%8D%EF%B8%8F"));
       assert.ok(!destination.includes("%EF%BF%BD") && !destination.includes("%25F0"));
       assert.equal(await popup.evaluate(() => window.opener), null);
@@ -2724,3 +2352,5 @@ test("WhatsApp: emojis íntegros en apertura directa y enlace de respaldo", { ti
   }
   assert.deepEqual(errors, []);
 });
+
+require("./orders.browser.cjs");

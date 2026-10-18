@@ -1,5 +1,7 @@
 # UX/UI mobile-first
 
+> Decisión vigente 18/10/2026: solicitudes persistidas, formulario de datos y limpieza posterior al guardado, según [PEDIDOS.md](PEDIDOS.md). Esta decisión reemplaza las referencias históricas a no persistir pedidos, conservar el carrito después de preparar y copiar/vista previa del mensaje. Continúan fuera de alcance pagos, stock, estados y cuentas de clientes.
+
 ## Objetivo
 Catálogo veloz y sencillo, orientado primero a teléfonos móviles. Priorizar navegación, legibilidad de precios, selección de cantidades y revisión del carrito por encima de animaciones.
 

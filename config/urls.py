@@ -10,9 +10,11 @@ from catalog.views import (
     cart_review,
     cart_whatsapp,
     catalog_list,
+    order_detail,
 )
 
 urlpatterns = [
+    path("orders/<uuid:token>/", order_detail, name="order_detail"),
     path("admin/", admin.site.urls),
     path("", catalog_list, name="home"),
     path("ubicacion/", RedirectView.as_view(url="/?ubicacion=1#ubicacion", permanent=True), name="directions"),

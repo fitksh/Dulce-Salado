@@ -12,6 +12,7 @@ from django.urls import reverse
 
 from .cart import calculate_cart, product_revision
 from .models import BusinessSettings, Category, OpeningInterval, Product
+from .orders import confirmation_token
 from .whatsapp import message_configuration, whatsapp_message, whatsapp_preview
 from .whatsapp_templates import (
     DEFAULT_MESSAGE_TEMPLATE,
@@ -21,7 +22,7 @@ from .whatsapp_templates import (
 )
 
 
-@override_settings(WHATSAPP_PHONE="5491100000000")
+@override_settings(WHATSAPP_PHONE="5491100000000", PUBLIC_BASE_URL="https://catalogo.example.com", ORDER_ALLOW_LOCAL_URLS=False)
 class MessageTemplateTests(TestCase):
     def setUp(self):
         self.business = BusinessSettings.objects.create(address="Dirección de prueba", hours_initialized=True)
@@ -32,7 +33,7 @@ class MessageTemplateTests(TestCase):
         self.item = {"id": self.product.pk, "quantity": "2", "price_type": "retail", "sale_unit": "paquete", "revision": product_revision(self.product)}
 
     def post(self, route, revision=None):
-        return self.client.post(reverse(route), {"items": json.dumps([self.item]), "accepted": "yes",
+        return self.client.post(reverse(route), {"full_name": "Ana", "delivery_mode": "pickup", "confirmation_token": confirmation_token(), "items": json.dumps([self.item]), "accepted": "yes",
                                 "message_revision": message_configuration()["revision"] if revision is None else revision})
 
     def test_missing_configuration_uses_defaults_without_creating_rows(self):
@@ -84,29 +85,29 @@ class MessageTemplateTests(TestCase):
 
     def test_invalid_database_template_falls_back_without_executing_or_losing_cart(self):
         BusinessSettings.objects.filter(pk=1).update(whatsapp_message_template="{request.user.password}")
-        response = self.post("cart_review")
+        response = self.post("cart_whatsapp")
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.context["message"].startswith("Hola!"))
-        self.assertIn("Gelatina {total}", response.context["message"])
-        self.assertIn("$ 3.800", response.context["message"])
+        message = response.context["order"].message
+        self.assertIn("Hola!", message)
+        self.assertIn("Gelatina {total}", message)
+        self.assertIn("$ 3.800", message)
 
     def test_template_change_during_review_requires_new_acceptance(self):
         preview = self.post("cart_review")
-        previous = preview.context["message_revision"]
         self.business.whatsapp_message_template = "Hola nuevo 👋\n{productos}\nTotal: {total}"
         self.business.save()
-        changed = self.post("cart_whatsapp", previous)
+        changed = self.post("cart_whatsapp", preview.context["message_revision"])
         self.assertNotContains(changed, 'id="whatsapp-ready"')
-        self.assertContains(changed, "El mensaje del comercio cambió")
-        self.assertIn("Hola nuevo 👋", changed.context["message"])
+        self.assertTrue(changed.context["review_required"])
+        self.assertEqual(changed.context["customer_form"]["full_name"].value(), "Ana")
         ready = self.post("cart_whatsapp", changed.context["message_revision"])
-        self.assertContains(ready, 'id="whatsapp-ready"')
-        self.assertEqual(parse_qs(urlparse(ready.context["ready_url"]).query)["text"], [changed.context["message"]])
+        self.assertIn("Hola nuevo 👋", ready.context["order"].message)
+        self.assertEqual(parse_qs(urlparse(ready.context["order"].whatsapp_url).query)["text"], [ready.context["order"].message])
 
     def test_missing_message_revision_requires_review(self):
         response = self.post("cart_whatsapp", "")
         self.assertNotContains(response, 'id="whatsapp-ready"')
-        self.assertContains(response, "Revisá el texto actualizado")
+        self.assertContains(response, "Revisá nuevamente")
 
     def test_admin_save_preview_validation_permissions_and_escape(self):
         owner = get_user_model().objects.create_superuser("message-owner", "", "qa-only")
@@ -162,4 +163,4 @@ class MessageTemplateMigrationTests(TransactionTestCase):
             self.assertEqual(BusinessSettings.objects.get().whatsapp_message_template, MigrationExecutor(connection).loader.project_state(current).apps.get_model("catalog", "BusinessSettings")._meta.get_field("whatsapp_message_template").default)
             self.assertEqual(BusinessSettings.objects.get().whatsapp_product_template, MigrationExecutor(connection).loader.project_state(current).apps.get_model("catalog", "BusinessSettings")._meta.get_field("whatsapp_product_template").default)
         finally:
-            MigrationExecutor(connection).migrate([("catalog", "0009_whatsapp_readable_format")])
+            MigrationExecutor(connection).migrate(MigrationExecutor(connection).loader.graph.leaf_nodes())

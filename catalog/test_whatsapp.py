@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from .cart import calculate_cart, product_revision
 from .models import Category, Product
+from .orders import confirmation_token
 from .whatsapp import (
     PRICE_WARNING,
     SEPARATOR,
@@ -15,7 +16,7 @@ from .whatsapp import (
 )
 
 
-@override_settings(WHATSAPP_PHONE="5491100000000")  # Sólo fixture: nunca se navega ni envía.
+@override_settings(WHATSAPP_PHONE="5491100000000", PUBLIC_BASE_URL="https://catalogo.example.com", ORDER_ALLOW_LOCAL_URLS=False)  # Sólo fixture: nunca se navega ni envía.
 class WhatsAppTests(TestCase):
     def setUp(self):
         category = Category.objects.create(name="Test", slug="test")
@@ -26,22 +27,16 @@ class WhatsAppTests(TestCase):
         return {"id": self.product.pk, "quantity": "3", "price_type": "retail", "sale_unit": "kg", "revision": product_revision(self.product)}
 
     def post(self, endpoint, items=None, **data):
-        return self.client.post(reverse(endpoint), {"items": json.dumps([self.item()] if items is None else items), "message_revision": message_configuration()["revision"], **data})
+        return self.client.post(reverse(endpoint), {"full_name": "Ana", "delivery_mode": "pickup", "confirmation_token": confirmation_token(), "items": json.dumps([self.item()] if items is None else items), "message_revision": message_configuration()["revision"], **data})
 
-    def test_review_has_copy_icon_and_no_duplicate_total_or_outro(self):
+    def test_review_has_customer_form_without_message_or_copy(self):
         response = self.post("cart_review")
-        self.assertContains(response, 'class="review-message-heading"')
-        self.assertContains(response, 'aria-label="Copiar mensaje completo"')
-        self.assertContains(response, 'id="copy-message"', count=1)
-        self.assertNotContains(response, '>Copiar mensaje completo</button>')
-        self.assertNotContains(response, "Total estimado:")
-        self.assertNotContains(response, "WhatsApp abrirá con el texto preparado.")
-        self.assertContains(response, "💰 Total:")
-        self.assertNotContains(response, 'id="review-warning"')
-        self.assertContains(response, PRICE_WARNING)  # Conservado dentro del mensaje, sin región duplicada.
-        self.assertContains(response, 'rows="10"')
-        self.assertContains(response, 'id="review-cancel">Volver</button>')
-        self.assertContains(response, ">Enviar a WhatsApp</button>")
+        self.assertContains(response, "Completá tus datos")
+        self.assertContains(response, 'name="full_name"')
+        self.assertNotContains(response, "textarea")
+        self.assertNotContains(response, "copy-message")
+        self.assertContains(response, 'id="review-cancel">Cancelar</button>')
+        self.assertContains(response, ">Enviar</button>")
 
     def test_message_has_current_selection_and_encoded_complete_text(self):
         message = whatsapp_message(calculate_cart([self.item()]))
@@ -105,24 +100,18 @@ class WhatsAppTests(TestCase):
         self.product.refresh_from_db()
         self.assertEqual((self.product.name, self.product.brand), (name, brand))
 
-    def test_preview_and_ready_link_contain_exactly_the_same_server_message(self):
-        preview = self.post("cart_review")
+    def test_ready_link_contains_saved_message_and_current_body(self):
         ready = self.post("cart_whatsapp", accepted="yes")
-        message = whatsapp_message(calculate_cart([self.item()]))
-        self.assertEqual(preview.context["message"], message)
-        self.assertEqual(ready.context["message"], message)
-        self.assertEqual(parse_qs(urlparse(ready.context["ready_url"]).query)["text"], [message])
+        order = ready.context["order"]
+        self.assertIn(whatsapp_message(calculate_cart([self.item()])), order.message)
+        self.assertEqual(parse_qs(urlparse(order.whatsapp_url).query)["text"], [order.message])
 
-    def test_review_keeps_warning_in_message_and_cancel_without_ready_link(self):
+    def test_review_explains_confirmation_and_cancel_without_ready_link(self):
         response = self.post("cart_review")
-        self.assertContains(response, PRICE_WARNING)
-        self.assertContains(response, 'id="review-cancel">Volver</button>')
-        self.assertContains(response, "Enviar a WhatsApp")
+        self.assertContains(response, "sujetos a confirmación del comercio")
         self.assertNotContains(response, 'id="whatsapp-ready"')
         self.assertNotContains(self.post("cart_whatsapp"), 'id="whatsapp-ready"')
-        self.assertContains(response, 'id="review-title" class="visually-hidden" tabindex="-1"')
-        self.assertNotContains(response, "El texto se incluye completo.")
-        self.assertContains(response, "Copiar mensaje completo")
+        self.assertContains(response, '<h2 id="review-title" tabindex="-1">Completá tus datos</h2>')
 
     def test_acceptance_generates_link_only_after_revalidation(self):
         response = self.post("cart_whatsapp", accepted="yes")
@@ -132,7 +121,7 @@ class WhatsAppTests(TestCase):
         Product.objects.filter(pk=self.product.pk).update(retail_price="120")
         response = self.post("cart_whatsapp", [item], accepted="yes")
         self.assertNotContains(response, 'id="whatsapp-ready"')
-        self.assertContains(response, "$ 360")
+        self.assertEqual(response.context["cart"]["total"], 360)
         revised = response.context["cart"]["items"]
         self.assertContains(self.post("cart_whatsapp", revised, accepted="yes"), 'id="whatsapp-ready"')
 
@@ -141,7 +130,7 @@ class WhatsAppTests(TestCase):
         response = self.post("cart_whatsapp", [item], accepted="yes")
         self.assertNotContains(response, 'id="whatsapp-ready"')
         self.assertContains(response, "el carrito ahora utiliza el precio publicado")
-        self.assertContains(response, "$ 300")
+        self.assertEqual(response.context["cart"]["total"], 300)
         self.assertNotContains(response, "Precio mayorista:")
         revised = response.context["cart"]["items"]
         self.assertEqual(revised[0]["price_type"], "retail")

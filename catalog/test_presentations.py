@@ -168,4 +168,4 @@ class PresentationMigrationTests(TransactionTestCase):
             with self.assertRaises(ValidationError):
                 Product(category_id=category.pk, name="New legacy", sale_unit="unidad", retail_price="1").save()
         finally:
-            MigrationExecutor(connection).migrate([("catalog", "0009_whatsapp_readable_format")])
+            MigrationExecutor(connection).migrate(MigrationExecutor(connection).loader.graph.leaf_nodes())

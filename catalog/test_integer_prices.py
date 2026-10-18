@@ -104,4 +104,4 @@ class IntegerPriceMigrationTests(TransactionTestCase):
             self.assertEqual(BusinessSettings.objects.values().get(), before_business)
             self.assertEqual([p["retail_price"] for p in after], [100, 0, 9999999999, 123])
         finally:
-            MigrationExecutor(connection).migrate([("catalog", "0009_whatsapp_readable_format")])
+            MigrationExecutor(connection).migrate(MigrationExecutor(connection).loader.graph.leaf_nodes())

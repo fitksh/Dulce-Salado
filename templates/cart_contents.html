@@ -27,7 +27,7 @@
   </div><aside class="cart-summary" aria-labelledby="summary-title">
     <h2 id="summary-title">Total</h2>
     {% if cart.total is not None %}<p class="total" data-cart-amount>{{ cart.total|ars }}</p>{% else %}<p class="visually-hidden">Corregí los artículos indicados para calcular el total.</p>{% endif %}
-    <button type="button" id="cart-review" {% if not cart.valid %}disabled{% endif %}>Revisar y preparar WhatsApp</button>
+    <button type="button" id="cart-review" {% if not cart.valid %}disabled{% endif %}><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><path d="M20 11.5a8 8 0 0 1-12 7L3 20l1.5-5A8 8 0 1 1 20 11.5Z"/><path d="M8 7c-2 3 2 7 5 8l2-2-3-1-1 1-2-2 1-1Z"/></svg> Enviar Pedido</button>
   </aside></div>
 {% else %}
   {% if cart_panel %}

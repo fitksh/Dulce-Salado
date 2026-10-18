@@ -23,6 +23,7 @@ jobs:
     env:
       DJANGO_SECRET_KEY: ci-only-development-key
       DJANGO_DEBUG: '0'
+      PUBLIC_BASE_URL: https://catalogo.example.com
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,testserver
       POSTGRES_DB: dulce_salado_test
       POSTGRES_USER: dulce_salado

@@ -77,3 +77,7 @@ Aplicada sólo en esta PC con respaldo privado de configuración en .qa/backups/
 - README y docs/PRODUCT_SPEC.md, ARCHITECTURE.md, UX_UI.md, ROADMAP.md, QA.md, EXECUTION_STATUS.md y este documento: decisión, límites, evidencia y pasos.
 
 Validación final: 203 Django, 9 Node y 84 Chromium; check/Ruff/migraciones/diff correctos. QA retirado, base local con 45 fichas y 0009 aplicada; Ctrl+F5. Cambios concretos revisados, sin commit/push ni publicación.
+
+## Solicitudes persistidas (18/10/2026)
+
+El formulario sustituye la vista previa y copia del carrito. El cuerpo editable se conserva y se incluye entre el código comercial y el bloque fijo de cliente/entrega/enlace. La advertencia de precios se añade si el formato personalizado la omite. Mensaje y URL completos se guardan en Order; Reenviar pedido conserva exactamente ambos. Admin continúa mostrando una vista previa del cuerpo con datos ficticios. Ver [PEDIDOS.md](PEDIDOS.md).

@@ -247,3 +247,13 @@ Publicación y CI remoto se comprueban después del commit/push; el resultado se
 - [x] Navegador real: 320/390/768/1280, axe, fotos, cantidades, totales, revision/copiar/URL WhatsApp interceptada y Admin login correctos; sin errores JS ni respuestas 500.
 
 El registro documental se incorpora a main y a la imagen final; no cambia funcionalidad ni datos. Detalles operativos y respaldo en ACTUALIZAR_RASPBERRY_PORTAINER.md. No se requiere ninguna accion manual del propietario para completar este despliegue.
+
+## Solicitudes persistidas autorizadas — 18/10/2026
+
+- [x] Order/0010: instantánea, token privado, código PostgreSQL e idempotencia concurrente.
+- [x] Formulario de cliente/entrega, detalle privado y resultado/reenvío normal e iframe.
+- [x] 219 pruebas Django y 9 Node correctas; 14 escenarios nuevos Chromium correctos a cuatro anchos.
+- [x] Regresión Chromium completa: 84 pruebas, sin fallos ni omisiones.
+- [ ] Publicación main y CI posterior.
+- [ ] Respaldo/restauración/ensayo Raspberry, renovación de demos y actualización sólo web.
+- [ ] Dominio HTTPS público futuro; actualmente prueba local expresamente autorizada.

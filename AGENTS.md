@@ -21,13 +21,13 @@ Antes de modificar código, leer: `docs/PRODUCT_SPEC.md`, `docs/ARCHITECTURE.md`
 Python 3.12, Django 5.2 LTS, PostgreSQL, templates Django, CSS, JavaScript vanilla, Django Admin, Docker Compose. `localStorage` para carrito. Una aplicación Django monolítica.
 
 ## Prohibido salvo autorización expresa
-React, Vue, Svelte, SPA, DRF, GraphQL, Celery, Redis, microservicios, cuentas de clientes, pedidos persistidos, inventario, pagos, envíos, facturación, reglas automáticas de mayorista, imágenes múltiples por producto, API de WhatsApp Business, analítica avanzada, PWA, integración cloud storage o infraestructura VPS.
+React, Vue, Svelte, SPA, DRF, GraphQL, Celery, Redis, microservicios, cuentas de clientes, gestión de estados de pedidos, inventario, pagos, logística de envíos, facturación, reglas automáticas de mayorista, imágenes múltiples por producto, API de WhatsApp Business, analítica avanzada, PWA, integración cloud storage o infraestructura VPS.
 
 ## Negocio y seguridad
 - El catálogo público, carrito y mensaje utilizan sólo retail_price vigente, sin selector ni etiqueta de tarifa. Mayorista/condiciones se conservan en Admin, CSV y PDF; no se aplican al carrito. Avisar y exigir nueva revisión si un carrito anterior se convierte de mayorista a minorista.
 - Los precios son estimativos, en ARS, y la disponibilidad se consulta al comercio.
 - No almacenar precios como autoridad en `localStorage`; refrescar desde catálogo vigente al abrir/revisar el carrito.
-- No crear pedidos ni afirmar que el WhatsApp fue enviado. `wa.me` precarga un mensaje, cuyo envío hace el cliente.
+- Persistir únicamente la solicitud autorizada: datos mínimos, instantánea inmutable y enlace privado UUID4. Vaciar el carrito sólo tras persistencia confirmada. No afirmar que WhatsApp fue enviado: `api.whatsapp.com/send` prepara el texto y el cliente decide enviarlo.
 - Admin sólo con autenticación de Django; no exponer `/media` para escritura anónima. Validar archivos de imagen cuando se implemente carga.
 - No guardar credenciales ni `.env` en Git. Variables de entorno para secretos.
 - Mantener accesibilidad, diseño mobile-first, URLs y HTML semánticos, y tests razonables.

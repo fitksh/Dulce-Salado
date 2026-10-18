@@ -1,5 +1,7 @@
 # Especificación funcional — MVP
 
+> Decisión vigente 18/10/2026: solicitudes persistidas, formulario de datos y limpieza posterior al guardado, según [PEDIDOS.md](PEDIDOS.md). Esta decisión reemplaza las referencias históricas a no persistir pedidos, conservar el carrito después de preparar y copiar/vista previa del mensaje. Continúan fuera de alcance pagos, stock, estados y cuentas de clientes.
+
 ## 1. Contexto
 Catálogo público para Dulce y Salado, comercio pequeño con productos de repostería, dietética y cotillón vendidos por presentación (100 gr, kg, caja, pack, paquete o bolsa). Público principal: clientes que consultan precios y arman pedidos, especialmente desde celular. La comunicación y confirmación final ocurre por WhatsApp.
 
@@ -21,7 +23,7 @@ Reducir consultas manuales de precios y facilitar pedidos de productos y cantida
 - Administración mediante Django Admin, sin panel administrativo propio.
 
 ## 5. Sin implementar en MVP
-Autenticación de clientes, historial/registro de pedidos, stock, pagos, pagos a cuenta, envíos, facturación, cupones, promociones complejas, umbrales mayoristas automáticos, múltiples fotografías, ratings, newsletter, notificaciones, chat embebido, API REST pública, WhatsApp Business API, PWA.
+Autenticación de clientes, historial de clientes, estados de pedidos, stock, pagos, pagos a cuenta, logística de envíos, facturación, cupones, promociones complejas, umbrales mayoristas automáticos, múltiples fotografías, ratings, newsletter, notificaciones, chat embebido, API REST pública, WhatsApp Business API, PWA.
 
 ## 6. Entidades
 **Category**: `name`, `slug`, `sort_order`, `is_active`.
@@ -46,11 +48,11 @@ Cantidad entera positiva como en el carrito: 100 gr se expresa como porción/por
 
 General requiere {productos}/{total}; producto requiere {producto}/{precio}/{subtotal} más {cantidad_presentacion}, o los campos compatibles {cantidad}/{unidad}. Nuevos campos {unidad_precio}/{presentacion_adicional}; {numero}/{marca}/{descripcion} siguen disponibles. Reemplazo de campos permitidos, sin ejecución de código/HTML/expresiones. Precios/subtotales/total minoristas vigentes en pesos enteros, sin cambios comerciales. Formatos personalizados anteriores se preservan; 0009 sustituye únicamente defaults conocidos.
 
-Vista previa, copia y enlace directo api.whatsapp.com/send comparten el mismo texto UTF-8. Evitar wa.me por una corrupción de emojis reproducida en su redirección. Cambio de formato exige nueva revisión, independiente de la revisión de productos. Configuración ausente usa defaults sin crear registros. [Campos, compatibilidad y límites](WHATSAPP_MESSAGES.md).
+El mensaje guardado y el enlace directo api.whatsapp.com/send comparten el mismo texto UTF-8. La vista previa y copia del carrito fueron reemplazadas por el formulario de datos. Evitar wa.me por una corrupción de emojis reproducida en su redirección. Cambio de formato exige nueva revisión, independiente de la revisión de productos. Configuración ausente usa defaults sin crear registros. [Campos, compatibilidad y límites](WHATSAPP_MESSAGES.md).
 
 ## 9. Revisión del mensaje
 
-La vista previa muestra el mensaje completo, con acciones Volver y Enviar a WhatsApp. No presenta una región de advertencia comercial separada. El formato general inicial conserva el texto sobre precios/disponibilidad dentro del mensaje editable que se prepara; el usuario decide enviarlo desde WhatsApp. La revisión y revalidación de catálogo/configuración siguen siendo necesarias.
+El botón Enviar Pedido abre Completá tus datos: nombre obligatorio, retiro predeterminado o envío con calle, número y ciudad (Viedma editable), puerta opcional. Cancelar conserva carrito. Enviar revalida catálogo y formato, persiste una única solicitud idempotente y sólo entonces vacía los artículos preparados. El resultado permite reenviar el mensaje guardado sin crear otro pedido. No existe textarea ni botón de copiar. [Decisión vigente y configuración](PEDIDOS.md).
 
 ## 10. Criterios de aceptación MVP
 1. Visitante navega y busca sin cuenta y sólo ve productos/categorías activos.
@@ -62,7 +64,7 @@ La vista previa muestra el mensaje completo, con acciones Volver y Enviar a What
 7. El texto precargado contiene cantidades, unidades, precio unitario, subtotales y total estimado.
 8. Admin modifica productos, imágenes y categorías mediante Django Admin.
 9. Interfaz usable en móvil con teclado, lector de pantalla y controles táctiles.
-10. No se persisten pedidos ni se gestionan existencias.
+10. Se persiste la solicitud con su instantánea, sin gestionar estados, pagos ni existencias.
 
 ## 11. Configuración comercial pendiente
 El dueño debe configurar el número real de WhatsApp por entorno y cargar productos/precios reales en Admin. Denominación inicial: Dulce y Salado. El precio mayorista no se publica en el flujo de compra. Los subtotales multiplican precio entero por cantidad entera y el total suma esos subtotales sin redondeo, con formato ARS es-AR.

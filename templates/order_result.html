@@ -1,0 +1,13 @@
+<h2 id="review-title" tabindex="-1">¡Tu pedido está listo! 🎉</h2>
+<div id="order-result" data-code="{{ order.code }}">
+  <p>Tu pedido <strong>{{ order.code }}</strong> se preparó correctamente.</p>
+  <p>Intentamos abrir WhatsApp en otra pestaña para que puedas enviarlo al negocio.</p>
+  <p>Si WhatsApp no se abrió automáticamente, podés intentarlo nuevamente.</p>
+  <p>No confirma la compra: el comercio confirmará precios y disponibilidad.</p>
+  <p><a href="{{ order.detail_url }}" target="_blank" rel="noopener noreferrer" id="order-detail-link">Ver detalle del pedido</a></p>
+  <div class="dialog-actions">
+    <a class="button" id="whatsapp-ready" href="{{ order.whatsapp_url }}" target="_blank" rel="noopener noreferrer">Reenviar pedido</a>
+    <button type="button" class="secondary" id="review-cancel">Cerrar</button>
+  </div>
+  <p id="cart-clear-error" class="notice error" hidden>No pudimos vaciar el carrito en este navegador. El pedido ya está guardado; no vuelvas a enviarlo. <button type="button" id="retry-cart-clear">Vaciar artículos preparados</button></p>
+</div>

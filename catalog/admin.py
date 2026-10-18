@@ -23,7 +23,7 @@ from django.views.decorators.http import require_GET, require_http_methods
 
 from .csv_import import HEADERS, PreviewChanged, create_from_preview, preview_rows, read_csv
 from .images import MAX_IMAGE_BYTES
-from .models import BusinessSettings, Category, OpeningInterval, Product
+from .models import BusinessSettings, Category, OpeningInterval, Order, Product
 from .pdf import build_catalog_pdf, build_catalog_table_pdf
 from .whatsapp import whatsapp_preview
 
@@ -318,6 +318,22 @@ class BusinessSettingsAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return super().has_add_permission(request) and not BusinessSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ("code", "created_at", "full_name", "delivery_mode", "total")
+    readonly_fields = ("code",) + tuple(field.name for field in Order._meta.fields)
+    ordering = ("-pk",)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
     def has_delete_permission(self, request, obj=None):
         return False

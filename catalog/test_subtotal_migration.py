@@ -25,7 +25,7 @@ class SubtotalLabelMigrationTests(TransactionTestCase):
             self.assertEqual(BusinessSettings.objects.values(*fields).get(), values)
             self.assertEqual(list(Product.objects.values()), products)
         finally:
-            MigrationExecutor(connection).migrate([("catalog", "0009_whatsapp_readable_format")])
+            MigrationExecutor(connection).migrate(MigrationExecutor(connection).loader.graph.leaf_nodes())
 
     def test_previous_default_gets_the_new_label_without_changing_other_data(self):
         self.migrate_format(DEFAULT_PRODUCT_TEMPLATE.replace("Subtotal:", "Subtotal estimado:"), DEFAULT_PRODUCT_TEMPLATE)

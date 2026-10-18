@@ -19,7 +19,7 @@ def parse_items(raw):
         items = json.loads(raw)
     except (ValueError, TypeError) as error:
         raise ValidationError("No se pudo leer el carrito. Volvé a cargar la página.") from error
-    if not isinstance(items, list):
+    if not isinstance(items, list) or len(items) > 200:
         raise ValidationError("El carrito tiene un formato inválido.")
     seen = set()
     for item in items:
