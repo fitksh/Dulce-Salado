@@ -224,3 +224,14 @@ Despliegue en Raspberry excluido; pasos manuales y respaldo/ensayo en CATALOGO_C
 - [x] Gramática completa conservadora y fallback sin perder texto; aliases compatibles y validación del formato editable.
 - [x] 0009 aplicada local con respaldo/comparación: sólo defaults, 45 fichas/fotos/precios y demás configuración conservados.
 - [x] 203 Django y 84 Chromium correctos; pedido local del ejemplo, copiado real y destino interceptado coincidentes, axe/JS sin errores en desktop/móvil. QA retirado, sin envío real ni Raspberry.
+
+
+## Corrección CI y publicación de la versión local — 18/10/2026
+
+- [x] Checkout local identificado en Documents/GitHub/Dulce-Salado, main limpio y sin divergencia con origin/main (8e2f151); ningún cambio local descartado.
+- [x] Fallo de Actions 39143824791 diagnosticado: las métricas de la fuente Linux desbordan los controles del header a 320 px y provocan fallos de navegador en cadena.
+- [x] Composición compacta bajo 400 px, conservando tipografía y áreas táctiles de 44 px. Regresión con dos familias tipográficas y límites 320/359/360/390/399/400/600.
+- [x] 203 Django sin omisiones, 9 Node y 85 Chromium en Linux correctos; check/Ruff/migraciones/diff correctos. Regresión probada antes/después y también en Windows.
+- [x] Guía para la carpeta local Raspberry y Portainer: respaldos, ensayo de restauración/migraciones, reconstrucción y recreación de web con volúmenes existentes.
+
+Publicación y CI remoto se comprueban después del commit/push; el resultado se informa en la conversación con su hash y enlace. No hay migraciones nuevas por esta corrección. No se accedió a Raspberry ni se cambió Portainer.

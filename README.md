@@ -299,3 +299,8 @@ Precios/cálculos/CSV/PDF/WhatsApp sin centavos; cantidades en cajas sólo con d
 ## WhatsApp legible y emojis — 18/10/2026
 
 Se evita una redirección de wa.me que reemplazaba emojis por � usando el enlace directo de WhatsApp con UTF-8. Cantidades como 3 porciones de 100 g o 4 packs de 3 paquetes de 500 g, marca opcional, precio por unidad y título/subtotal/total en negrita. Un separador y cierre 📌. Contenido ambiguo queda como Presentación adicional, sin inventarlo. 0009 aplicada local con respaldo sólo sobre defaults; personalizados y 45 productos/fotos/precios conservados. [Campos, formato, limitación de datos y actualización autorizada](docs/WHATSAPP_MESSAGES.md). Ctrl+F5.
+
+
+## Actualizar la Raspberry desde Portainer con carpeta local
+
+Para `/mnt/datos/docker/dulce-salado`, seguir [la guía de actualización](docs/ACTUALIZAR_RASPBERRY_PORTAINER.md): mismo proyecto Compose, respaldo PostgreSQL/media, reconstrucción local, migraciones y recreación de web desde Portainer. No se publican imágenes automáticamente con CI. La versión actual puede requerir 0005–0009; 0008 descarta centavos sin redondear. Conservar volúmenes y configuración existentes, sin seed/reset.

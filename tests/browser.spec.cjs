@@ -1186,6 +1186,32 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.deepEqual(errors, []);
   });
 
+  await t.test("encabezado compacto conserva controles dentro del contenedor con fuentes distintas", async () => {
+    const compact = await context.newPage();
+    try {
+      await compact.goto(base);
+      await compact.locator(".hours-panel summary").waitFor();
+      for (const font of ["monospace", "sans-serif"]) {
+        await compact.locator(".header-actions").evaluate((node, font) => { node.style.fontFamily = font; }, font);
+        for (const width of [320, 359, 360, 390, 399, 400, 600]) {
+          await compact.setViewportSize({ width, height: 844 });
+          const layout = await compact.locator(".header-actions").evaluate(node => {
+            const bounds = node.getBoundingClientRect();
+            const controls = [...node.querySelectorAll("summary, .cart-link")].map(control => control.getBoundingClientRect());
+            return { fits: controls.every(control => control.left >= bounds.left && control.right <= bounds.right),
+              touch: controls.every(control => control.width >= 44 && control.height >= 44),
+              scroll: document.documentElement.scrollWidth <= innerWidth };
+          });
+          assert.ok(layout.fits && layout.scroll, `Encabezado desbordado a ${width}px con ${font}`);
+          assert.ok(layout.touch, `Control menor a 44px a ${width}px con ${font}`);
+        }
+      }
+      await compact.setViewportSize({ width: 320, height: 844 });
+      await compact.screenshot({ path: ".qa/screenshots/header-compact-320.png", fullPage: true });
+      await accessible(compact);
+    } finally { await compact.close(); }
+  });
+
   await t.test("carrito con nombre largo, foto vigente y ausencia de foto sin espacio extra", async () => {
     await page.goto(`${base}/?q=QA%20Velas`);
     const id = await page.locator(".add-product").getAttribute("data-id");
