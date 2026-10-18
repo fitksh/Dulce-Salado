@@ -259,3 +259,6 @@ El registro documental se incorpora a main y a la imagen final; no cambia funcio
 - [x] Migración real 0010 y actualización sólo web, preservando otros 13 contenedores.
 - [ ] Corrección de tipo MIME WebP detectada en Raspberry y prueba funcional real final.
 - [ ] Dominio HTTPS público futuro; actualmente prueba local expresamente autorizada.
+
+
+CI fb1d148 pasó 220 Django, Node, lint/check y migraciones, pero canceló por timeout de 60 s la preparación de Presentaciones compactas, sin llegar a sus subpruebas. Se confirma la sesión Admin y el mensaje de alta correcta antes de cerrar la página que crea el fixture, con diagnóstico de etapas y timeout de acción acotado. No se aumentó el timeout general ni se eliminaron aserciones. Regresión local repetida: 84 Chromium correctos, cero fallos/omisiones. CI posterior y prueba funcional Raspberry pendientes antes de declarar cierre.

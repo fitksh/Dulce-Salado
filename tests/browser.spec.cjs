@@ -1214,12 +1214,16 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
 test("Presentaciones compactas: sincronización, precio publicado, errores y alta repetida", { timeout: 60000 }, async t => {
   const browser = await chromium.launch();
   t.after(() => browser.close());
+  t.diagnostic("Presentaciones: Chromium iniciado.");
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const setup = await context.newPage();
+  setup.setDefaultTimeout(15000);
   await setup.goto(`${base}/admin/login/`);
   await setup.locator("#id_username").fill("qa-admin");
   await setup.locator("#id_password").fill("qa-only-password-582");
   await setup.locator('input[type="submit"]').click();
+  await setup.locator("#user-tools").waitFor();
+  t.diagnostic("Presentaciones: sesión Admin confirmada.");
   await setup.goto(`${base}/admin/catalog/product/add/`);
   await setup.locator("#id_category").selectOption({ label: "QA Repostería (test)" });
   await setup.locator("#id_name").fill("QA Compacto independiente");
@@ -1228,8 +1232,12 @@ test("Presentaciones compactas: sincronización, precio publicado, errores y alt
   await setup.locator("#id_retail_price").fill("100");
   await setup.locator("#id_wholesale_price").fill("90");
   await setup.locator('input[name="_save"]').click();
+  // No cerrar la página con el POST pendiente: podría cancelar el alta del fixture.
+  await setup.locator(".messagelist .success").waitFor();
+  t.diagnostic("Presentaciones: fixture confirmado por Admin.");
   await setup.close();
   const page = await context.newPage();
+  page.setDefaultTimeout(15000);
   await page.goto(`${base}/?q=QA%20Compacto%20independiente`);
   const card = page.locator(".product-card").first();
   const control = card.locator(".add-product");
