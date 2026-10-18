@@ -235,3 +235,15 @@ Despliegue en Raspberry excluido; pasos manuales y respaldo/ensayo en CATALOGO_C
 - [x] Guía para la carpeta local Raspberry y Portainer: respaldos, ensayo de restauración/migraciones, reconstrucción y recreación de web con volúmenes existentes.
 
 Publicación y CI remoto se comprueban después del commit/push; el resultado se informa en la conversación con su hash y enlace. No hay migraciones nuevas por esta corrección. No se accedió a Raspberry ni se cambió Portainer.
+
+
+## Despliegue Raspberry autorizado y verificado - 18/10/2026
+
+- [x] Inspeccion del stack real dulce-salado y checkout source; variables de Portainer, imagen local, puerto 8003 y binds conservados.
+- [x] Imagen ARM64 construida; 203 Django OK en base aislada (16 inspecciones PDF omitidas por ausencia de Poppler en runtime). CI funcional previo completo aprobado.
+- [x] Respaldo PostgreSQL/media/configuracion, copia fuera de la Raspberry, restauracion y ensayo de 0005-0009 verificados antes de migrar datos reales.
+- [x] 45 productos, 1 usuario y 45 fotos conservados; solo 21 incrementos y 4 productos con centavos cambian conforme a las migraciones.
+- [x] Web actualizado por Portainer; 13 contenedores restantes, incluido PostgreSQL, conservan IDs, imagenes, tiempos de inicio y reinicios.
+- [x] Navegador real: 320/390/768/1280, axe, fotos, cantidades, totales, revision/copiar/URL WhatsApp interceptada y Admin login correctos; sin errores JS ni respuestas 500.
+
+El registro documental se incorpora a main y a la imagen final; no cambia funcionalidad ni datos. Detalles operativos y respaldo en ACTUALIZAR_RASPBERRY_PORTAINER.md. No se requiere ninguna accion manual del propietario para completar este despliegue.

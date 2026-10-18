@@ -303,4 +303,4 @@ Se evita una redirección de wa.me que reemplazaba emojis por � usando el enla
 
 ## Actualizar la Raspberry desde Portainer con carpeta local
 
-Para `/mnt/datos/docker/dulce-salado`, seguir [la guía de actualización](docs/ACTUALIZAR_RASPBERRY_PORTAINER.md): mismo proyecto Compose, respaldo PostgreSQL/media, reconstrucción local, migraciones y recreación de web desde Portainer. No se publican imágenes automáticamente con CI. La versión actual puede requerir 0005–0009; 0008 descarta centavos sin redondear. Conservar volúmenes y configuración existentes, sin seed/reset.
+Instalación verificada en Raspberry: checkout `/mnt/datos/docker/dulce-salado/source`, imagen local `dulce-salado:raspi`, variables en Portainer y sitio en puerto 8003. Ver [configuración real, actualización ejecutada y respaldos](docs/ACTUALIZAR_RASPBERRY_PORTAINER.md). Conservar el stack y sus montajes existentes; el Compose de desarrollo no sustituye su configuración. No se publican imágenes automáticamente con CI. La versión actual puede requerir 0005–0009; 0008 descarta centavos sin redondear. Conservar volúmenes y configuración existentes, sin seed/reset.
