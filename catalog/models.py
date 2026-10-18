@@ -233,7 +233,6 @@ class Order(models.Model):
     delivery_mode = models.CharField("modalidad", max_length=8, choices=Delivery.choices)
     street = models.CharField("calle", max_length=160, blank=True)
     number = models.CharField("número", max_length=30, blank=True)
-    door = models.CharField("puerta", max_length=80, blank=True)
     city = models.CharField("ciudad", max_length=100, blank=True)
     items = models.JSONField("productos y precios originales", editable=False)
     total = models.DecimalField("total", max_digits=24, decimal_places=0, editable=False)

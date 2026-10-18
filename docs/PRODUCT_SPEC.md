@@ -52,7 +52,7 @@ El mensaje guardado y el enlace directo api.whatsapp.com/send comparten el mismo
 
 ## 9. Revisión del mensaje
 
-El botón Enviar Pedido abre Completá tus datos: nombre obligatorio, retiro predeterminado o envío con calle, número y ciudad (Viedma editable), puerta opcional. Cancelar conserva carrito. Enviar revalida catálogo y formato, persiste una única solicitud idempotente y sólo entonces vacía los artículos preparados. El resultado permite reenviar el mensaje guardado sin crear otro pedido. No existe textarea ni botón de copiar. [Decisión vigente y configuración](PEDIDOS.md).
+El botón Enviar Pedido abre Completá tus datos: nombre obligatorio, retiro predeterminado o envío con calle, número y ciudad (Viedma editable). Cancelar conserva carrito. Enviar revalida catálogo y formato, persiste una única solicitud idempotente y sólo entonces vacía los artículos preparados. El resultado permite reenviar el mensaje guardado sin crear otro pedido. No existe textarea ni botón de copiar. [Decisión vigente y configuración](PEDIDOS.md).
 
 ## 10. Criterios de aceptación MVP
 1. Visitante navega y busca sin cuenta y sólo ve productos/categorías activos.

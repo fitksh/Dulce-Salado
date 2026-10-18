@@ -46,7 +46,7 @@
       const listScroll = oldList.scrollTop;
       const rows = Array.from(newList.children);
       const ids = new Set(rows.map(row => row.dataset.id));
-      Array.from(oldList.children).forEach(row => { if (!ids.has(row.dataset.id)) row.remove(); });
+      Array.from(oldList.children).forEach(row => { if (!row.dataset.id || !ids.has(row.dataset.id)) row.remove(); });
       rows.forEach((row, index) => {
         let previous = oldList.querySelector(`.cart-item[data-id="${row.dataset.id}"]`);
         if (!previous) { oldList.insertBefore(row, oldList.children[index] || null); return; }
@@ -267,8 +267,8 @@
     window.addEventListener("pagehide", () => { ++serial; closePendingWindow(); });
     // Sólo memoria de esta pestaña: los datos personales no van a localStorage.
     const draftHost = window.parent === window ? window : window.parent;
-    const draftFields = ["full_name", "delivery_mode", "street", "number", "door", "city"];
-    let attempt = null, completedItems = null;
+    const draftFields = ["full_name", "delivery_mode", "street", "number", "city"];
+    let attempt = null, completedItems = null, completedResult = null;
     function rememberDraft() {
       const form = reviewContents.querySelector("#order-customer-form");
       if (!form) return;
@@ -304,7 +304,7 @@
     function validateCustomer() {
       const form = reviewContents.querySelector("#order-customer-form");
       let first = null;
-      ["full_name", "street", "number", "door", "city"].forEach(name => {
+      ["full_name", "street", "number", "city"].forEach(name => {
         const field = form.elements[name], error = form.querySelector(`#id_${name}_error`);
         const value = field.value.trim().replace(/\s+/g, " ");
         const invalid = !field.disabled && ((field.required && !value) || value.length > field.maxLength);
@@ -346,6 +346,23 @@
         return false;
       }
     }
+    function showCompletedOrder() {
+      if (!clearPreparedItems()) return false;
+      draftHost.__dysOrderDraft = null;
+      try { window.sessionStorage.removeItem("dys-order-confirmation"); } catch { /* Sin datos personales. */ }
+      // El handle ya fue liberado después de navegar: cerrar el iframe no cierra WhatsApp.
+      panelClosing = true;
+      if (dialog.open) dialog.close();
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: "dys-order-complete", ...completedResult }, window.location.origin);
+      } else {
+        refresh();
+        window.OrderResult.show(completedResult, () => {
+          window.location.assign(document.querySelector(".brand").href + "#contenido");
+        });
+      }
+      return true;
+    }
     function setSubmitting(busy) {
       app.dataset.orderSubmitting = String(busy);
       reviewContents.setAttribute("aria-busy", String(busy));
@@ -382,19 +399,16 @@
         if (requestNumber !== serial && !accepted) return;
         if (!response.ok) throw new Error("No se pudo completar la preparación. Reintentá con la misma solicitud.");
         reviewContents.innerHTML = html;
-        const ready = reviewContents.querySelector("#whatsapp-ready");
+        const ready = reviewContents.querySelector("#order-result-data");
         if (ready) {
           completedItems = attempt.items; attempt = null;
-          clearPreparedItems();
-          draftHost.__dysOrderDraft = null;
-          try { window.sessionStorage.removeItem("dys-order-confirmation"); } catch { /* Sin datos personales. */ }
+          completedResult = { code: ready.dataset.code, url: ready.dataset.whatsappUrl };
           if (pendingWindow && !pendingWindow.closed) {
-            try { pendingWindow.location.replace(ready.href); } catch { closePendingWindow(); }
+            try { pendingWindow.location.replace(completedResult.url); } catch { closePendingWindow(); }
           }
           pendingWindow = null;
           reviewing = false; setSubmitting(false);
-          // La actualización del fondo no cierra el resultado ni vuelve a crear el pedido.
-          refresh();
+          if (showCompletedOrder()) return;
         } else {
           attempt = null; closePendingWindow();
           items = JSON.parse(reviewContents.querySelector("#review-current-items").textContent);
@@ -441,7 +455,7 @@
     });
     dialog.addEventListener("click", event => {
       if (event.target.closest("#review-cancel") && app.dataset.orderSubmitting !== "true") dialog.close();
-      if (event.target.closest("#retry-cart-clear")) { clearPreparedItems(); refresh(); }
+      if (event.target.closest("#retry-cart-clear")) showCompletedOrder();
     });
     app.addEventListener("click", event => {
       if (event.target.closest("#cart-review")) {
@@ -501,7 +515,7 @@
     if (event.key !== core.STORAGE_KEY && event.key !== null) return;
     if (app?.dataset.orderSubmitting === "true") return;
     const dialog = document.getElementById("cart-review-dialog");
-    if (dialog?.open && !document.getElementById("order-result")) {
+    if (dialog?.open && !document.getElementById("order-result-data")) {
       dialog.close(); announce("El carrito cambió en otra pestaña. Revisalo nuevamente.", "warning");
     }
     load(); refresh();

@@ -27,7 +27,7 @@
   </div><aside class="cart-summary" aria-labelledby="summary-title">
     <h2 id="summary-title">Total</h2>
     {% if cart.total is not None %}<p class="total" data-cart-amount>{{ cart.total|ars }}</p>{% else %}<p class="visually-hidden">Corregí los artículos indicados para calcular el total.</p>{% endif %}
-    <button type="button" id="cart-review" {% if not cart.valid %}disabled{% endif %}><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><path d="M20 11.5a8 8 0 0 1-12 7L3 20l1.5-5A8 8 0 1 1 20 11.5Z"/><path d="M8 7c-2 3 2 7 5 8l2-2-3-1-1 1-2-2 1-1Z"/></svg> Enviar Pedido</button>
+    <button type="button" id="cart-review" {% if not cart.valid %}disabled{% endif %}><svg class="icon whatsapp-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M20.5 3.5A11.9 11.9 0 0 0 12 0 12 12 0 0 0 1.6 18L0 24l6.2-1.6A12 12 0 0 0 12 24h.1A12 12 0 0 0 24 12a11.9 11.9 0 0 0-3.5-8.5ZM12 22a10 10 0 0 1-5.1-1.4l-.4-.2-3.7 1 1-3.6-.3-.4A10 10 0 1 1 12 22Zm5.5-7.5c-.3-.1-1.8-.9-2.1-1-.3-.1-.5-.1-.7.2l-1 1.2c-.2.2-.4.2-.7.1a8.2 8.2 0 0 1-4.1-3.6c-.3-.5.3-.5.9-1.7.1-.2 0-.4 0-.6l-1-2.3c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.6s1.2 3 1.4 3.2c.1.2 2.3 3.6 5.6 5 2.1.9 3 .9 4.1.7.6-.1 1.8-.7 2.1-1.5.2-.7.2-1.3.1-1.5-.1-.1-.3-.2-.6-.3Z"/></svg><span>Enviar Pedido</span></button>
   </aside></div>
 {% else %}
   {% if cart_panel %}

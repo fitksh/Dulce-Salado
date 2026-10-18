@@ -58,6 +58,11 @@
   dialog.addEventListener("cancel", event => { event.preventDefault(); close(); });
   dialog.addEventListener("close", () => { if (active) { finishClose(); restoreFocus(); } });
   window.addEventListener("message", event => {
-    if (event.origin === window.location.origin && event.source === frame.contentWindow && event.data?.type === "dys-cart-close") close();
+    if (event.origin !== window.location.origin || event.source !== frame.contentWindow || !active) return;
+    if (event.data?.type === "dys-cart-close") close();
+    if (event.data?.type === "dys-order-complete" && window.OrderResult.valid(event.data)) {
+      close();
+      if (!dialog.open) window.OrderResult.show(event.data, restoreFocus);
+    }
   });
 })();

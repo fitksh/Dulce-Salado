@@ -195,3 +195,7 @@ digits-only.js compartido entre Admin, catálogo y ambos carritos intercepta bef
 ## Pedido legible y Unicode — 18/10/2026
 
 whatsapp_presentations.presentation_text deriva cantidad_presentacion/unidad_precio/presentacion_adicional sin persistir ni convertir. Gramática completa acotada, fallback explícito con texto original y sin inferir desde nombre. whatsapp.py centraliza el mensaje; Admin preview, textarea/copia y destino comparten formato/cálculos. Aliases nuevos conservan campos anteriores; validación exige producto/precio/subtotal/cantidad-unidad. Migración 0009 sólo sustituye defaults conocidos, sin pisar formatos propios. Endpoint directo api.whatsapp.com/send con quote UTF-8 estricto evita corrupción reproducida de wa.me. No es API Business, no hay pedidos persistidos ni cambios de carrito/UI/stock/precios.
+
+## Resultado del pedido fuera del iframe
+
+order-result.js controla el único diálogo global de base. cart-drawer.js recibe únicamente datos desde su iframe activo con origin/source exactos y valida destino; cart.js confirma limpieza y libera el popup antes de solicitar el cierre. El fragmento del servidor comunica los valores persistidos; no se recalcula el mensaje. 0011 retira una columna obsoleta sin reescribir instantáneas. Detalle independiente en card única conserva las cabeceras privadas. Ver PEDIDOS.md.

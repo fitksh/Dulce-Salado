@@ -11,7 +11,6 @@ class CustomerForm(forms.Form):
                                       initial=Order.Delivery.PICKUP, widget=forms.RadioSelect)
     street = forms.CharField(label="Calle", max_length=160, required=False)
     number = forms.CharField(label="Número", max_length=30, required=False)
-    door = forms.CharField(label="Puerta", max_length=80, required=False)
     city = forms.CharField(label="Ciudad", max_length=100, required=False, initial="Viedma")
 
     def __init__(self, *args, **kwargs):
@@ -22,13 +21,13 @@ class CustomerForm(forms.Form):
             field.widget.attrs["aria-describedby"] = f"id_{name}_error"
         if self.is_bound and self.data.get("delivery_mode") == Order.Delivery.PICKUP:
             # Datos ocultos/maliciosos no participan de la validación ni de la persistencia.
-            for name in ("street", "number", "door", "city"):
+            for name in ("street", "number", "city"):
                 self.fields[name].disabled = True
                 self.fields[name].initial = ""
 
     def clean(self):
         data = super().clean()
-        for name in ("full_name", "street", "number", "door", "city"):
+        for name in ("full_name", "street", "number", "city"):
             value = "".join(c for c in data.get(name, "") if unicodedata.category(c) != "Cf" and (not unicodedata.category(c).startswith("C") or c.isspace()))
             data[name] = " ".join(value.replace("\x00", "").split())
         if not data.get("full_name") and "full_name" not in self.errors:
@@ -38,6 +37,6 @@ class CustomerForm(forms.Form):
                 if not data.get(name) and name not in self.errors:
                     self.add_error(name, "Completá este campo para el envío.")
         else:
-            for name in ("street", "number", "door", "city"):
+            for name in ("street", "number", "city"):
                 data[name] = ""
         return data

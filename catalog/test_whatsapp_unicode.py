@@ -17,8 +17,8 @@ class ReadyLink(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
-        if tag == "a" and attrs.get("id") == "whatsapp-ready":
-            self.href = attrs["href"]
+        if attrs.get("id") == "order-result-data":
+            self.href = attrs["data-whatsapp-url"]
 
 
 @override_settings(WHATSAPP_PHONE="5491100000000", PUBLIC_BASE_URL="https://catalogo.example.com", ORDER_ALLOW_LOCAL_URLS=False)

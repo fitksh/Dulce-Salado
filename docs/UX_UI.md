@@ -183,3 +183,7 @@ Errores y advertencias del carrito/revisión sólo en el aviso superior, con tex
 ## Texto del pedido — 18/10/2026
 
 Título numerado/subtotal/total con negrita nativa de WhatsApp, marca opcional, cantidad natural por presentación y precio por unidad sin etiqueta de tarifa. Una línea en blanco entre artículos y un separador antes del total. Conservar saludo y nuevo cierre 📌. Descripciones no interpretables se muestran aparte para no perder contenido. Mismo texto en Admin, revisión, copia y apertura con emojis; ningún cambio de cards, controles o distribución del carrito.
+
+## Pedidos: corrección del resultado y detalle — 18/10/2026
+
+Éxito centrado en la ventana principal tras cerrar el carrito; dos párrafos exactos, dos acciones compactas iguales a la derecha y sin enlace adicional. Diálogo nativo con nombre/descripción, teclado y foco de retorno. Formulario con radios horizontales, dirección calle/número en grilla y ciudad debajo, sin campo adicional. CTA con SVG WhatsApp de 24 px y gap 9 px. Detalle en una sola card de 860 px, marca interna, productos compactos con subtotales a la derecha y total destacado; contenido largo fluye sin recorte. Validación a 320/390/768/1280 y axe.

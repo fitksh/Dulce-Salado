@@ -116,8 +116,6 @@ def prepare_order(submitted, customer, token, revision):
         if order.delivery_mode == Order.Delivery.DELIVERY:
             lines += ["", "*Envío a domicilio*", "Calle: " + message_label(order.street),
                       "Número: " + message_label(order.number)]
-            if order.door:
-                lines += ["Puerta: " + message_label(order.door)]
             lines += ["Ciudad: " + message_label(order.city)]
         else:
             lines += ["Modalidad: Retiro en el local"]

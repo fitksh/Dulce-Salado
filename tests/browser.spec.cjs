@@ -2347,15 +2347,16 @@ test("WhatsApp: emojis íntegros en apertura directa y enlace de respaldo", { ti
       assert.ok(!destination.includes("%EF%BF%BD") && !destination.includes("%25F0"));
       assert.equal(await popup.evaluate(() => window.opener), null);
       await popup.close();
-      const ready = new URL(await cart.locator("#whatsapp-ready").getAttribute("href"));
+      await page.locator("#order-result-dialog[open]").waitFor();
+      const ready = new URL(await page.locator("#whatsapp-ready").getAttribute("href"));
       assert.equal(ready.searchParams.get("text"), original);
       const manualOpening = context.waitForEvent("page");
-      await cart.locator("#whatsapp-ready").click();
+      await page.locator("#whatsapp-ready").click();
       const manual = await manualOpening;
       await manual.getByRole("heading", { name: "WhatsApp interceptado sin enviar" }).waitFor({ timeout: 5000 });
       assert.equal(new URL(destination).searchParams.get("text"), original);
       await manual.close();
-      if (panel) await page.locator(".cart-drawer-close").click();
+      if (panel) await page.locator("#order-result-close").click();
     });
   }
   assert.deepEqual(errors, []);

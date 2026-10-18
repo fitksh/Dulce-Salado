@@ -18,7 +18,7 @@
   </fieldset>
   <fieldset id="delivery-address" hidden disabled><legend>Dirección de envío</legend>
     {% for field in customer_form %}{% if field.name != 'full_name' and field.name != 'delivery_mode' %}
-      <div class="customer-field"><label for="{{ field.id_for_label }}">{{ field.label }}{% if field.name != 'door' %} *{% endif %}</label>{{ field }}
+      <div class="customer-field customer-{{ field.name }}"><label for="{{ field.id_for_label }}">{{ field.label }} *</label>{{ field }}
         <div id="{{ field.id_for_label }}_error" class="field-error" aria-live="polite">{{ field.errors }}</div>
       </div>
     {% endif %}{% endfor %}

@@ -109,42 +109,42 @@ class WhatsAppTests(TestCase):
     def test_review_explains_confirmation_and_cancel_without_ready_link(self):
         response = self.post("cart_review")
         self.assertContains(response, "sujetos a confirmación del comercio")
-        self.assertNotContains(response, 'id="whatsapp-ready"')
-        self.assertNotContains(self.post("cart_whatsapp"), 'id="whatsapp-ready"')
+        self.assertNotContains(response, 'id="order-result-data"')
+        self.assertNotContains(self.post("cart_whatsapp"), 'id="order-result-data"')
         self.assertContains(response, '<h2 id="review-title" tabindex="-1">Completá tus datos</h2>')
 
     def test_acceptance_generates_link_only_after_revalidation(self):
         response = self.post("cart_whatsapp", accepted="yes")
-        self.assertContains(response, 'id="whatsapp-ready"')
-        self.assertContains(response, 'target="_blank" rel="noopener noreferrer"')
+        self.assertContains(response, 'id="order-result-data"')
+        self.assertContains(self.client.get(reverse("cart")), 'target="_blank" rel="noopener noreferrer"')
         item = self.item()
         Product.objects.filter(pk=self.product.pk).update(retail_price="120")
         response = self.post("cart_whatsapp", [item], accepted="yes")
-        self.assertNotContains(response, 'id="whatsapp-ready"')
+        self.assertNotContains(response, 'id="order-result-data"')
         self.assertEqual(response.context["cart"]["total"], 360)
         revised = response.context["cart"]["items"]
-        self.assertContains(self.post("cart_whatsapp", revised, accepted="yes"), 'id="whatsapp-ready"')
+        self.assertContains(self.post("cart_whatsapp", revised, accepted="yes"), 'id="order-result-data"')
 
     def test_legacy_wholesale_requires_review_even_with_current_revision(self):
         item = {**self.item(), "price_type": "wholesale"}
         response = self.post("cart_whatsapp", [item], accepted="yes")
-        self.assertNotContains(response, 'id="whatsapp-ready"')
+        self.assertNotContains(response, 'id="order-result-data"')
         self.assertContains(response, "el carrito ahora utiliza el precio publicado")
         self.assertEqual(response.context["cart"]["total"], 300)
         self.assertNotContains(response, "Precio mayorista:")
         revised = response.context["cart"]["items"]
         self.assertEqual(revised[0]["price_type"], "retail")
-        self.assertContains(self.post("cart_whatsapp", revised, accepted="yes"), 'id="whatsapp-ready"')
+        self.assertContains(self.post("cart_whatsapp", revised, accepted="yes"), 'id="order-result-data"')
 
     def test_removed_invalid_empty_or_missing_phone_prevent_navigation(self):
         self.product.is_active = False
         self.product.save()
-        self.assertNotContains(self.post("cart_whatsapp", accepted="yes"), 'id="whatsapp-ready"')
-        self.assertNotContains(self.post("cart_whatsapp", [], accepted="yes"), 'id="whatsapp-ready"')
+        self.assertNotContains(self.post("cart_whatsapp", accepted="yes"), 'id="order-result-data"')
+        self.assertNotContains(self.post("cart_whatsapp", [], accepted="yes"), 'id="order-result-data"')
         self.product.is_active = True
         self.product.save()
         with override_settings(WHATSAPP_PHONE=""):
             response = self.post("cart_review")
             self.assertContains(response, "todavía no habilitó")
-            self.assertNotContains(self.post("cart_whatsapp", accepted="yes"), 'id="whatsapp-ready"')
+            self.assertNotContains(self.post("cart_whatsapp", accepted="yes"), 'id="order-result-data"')
         self.assertEqual(self.client.get(reverse("cart_whatsapp")).status_code, 405)

@@ -65,3 +65,7 @@ docker exec dulce_salado_web python manage.py showmigrations catalog
 ```
 
 El hash Git debe coincidir con la revision de la imagen activa. En la versión actual deben figurar 0001-0010 aplicadas. En Portainer, web debe estar iniciado y db healthy. Para futuras actualizaciones, construir desde `source` y conservar la configuracion real anterior: **Restart** no sustituye una imagen; descargar una imagen tampoco actualiza el checkout ni reconstruye el Dockerfile. [Acciones de contenedores](https://docs.portainer.io/user/docker/containers/view) y [gestion de stacks](https://docs.portainer.io/user/docker/stacks/edit).
+
+## Corrección posterior de pedidos
+
+Antes de aplicar 0011_remove_order_door: inspeccionar si la columna tiene valores, respaldar PostgreSQL completo (incluye la columna), media y configuración actual de Portainer. Detener sólo web durante el respaldo final/migración; restaurar en base descartable y comprobar que sólo desaparezca esa columna y se agregue el registro de migración. Comparar todos los otros valores, mensajes/URL históricas y secuencia. No ejecutar seed ni reset. Construir ARM64 con revisión etiquetada tras CI verde y conservar dulce-salado:rollback-corrections-20261018. Actualizar el stack existente con su YAML/variables idénticos, sin pull de imagen ni prune. Verificar el ID de imagen activo, revisión, DB healthy, media y demás contenedores. Eliminar la columna es irreversible para sus valores sin el dump: un rollback necesita respaldo y código coherentes, contemplando escrituras posteriores.

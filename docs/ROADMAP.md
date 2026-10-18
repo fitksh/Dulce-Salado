@@ -268,3 +268,15 @@ CI fb1d148 pasó 220 Django, Node, lint/check y migraciones, pero canceló por t
 
 
 Cierre funcional de pedidos Raspberry: revisión f5ddd0a verificada en imagen ARM64, migración 0010 aplicada, 45 productos/3 categorías/45 asociaciones correctas. DYS-000001 y DYS-000002 son pedidos técnicos con datos ficticios, guardados y conservados; sus cuatro aperturas WhatsApp fueron interceptadas. Se verificó accesibilidad automatizada en formulario y detalle, y detalle responsive a 320/390/768/1280 px. Enlace de consulta por UUID4, noindex/no-store y sin listado público. Snapshot completo de tablas posterior y respaldo adicional de PostgreSQL guardados privadamente. Sin dominio público: permanece el modo LAN solicitado; dominio/HTTPS futuro sigue fuera de esta instalación de prueba.
+
+## Correcciones de pedidos — 18/10/2026
+
+- [x] Reconciliación del estado vacío sin duplicados; controles conectados conservados.
+- [x] Resultado global fuera del iframe, comunicación con origen/ventana exactos, popup preservado y reenvío idéntico.
+- [x] Formulario responsive, SVG WhatsApp, detalle en card única y nueva migración 0011; 0010 intacta.
+- [x] 223 Django, 9 Node y 88 Chromium sin fallos/omisiones; check, Ruff, migraciones y diff correctos.
+- [x] Migración local con respaldo restaurado y comparación completa; 45 productos y datos conservados.
+- [x] Raspberry inspeccionada: 45 productos, cuatro pedidos sin valores en la columna retirada; URL/texto guardados correctos.
+
+El hash publicado, CI y despliegue efectivo se verifican después del commit y se informan con sus evidencias en el cierre de la tarea. El procedimiento incluye respaldo restaurado, comparación de datos y actualización exclusiva de web; no se reinicializa el catálogo.
+- [ ] Dominio HTTPS público y comprobación del enlace en WhatsApp desde fuera de la LAN.

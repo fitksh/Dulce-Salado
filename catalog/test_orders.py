@@ -47,6 +47,23 @@ class OrderTests(TestCase):
         self.assertEqual(form["delivery_mode"].value(), "pickup")
         self.assertEqual(form["city"].value(), "Viedma")
         self.assertFalse(Order.objects.exists())
+        self.assertNotIn("door", form.fields)
+        self.assertNotContains(response, "Puerta")
+
+    def test_removed_address_field_is_not_accepted_or_persisted(self):
+        order = self.send(delivery_mode="delivery", street="Calle", number="1", city="Viedma",
+                          door="dato obsoleto").context["order"]
+        self.assertNotIn("dato obsoleto", order.message)
+        self.assertNotIn("door", [field.name for field in Order._meta.fields])
+
+    def test_result_is_data_only_and_global_dialog_has_exact_copy(self):
+        response = self.send()
+        self.assertContains(response, 'id="order-result-data"')
+        self.assertNotContains(response, "Ver detalle del pedido")
+        page = self.client.get(reverse("cart"))
+        self.assertContains(page, "¡Tu pedido fue generado con éxito! 🎉")
+        self.assertContains(page, "Tu pedido ha sido generado correctamente.")
+        self.assertContains(page, "Si WhatsApp no se abrió automáticamente, podés intentar enviarlo nuevamente.")
 
     def test_name_required_trimmed_and_single_word_accepted(self):
         for value in ("", " \n\t ", "a" * 121):
@@ -64,16 +81,20 @@ class OrderTests(TestCase):
 
     def test_pickup_ignores_even_invalid_hidden_addresses(self):
         order = self.send(street="x" * 1000, city="y" * 1000, number="n" * 1000).context["order"]
-        self.assertEqual((order.street, order.city, order.number, order.door), ("", "", "", ""))
+        self.assertEqual((order.street, order.city, order.number), ("", "", ""))
         self.assertNotIn("Calle:", order.message)
         self.assertIn("Retiro en el local", order.message)
 
-    def test_delivery_optional_door_utf8_and_neutralized_customer_format(self):
+    def test_delivery_utf8_and_neutralized_customer_format(self):
         order = self.send(delivery_mode="delivery", full_name=" Ana\n*Total:* _0_ ", street="San Martín",
                           number="123 B", city="Viedma & Patagones").context["order"]
         self.assertIn("Nombre completo: Ana ∗Total:∗ ＿0＿", order.message)
         self.assertIn("Calle: San Martín\nNúmero: 123 B\nCiudad: Viedma & Patagones", order.message)
         self.assertNotIn("Puerta:", order.message)
+        self.assertFalse(hasattr(order, "door"))
+        self.assertEqual(order.message.splitlines()[-1], order.detail_url)
+        self.assertNotIn("%25F0", order.whatsapp_url)
+        self.assertNotIn("\u200b", order.detail_url)
         self.assertEqual(parse_qs(urlsplit(order.whatsapp_url).query)["text"], [order.message])
         self.assertIn("%F0%9F%9B%8D", order.whatsapp_url)
 
@@ -107,7 +128,7 @@ class OrderTests(TestCase):
     def test_reusing_confirmation_for_changed_customer_is_rejected(self):
         self.send()
         response = self.send(full_name="Otra persona")
-        self.assertNotContains(response, 'id="order-result"')
+        self.assertNotContains(response, 'id="order-result-data"')
         self.assertContains(response, "ya fue utilizada")
         self.assertEqual(Order.objects.count(), 1)
 
@@ -123,7 +144,7 @@ class OrderTests(TestCase):
     def test_invalid_cart_missing_acceptance_token_and_csrf_cannot_write(self):
         for changes in ({"accepted": ""}, {"confirmation_token": "bad"}, {"items": "[]"},
                         {"delivery_mode": "both"}):
-            self.assertNotContains(self.send(**changes), 'id="order-result"')
+            self.assertNotContains(self.send(**changes), 'id="order-result-data"')
             self.assertFalse(Order.objects.exists())
         csrf = Client(enforce_csrf_checks=True)
         self.assertEqual(csrf.post(reverse("cart_whatsapp"), self.data).status_code, 403)
@@ -146,6 +167,9 @@ class OrderTests(TestCase):
         self.assertIn("private", response["Cache-Control"])
         self.assertIn("noindex", response["X-Robots-Tag"])
         self.assertEqual(response["Referrer-Policy"], "no-referrer")
+        self.assertContains(response, 'class="order-detail"', count=1)
+        self.assertContains(response, 'class="order-brand"', count=1)
+        self.assertNotContains(response, "<header")
         for path in ("/orders/", f"/orders/{order.pk}/", f"/orders/{order.code}/",
                      reverse("order_detail", args=[uuid4()])):
             self.assertEqual(self.client.get(path).status_code, 404)
@@ -220,5 +244,33 @@ class OrderMigrationTests(TransactionTestCase):
             self.assertEqual(BusinessSettings.objects.get(pk=business.pk).address, "Conservar")
             self.assertTrue(get_user_model().objects.get(pk=owner.pk).is_superuser)
             self.assertFalse(Order.objects.exists())
+        finally:
+            MigrationExecutor(connection).migrate(MigrationExecutor(connection).loader.graph.leaf_nodes())
+
+    def test_remove_address_column_preserves_historical_orders_and_other_tables(self):
+        previous = [("catalog", "0010_order")]
+        executor = MigrationExecutor(connection)
+        executor.migrate(previous)
+        try:
+            apps = executor.loader.project_state(previous).apps
+            HistoricalOrder = apps.get_model("catalog", "Order")
+            category = apps.get_model("catalog", "Category").objects.create(name="Conservar", slug="conservar")
+            product = apps.get_model("catalog", "Product").objects.create(category=category, name="Conservar", retail_price=123)
+            historical = HistoricalOrder.objects.create(
+                confirmation_key=uuid4(), request_hash="a" * 64, full_name="Anterior",
+                delivery_mode="delivery", street="Calle", number="1", door="interior 2", city="Viedma",
+                items=[{"name": "Original", "subtotal": "123"}], total=123,
+                detail_url="http://192.168.0.80:8003/orders/old/",
+                message="Mensaje original\nPuerta: interior 2\nURL original",
+                whatsapp_url="https://api.whatsapp.com/send?text=original",
+            )
+            before = HistoricalOrder.objects.filter(pk=historical.pk).values().get()
+            before.pop("door")
+            MigrationExecutor(connection).migrate([("catalog", "0011_remove_order_door")])
+            self.assertEqual(Order.objects.filter(pk=historical.pk).values().get(), before)
+            self.assertEqual(Product.objects.get(pk=product.pk).retail_price, 123)
+            with connection.cursor() as cursor:
+                columns = connection.introspection.get_table_description(cursor, "catalog_order")
+            self.assertNotIn("door", [column.name for column in columns])
         finally:
             MigrationExecutor(connection).migrate(MigrationExecutor(connection).loader.graph.leaf_nodes())
