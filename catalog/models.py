@@ -2,10 +2,16 @@ from decimal import Decimal
 from urllib.parse import urlencode, urlsplit
 
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 
 from .images import optimize_product_image, product_image_path, validate_product_image
+from .whatsapp_templates import (
+    DEFAULT_MESSAGE_TEMPLATE,
+    DEFAULT_PRODUCT_TEMPLATE,
+    validate_message_template,
+    validate_product_template,
+)
 
 
 class Category(models.Model):
@@ -25,26 +31,30 @@ class Category(models.Model):
 
 class Product(models.Model):
     class SaleUnit(models.TextChoices):
+        HUNDRED_GRAMS = "100 gr", "100 gr"
         KG = "kg", "kg"
-        UNIT = "unidad", "unidad"
+        BOX = "caja", "caja"
+        PACK = "pack", "pack"
         PACKAGE = "paquete", "paquete"
+        BAG = "bolsa", "bolsa"
 
     category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name="categoría")
     name = models.CharField("nombre", max_length=180)
     brand = models.CharField("marca", max_length=100, blank=True)
     description = models.TextField("descripción", blank=True)
-    sale_unit = models.CharField("unidad de venta", max_length=10, choices=SaleUnit.choices, default=SaleUnit.UNIT)
+    sale_unit = models.CharField("unidad de venta", max_length=10, choices=SaleUnit.choices, default=SaleUnit.KG)
     quantity_step = models.DecimalField(
         "incremento de cantidad", max_digits=9, decimal_places=2, default=Decimal("1"),
-        validators=[MinValueValidator(Decimal("0.01"))],
-        help_text="Cantidad positiva. En unidad/paquete debe ser entera. Inicial: 0,1 kg o 1 unidad/paquete.",
+        editable=False,
+        validators=[MinValueValidator(Decimal("1")), MaxValueValidator(Decimal("1"))],
+        help_text="Siempre una presentación por vez.",
     )
     retail_price = models.DecimalField(
-        "precio minorista (ARS)", max_digits=12, decimal_places=2,
+        "precio minorista (ARS)", max_digits=12, decimal_places=0,
         validators=[MinValueValidator(Decimal("0"))],
     )
     wholesale_price = models.DecimalField(
-        "precio mayorista (ARS)", max_digits=12, decimal_places=2, blank=True, null=True,
+        "precio mayorista (ARS)", max_digits=12, decimal_places=0, blank=True, null=True,
         validators=[MinValueValidator(Decimal("0"))],
     )
     wholesale_condition = models.CharField("condición mayorista", max_length=300, blank=True)
@@ -61,26 +71,48 @@ class Product(models.Model):
         verbose_name = "producto"
         verbose_name_plural = "productos"
         constraints = [
-            models.CheckConstraint(condition=models.Q(quantity_step__gt=0), name="product_positive_step"),
+            models.CheckConstraint(condition=models.Q(quantity_step=1), name="product_fixed_step"),
             models.CheckConstraint(condition=models.Q(retail_price__gte=0), name="product_nonnegative_retail"),
             models.CheckConstraint(
                 condition=models.Q(wholesale_price__isnull=True) | models.Q(wholesale_price__gte=0),
                 name="product_nonnegative_wholesale",
             ),
-            models.CheckConstraint(condition=models.Q(sale_unit__in=["kg", "unidad", "paquete"]), name="product_valid_unit"),
+            models.CheckConstraint(condition=models.Q(sale_unit__in=["100 gr", "kg", "caja", "pack", "paquete", "bolsa", "unidad"]), name="product_valid_unit"),
         ]
+
+    def has_legacy_unit(self):
+        return self.pk is not None and type(self).objects.filter(pk=self.pk, sale_unit="unidad").exists()
+
+    def clean_fields(self, exclude=None):
+        # Las altas sólo usan las seis presentaciones. Una unidad anterior no se
+        # convierte a paquete ni cambia de precio sin decisión del administrador.
+        exclude = set(exclude or ())
+        if self.sale_unit == "unidad" and self.has_legacy_unit():
+            exclude.add("sale_unit")
+        super().clean_fields(exclude=exclude)
 
     def clean(self):
         super().clean()
-        if self.quantity_step is not None and self.sale_unit != self.SaleUnit.KG:
-            if self.quantity_step != self.quantity_step.to_integral_value():
-                raise ValidationError({"quantity_step": "Unidad y paquete requieren incrementos enteros."})
+        if self.quantity_step != Decimal("1"):
+            raise ValidationError({"quantity_step": "El incremento de cantidad debe ser siempre 1."})
+        if self.sale_unit == "unidad" and not self.has_legacy_unit():
+            raise ValidationError({"sale_unit": "Elegí 100 gr, kg, caja, pack, paquete o bolsa."})
 
     def __str__(self):
         return f"{self.name} — {self.brand}" if self.brand else self.name
 
     def save(self, *args, **kwargs):
+        if self.sale_unit == "unidad" and not self.has_legacy_unit():
+            raise ValidationError({"sale_unit": "Unidad sólo se conserva en productos anteriores."})
         update_fields = kwargs.get("update_fields")
+        # Evitar que numeric(12, 0) redondee silenciosamente una escritura del modelo.
+        for name in ("retail_price", "wholesale_price"):
+            if update_fields is None or name in update_fields:
+                value = getattr(self, name)
+                if value is not None:
+                    value = self._meta.get_field(name).to_python(value)
+                    if value != value.to_integral_value():
+                        raise ValidationError({name: "Ingresá un precio en pesos enteros, sin decimales."})
         if update_fields is not None and "image" not in update_fields:
             return super().save(*args, **kwargs)
         previous = type(self).objects.filter(pk=self.pk).values_list("image", flat=True).first() if self.pk else None
@@ -102,6 +134,17 @@ class BusinessSettings(models.Model):
     hours_initialized = models.BooleanField(
         "publicar horario semanal", default=False,
         help_text="Activar después de completar los intervalos. Los días sin intervalos se publicarán como cerrados.",
+    )
+
+    whatsapp_message_template = models.TextField(
+        "mensaje general de WhatsApp", default=DEFAULT_MESSAGE_TEMPLATE, max_length=5000,
+        validators=[validate_message_template],
+        help_text="Cambiá frases, emojis y orden. Conservá {productos} para el listado y {total} para el importe calculado. Los campos se completan automáticamente con el carrito.",
+    )
+    whatsapp_product_template = models.TextField(
+        "formato de cada producto", default=DEFAULT_PRODUCT_TEMPLATE, max_length=3000,
+        validators=[validate_product_template],
+        help_text="Campos: {numero}, {producto}, {marca}, {cantidad_presentacion}, {unidad_precio}, {presentacion_adicional}, {precio}, {subtotal}. Cantidad/presentación se arma con la unidad y contenido registrado; la presentación adicional sólo aparece si aporta datos. Compatibilidad: {cantidad}, {unidad}, {descripcion} conservan su significado original. Conservá producto, precio, cantidad/unidad y subtotal.",
     )
 
     class Meta:

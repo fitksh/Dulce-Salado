@@ -1,6 +1,6 @@
 {% load catalog_format l10n %}
 {{ cart.items|json_script:"cart-current-items" }}
-<div id="cart-notices">{% if cart.notices %}<div class="notice warning"><p>Información actualizada</p><ul>{% for notice in cart.notices %}<li>{{ notice }}</li>{% endfor %}</ul></div>{% endif %}</div>
+<div id="cart-notices" class="visually-hidden">{% if cart.notices %}<div class="notice warning"><p>Información actualizada</p><ul>{% for notice in cart.notices %}<li>{{ notice }}</li>{% endfor %}</ul></div>{% endif %}</div>
 {% if cart.rows %}
   <div class="cart-layout"><div class="cart-items">
     {% for row in cart.rows %}
@@ -10,31 +10,31 @@
             {% if row.product.image %}<a class="product-image-open cart-thumbnail" href="{{ row.product.image.url }}" aria-label="Ver imagen ampliada de {{ row.product.name }}"><img src="{{ row.product.image.url }}" alt="{{ row.product.name }}{% if row.product.brand %} — {{ row.product.brand }}{% endif %}" width="56" height="56" loading="lazy" decoding="async"></a>{% endif %}
             <h2 id="cart-product-{{ row.entry.id }}">{% if row.product %}{{ row.product.name }}{% else %}Producto no disponible ({{ row.entry.id }}){% endif %}</h2>
           </div>
-          <button type="button" class="secondary remove-item" aria-label="Quitar {% if row.product %}{{ row.product.name }}{% else %}producto no disponible {{ row.entry.id }}{% endif %} del carrito"><svg class="icon trash-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg></button>
+          {% if not row.product %}<button type="button" class="secondary remove-item" aria-label="Quitar producto no disponible {{ row.entry.id }} del carrito"><svg class="icon trash-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg></button>{% endif %}
         </div>
         {% if row.product %}
-          {% if row.product.brand %}<p class="product-brand">{{ row.product.brand }}</p>{% endif %}
-          <p data-cart-amount>Precio {% if row.entry.price_type == 'wholesale' %}mayorista{% else %}minorista{% endif %}: {% if row.price is not None %}{{ row.price|ars }} / {{ row.product.sale_unit }}{% else %}no disponible{% endif %}</p>
-          {% if row.entry.price_type == 'wholesale' and row.product.wholesale_condition %}<p class="wholesale-note">{{ row.product.wholesale_condition }}</p>{% endif %}
+          {% if row.product.description %}<p class="product-description">{{ row.product.description }}</p>{% endif %}
+          <p class="product-price" data-cart-amount><span class="visually-hidden">Precio: </span>{{ row.price|ars }} <span>/ {{ row.product.sale_unit }}</span></p>
+          {% if row.subtotal is not None %}<p class="subtotal" data-cart-amount>Subtotal: <strong>{{ row.subtotal|ars }}</strong></p>{% endif %}
           <div class="product-controls">
-            {% include "includes/quantity_control.html" with product=row.product input_id_prefix="cart-quantity-" quantity=row.quantity_value input_class="cart-quantity" cart_error=True %}
-            <div><label for="cart-price-{{ row.entry.id }}">Tipo de precio</label><select id="cart-price-{{ row.entry.id }}" class="cart-price" aria-describedby="cart-errors-{{ row.entry.id }}">
-              {% if row.entry.price_type == 'wholesale' and row.product.wholesale_price is None %}<option value="wholesale" selected disabled>Mayorista no disponible</option>{% endif %}
-              <option value="retail" {% if row.entry.price_type == 'retail' %}selected{% endif %}>Minorista</option>
-              {% if row.product.wholesale_price is not None %}<option value="wholesale" {% if row.entry.price_type == 'wholesale' %}selected{% endif %}>Mayorista</option>{% endif %}
-            </select></div>
+            {% include "includes/quantity_control.html" with product=row.product input_id_prefix="cart-quantity-" quantity=row.quantity_value input_class="cart-quantity" cart_error=True quantity_invalid=row.quantity_error remove_on_decrease=row.remove_on_decrease %}
           </div>
-          {% if row.subtotal is not None %}<p class="subtotal" data-cart-amount>Subtotal estimado: <strong>{{ row.subtotal|ars }}</strong></p>{% endif %}
         {% endif %}
-        <div id="cart-errors-{{ row.entry.id }}" class="notice error" data-cart-error {% if not row.errors %}hidden{% endif %}><ul>{% for error in row.errors %}<li>{{ error }}</li>{% endfor %}</ul></div>
+        <p id="cart-quantity-server-error-{{ row.entry.id }}" class="visually-hidden" data-quantity-error {% if not row.quantity_error %}hidden{% endif %}>{{ row.quantity_error }}</p>
+        <div id="cart-errors-{{ row.entry.id }}" class="visually-hidden" data-cart-error {% if not row.visible_errors %}hidden{% endif %}><ul>{% for error in row.visible_errors %}<li>{{ error }}</li>{% endfor %}</ul></div>
       </article>
     {% endfor %}
   </div><aside class="cart-summary" aria-labelledby="summary-title">
-    <h2 id="summary-title">Total estimado</h2>
-    {% if cart.total is not None %}<p class="total" data-cart-amount>{{ cart.total|ars }}</p>{% else %}<p>Corregí los artículos indicados para calcular el total.</p>{% endif %}
-    <p>Disponibilidad y precios sujetos a confirmación.</p>
+    <h2 id="summary-title">Total</h2>
+    {% if cart.total is not None %}<p class="total" data-cart-amount>{{ cart.total|ars }}</p>{% else %}<p class="visually-hidden">Corregí los artículos indicados para calcular el total.</p>{% endif %}
     <button type="button" id="cart-review" {% if not cart.valid %}disabled{% endif %}>Revisar y preparar WhatsApp</button>
   </aside></div>
 {% else %}
-  <div class="empty-state"><h2>Tu carrito está vacío</h2><p>Buscá productos en el catálogo para empezar.</p><a class="button" href="{% url 'home' %}">Explorar catálogo</a><p><button type="button" disabled>Revisar y preparar WhatsApp</button></p></div>
+  {% if cart_panel %}
+    <div class="cart-layout"><div class="cart-items"><div class="empty-state"><h2>Tu carrito está vacío</h2><p>Buscá productos en el catálogo para empezar.</p></div></div>
+      <aside class="cart-summary" aria-labelledby="summary-title"><h2 id="summary-title">Total</h2><p class="total" data-cart-amount>{{ cart.total|ars }}</p><button type="button" class="button" data-close-cart>Agregar productos</button></aside>
+    </div>
+  {% else %}
+    <div class="empty-state"><h2>Tu carrito está vacío</h2><p>Buscá productos en el catálogo para empezar.</p><a class="button" href="{% url 'home' %}">Agregar productos</a></div>
+  {% endif %}
 {% endif %}

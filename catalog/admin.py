@@ -1,6 +1,7 @@
 import csv
-from decimal import Decimal
+import re
 from pathlib import Path
+from urllib.parse import urlencode
 
 from django import forms
 from django.conf import settings
@@ -9,17 +10,22 @@ from django.contrib import messages as admin_messages
 from django.contrib.admin.options import IncorrectLookupParameters
 from django.core import signing
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.files.base import ContentFile
+from django.db.models.fields.files import FieldFile
 from django.forms.models import BaseInlineFormSet
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
+from django.utils.html import format_html
 from django.views.decorators.http import require_GET, require_http_methods
 
 from .csv_import import HEADERS, PreviewChanged, create_from_preview, preview_rows, read_csv
+from .images import MAX_IMAGE_BYTES
 from .models import BusinessSettings, Category, OpeningInterval, Product
 from .pdf import build_catalog_pdf, build_catalog_table_pdf
+from .whatsapp import whatsapp_preview
 
 IMPORT_SALT = "catalog.product.csv-preview"
 IMPORT_MAX_AGE = 15 * 60
@@ -42,18 +48,42 @@ class ProductAdminForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = "__all__"
+        widgets = {name: forms.TextInput(attrs={"inputmode": "numeric", "pattern": "[0-9]+", "maxlength": 12,
+                                               "data-digits-only": ""})
+                   for name in ("retail_price", "wholesale_price")}
+
+    class Media:
+        js = ("js/digits-only.js",)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["quantity_step"].required = False
-        if not self.instance.pk:
-            self.initial["quantity_step"] = None
+        if self.instance.pk and self.instance.sale_unit == "unidad":
+            self.fields["sale_unit"].choices = [*Product.SaleUnit.choices, ("unidad", "unidad (anterior)")]
+            self.fields["sale_unit"].help_text = "Presentación anterior conservada. Elegí una nueva sólo si corresponde y revisá su precio."
 
-    def clean_quantity_step(self):
-        value = self.cleaned_data.get("quantity_step")
-        if value is None:
-            return Decimal("0.1") if self.cleaned_data.get("sale_unit") == "kg" else Decimal("1")
-        return value
+    def _whole_price(self, name):
+        raw = self.data.get(self.add_prefix(name), "")
+        if raw and not re.fullmatch(r"[0-9]+", raw):
+            raise ValidationError("Ingresá un precio en pesos enteros, sin decimales ni separadores.")
+        return self.cleaned_data.get(name)
+
+    def clean_retail_price(self):
+        return self._whole_price("retail_price")
+
+    def clean_wholesale_price(self):
+        return self._whole_price("wholesale_price")
+
+    def clean_image(self):
+        image = self.cleaned_data.get("image")
+        if not self.instance.pk and isinstance(image, FieldFile):
+            # Una nueva ficha tiene su propia copia; reemplazarla no borra la foto
+            # de la presentación anterior. La validación/conversión habitual sigue activa.
+            try:
+                with image.storage.open(image.name, "rb") as source:
+                    return ContentFile(source.read(MAX_IMAGE_BYTES + 1), name=Path(image.name).name)
+            except OSError as error:
+                raise ValidationError("No se pudo copiar la foto anterior. Seleccioná otra imagen o quitála.") from error
+        return image
 
 
 @admin.register(Category)
@@ -73,6 +103,42 @@ class ProductAdmin(admin.ModelAdmin):
     list_select_related = ["category"]
     readonly_fields = ["created_at", "updated_at"]
     change_list_template = "admin/catalog/product/change_list.html"
+
+    def render_change_form(self, request, context, *args, **kwargs):
+        context["show_save_and_continue"] = False
+        return super().render_change_form(request, context, *args, **kwargs)
+
+    def response_add(self, request, obj, post_url_continue=None):
+        response = super().response_add(request, obj, post_url_continue)
+        if "_addanother" in request.POST:
+            token = signing.dumps({"id": obj.pk, "user": request.user.pk, "updated": obj.updated_at.isoformat()},
+                                  salt="catalog.product.copy")
+            response["Location"] = reverse("admin:catalog_product_add") + "?" + urlencode({"copy": token})
+        return response
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        token = request.GET.get("copy", "")
+        if obj is not None or not token:
+            return form
+        try:
+            data = signing.loads(token, salt="catalog.product.copy", max_age=3600)
+            if data["user"] != request.user.pk:
+                raise signing.BadSignature
+            source = Product.objects.get(pk=data["id"], updated_at=data["updated"])
+        except (signing.BadSignature, Product.DoesNotExist, KeyError, ValueError, TypeError):
+            self.message_user(request, "Los datos para repetir el alta vencieron o cambiaron. Completá una nueva ficha.",
+                              level=admin_messages.WARNING)
+            return form
+        initial = {field.name: getattr(source, field.attname) for field in Product._meta.fields
+                   if field.editable and not field.primary_key}
+
+        class PrefilledProductForm(form):
+            def __init__(self, *args, **kwargs):
+                kwargs["initial"] = {**initial, **kwargs.get("initial", {})}
+                super().__init__(*args, **kwargs)
+
+        return PrefilledProductForm
 
     def get_urls(self):
         return [
@@ -201,10 +267,18 @@ def csv_text(value):
 
 
 def csv_decimal(value):
-    return format(value, "f").replace(".", ",") if value is not None else ""
+    return format(value, ".0f") if value is not None else ""
 
 
 class OpeningIntervalFormSet(BaseInlineFormSet):
+    def add_fields(self, form, index):
+        super().add_fields(form, index)
+        interval = f"intervalo {index + 1}" if index is not None else "nuevo intervalo"
+        for name in ("weekday", "opens_at", "closes_at", "DELETE"):
+            if name in form.fields:
+                field = form.fields[name]
+                field.widget.attrs["aria-label"] = f"{field.label} ({interval})"
+
     def clean(self):
         super().clean()
         if any(self.errors):
@@ -227,6 +301,20 @@ class OpeningIntervalInline(admin.TabularInline):
 @admin.register(BusinessSettings)
 class BusinessSettingsAdmin(admin.ModelAdmin):
     inlines = [OpeningIntervalInline]
+    readonly_fields = ["message_preview"]
+    fieldsets = [
+        ("Datos del comercio", {"fields": ["address", "maps_url"]}),
+        ("Horarios", {"fields": ["hours_initialized"]}),
+        ("Mensaje de WhatsApp", {
+            "description": "Personalizá el texto general y cada producto. Se respetan emojis, saltos de línea y formato de WhatsApp. Guardá para actualizar la vista previa con datos de ejemplo.",
+            "fields": ["whatsapp_message_template", "whatsapp_product_template", "message_preview"],
+        }),
+    ]
+
+    @admin.display(description="Vista previa con datos de ejemplo")
+    def message_preview(self, obj):
+        return format_html('<pre style="white-space:pre-wrap;overflow-wrap:anywhere">{}</pre>',
+                           whatsapp_preview(obj if obj is not None else BusinessSettings()))
 
     def has_add_permission(self, request):
         return super().has_add_permission(request) and not BusinessSettings.objects.exists()

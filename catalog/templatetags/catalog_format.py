@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import ROUND_DOWN, Decimal
 
 from django import template
 
@@ -7,8 +7,8 @@ register = template.Library()
 
 @register.filter
 def ars(value):
-    formatted = f"{Decimal(value):,.2f}"
-    return "$ " + formatted.replace(",", "_").replace(".", ",").replace("_", ".")
+    pesos = Decimal(value).quantize(Decimal("1"), rounding=ROUND_DOWN)
+    return "$ " + format(pesos, ",.0f").replace(",", ".")
 
 
 @register.filter

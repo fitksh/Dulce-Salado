@@ -1,0 +1,27 @@
+{% load static %}
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tu carrito · Dulce y Salado</title>
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  <script src="{% static 'js/cart-core.js' %}" defer></script>
+  <script src="{% static 'js/notifications.js' %}" defer></script>
+  <script src="{% static 'js/digits-only.js' %}" defer></script>
+  <script src="{% static 'js/quantity.js' %}" defer></script>
+  <script src="{% static 'js/cart.js' %}" defer></script>
+  <script src="{% static 'js/catalog.js' %}" defer></script>
+  <script src="{% static 'js/cart-frame.js' %}" defer></script>
+</head>
+<body class="cart-frame">
+  <main id="contenido">
+    {% include "includes/notification.html" %}
+    <p id="cart-storage-error" class="notice error" hidden></p>
+    <button type="button" class="secondary" id="cart-reset" hidden>Restablecer carrito</button>
+    <noscript><p class="notice">Activá JavaScript para armar el carrito.</p></noscript>
+    {% include "includes/cart_app.html" %}
+  </main>
+  {% include "includes/image_dialog.html" %}
+</body>
+</html>

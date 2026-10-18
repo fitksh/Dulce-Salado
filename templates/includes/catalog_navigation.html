@@ -1,0 +1,21 @@
+<div class="container catalog-bar">
+  {% if request.resolver_match.url_name != 'home' %}<a class="catalog-return" href="{% url 'home' %}">Catálogo</a>{% endif %}
+  <form action="{% url 'home' %}" method="get" class="category-select">
+    <label class="visually-hidden" for="category-filter">Categoría</label>
+    <input type="hidden" name="q" value="{{ query|default:'' }}">
+    <div class="search-controls"><select id="category-filter" name="categoria">
+      <option value="">Todas las categorías</option>
+      {% for category in categories %}<option value="{{ category.slug }}" {% if selected_category.pk == category.pk %}selected{% endif %}>{{ category.name }}</option>{% endfor %}
+    </select><button type="submit" class="secondary">Filtrar</button></div>
+  </form>
+  <nav class="categories" aria-label="Filtrar por categoría">
+    <a class="chip all-categories{% if not selected_category %} selected{% endif %}" href="{% url 'home' %}?q={{ query|default:''|urlencode }}" {% if not selected_category and request.resolver_match.url_name == 'home' %}aria-current="page"{% endif %}>
+      Todas las categorías
+    </a>
+    {% for category in categories %}
+      <a class="chip{% if selected_category.pk == category.pk %} selected{% endif %}" href="{% url 'home' %}?categoria={{ category.slug|urlencode }}&amp;q={{ query|default:''|urlencode }}" {% if selected_category.pk == category.pk %}aria-current="page"{% endif %}>
+        {{ category.name }}
+      </a>
+    {% endfor %}
+  </nav>
+</div>

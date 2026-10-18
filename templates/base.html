@@ -9,9 +9,12 @@
   <link rel="stylesheet" href="{% static 'css/site.css' %}">
   <script src="{% static 'js/cart-core.js' %}" defer></script>
   <script src="{% static 'js/notifications.js' %}" defer></script>
+  <script src="{% static 'js/digits-only.js' %}" defer></script>
   <script src="{% static 'js/quantity.js' %}" defer></script>
   <script src="{% static 'js/cart.js' %}" defer></script>
   <script src="{% static 'js/business-hours.js' %}" defer></script>
+  <script src="{% static 'js/header.js' %}" defer></script>
+  <script src="{% static 'js/cart-drawer.js' %}" defer></script>
   <script src="{% static 'js/catalog.js' %}" defer></script>
   {% block scripts %}{% endblock %}
 </head>
@@ -20,19 +23,20 @@
   <header class="site-header"><div class="container header-inner">
     <a class="brand" href="{% url 'home' %}" aria-label="Dulce y Salado, inicio">
       <img class="brand-logo" src="{% static 'img/logo.webp' %}" alt="" width="150" height="150">
-      <span>Dulce y Salado<small>Repostería · Dietética · Cotillón</small></span>
+      <span>Dulce y Salado</span>
     </a>
-    {% include "includes/business_hours.html" %}
+    {% include "includes/header_search.html" %}
     <nav class="header-actions" aria-label="Navegación principal">
-    <a class="button secondary" href="{% url 'home' %}"{% if request.resolver_match.url_name == 'home' %} aria-current="page"{% endif %}>Catálogo</a>
-    <a class="button secondary" href="{% url 'directions' %}"{% if request.resolver_match.url_name == 'directions' %} aria-current="page"{% endif %}>Ubicación</a>
+    {% include "includes/location_panel.html" %}
+    {% include "includes/business_hours.html" %}
     <a class="button secondary cart-link" href="{% url 'cart' %}"{% if request.resolver_match.url_name == 'cart' %} aria-current="page"{% endif %}>
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 3h3l3 12h11l3-9H6"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>
-      Carrito <span data-cart-count aria-label="productos diferentes">0</span>
+      <span class="visually-hidden">Carrito:</span><span data-cart-count>0</span><span class="visually-hidden">productos diferentes</span>
     </a>
     {% block header_actions %}{% endblock %}
     </nav>
   </div>
+  {% include "includes/catalog_navigation.html" %}
   </header>
   <main id="contenido" class="container" tabindex="-1">
     {% include "includes/notification.html" %}
@@ -42,10 +46,17 @@
     {% block content %}{% endblock %}
   </main>
   {% include "includes/image_dialog.html" %}
+  {% if request.resolver_match.url_name != 'cart' %}{% include "includes/cart_drawer.html" %}{% endif %}
   <footer class="container site-footer">
-    <nav class="footer-links" aria-label="Información del comercio"><a href="{% url 'directions' %}">
-      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-      Ubicación</a>
+    <nav class="footer-links" aria-label="Información del comercio">
+    {% if business.location_url %}
+      <a class="footer-location" href="{{ business.location_url }}" target="_blank" rel="noopener noreferrer">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        Ubicación <span class="visually-hidden">en Google Maps (se abre en otra pestaña)</span>
+      </a>
+    {% else %}
+      <span class="footer-location-unavailable" aria-disabled="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg> Ubicación no disponible</span>
+    {% endif %}
     <a class="social-link" href="https://www.instagram.com/_dulceysalado1/" target="_blank" rel="noopener noreferrer">
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="currentColor" stroke="none"/></svg>
       Instagram <span class="visually-hidden">(se abre en otra pestaña)</span>

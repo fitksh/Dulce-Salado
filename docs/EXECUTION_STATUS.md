@@ -371,3 +371,163 @@ Manifest de cambios: aplicación static/css/site.css y catalog/pdf.py; QA catalo
 Tarea 5 publicada: 3a6f97a; [CI success 38173168024](https://github.com/fitksh/Dulce-Salado/actions/runs/38173168024). Las cinco tareas publicadas tienen CI success; se marca el roadmap completo. Commits: 8577ee4 (visor), afe9951 (grilla), bf4b918 (carrito), 8f8a935 (PDF) y 3a6f97a (QA/documentación). El cierre sólo actualiza seguimiento, sin código nuevo después de las suites finales.
 
 Resultado: AJUSTES VISUALES Y PDF COMPLETADOS — LISTO PARA PRUEBAS LOCALES. Visor sin márgenes blancos excesivos en seis viewports/tres proporciones; cuatro columnas reales a 1280; logo completo en las cuatro variantes/todas las páginas. Foto de carrito desktop y lista PDF centradas; etiquetas bold/valores normales seguros, texto extenso paginado sin bloqueo. 130 Django, 7 Node, 26 Chromium, check/Ruff/migraciones, 19 páginas PDF y capturas inspeccionadas. Datos/fotos íntegros, QA descartada, entorno local disponible. Sin correcciones de implementación pendientes conocidas. Próximo paso concreto: seguir la comprobación local de README con Ctrl+F5 y Admin → Productos → cuatro descargas; las verificaciones físicas/manuales indicadas no se afirman ejecutadas.
+
+## Catálogo compacto y presentaciones — 17/10/2026
+
+Solicitud implementada sobre main del catálogo **Dulce-Salado** (base d6c9afc), limpio y sincronizado al comenzar. ARCA DYS es la aplicación distinta de facturación; no se cambió ese repositorio. Referencia Tiendista inspeccionada en navegador, sin copiar fuente ni diseño literal. No hay ramas/PR nuevos, publicación ni CI remoto de esta iteración; cambios concretos locales disponibles para revisión.
+
+Cards compactas con estados +/basura/−, cantidades sincronizadas y escritura confirmada antes del aviso. Hasta cinco columnas y ancho máximo para resultado único. Minorista al agregar por primera vez, mayorista manual en carrito conservado al volver/sumar. Descripción incorporada en carrito, mensaje y hash de revisión para distinguir presentaciones por tamaño. Admin elimina continuar editando y precarga alta siguiente mediante token firmado por usuario/fuente vigente; copia WebP independiente, sin compartir ruta con la ficha anterior.
+
+Migración 0005 añade seis unidades de altas y constraint quantity_step=1, mantiene columna Decimal y unidad anterior como compatibilidad de filas existentes, sin convertir precios/unidades, duplicar ni borrar productos. CSV conserva encabezados, exige paso vacío/1 y reconoce presentación por categoría/nombre/marca/unidad/descripción. Carritos v1 fraccionarios siguen legibles y bloquean revisión hasta corrección explícita. DEMO sólo cambia especificaciones de futuras altas, no se aplicó al catálogo comercial ni se relajaron las huellas de limpieza.
+
+Validación final ejecutada: **158 Django, 9 Node y 40 Chromium correctos, sin omisiones**, check/Ruff/makemigrations/diff correctos. Prueba real 0004→0005 conserva todos los campos salvo incremento solicitado. Responsive hasta 1920, cinco columnas a 1440, teclado/axe, almacenamiento fallido y sincronización real entre pestañas; regresiones completas de CSV/PDF/horarios/fotos/WhatsApp sin envío. Cuatro capturas finales inspeccionadas. Detalle y comandos en QA.md; manifiesto de archivos/decisiones y despliegue manual en CATALOGO_COMPACTO.md.
+
+Sólo código, pruebas y documentación; sin nuevas dependencias/servicios ni cambios de Docker/.env/media. Base comercial local sin migración ni altas/cambios; QA en DB/media descartables y puerto 8002. Raspberry sin acceso ni despliegue. Próximo paso de entrega: revisar el diff local y publicar cuando corresponda; cualquier despliegue requiere respaldo, ensayo sobre copia y migración 0005 de la instalación existente, conservando stack/volúmenes, según guía. Las comprobaciones físicas de teléfono/lector/impresora/otros navegadores no se afirman ejecutadas.
+
+## Ajuste posterior: filas, iconos y datos ficticios locales — 17/10/2026
+
+Solicitud completada: alturas iguales por fila según la mayor, controles alineados al pie; basura/− excluyentes mediante atributo hidden válido en SVG; header sólo icono y contador, conservando accesibilidad y conteo por producto diferente. Cambios sobre main con la implementación anterior aún local, sin descartar archivos ni publicar.
+
+Datos demo ampliados a las seis unidades, con paso 1 en las 45 especificaciones. Respaldo inicial completo y ensayo restaurado con migración/limpieza/carga en copia. Respaldo inmediato adicional antes de aplicar en la base local identificada dulce_salado: retirados 52 productos/3 categorías, creada nueva carga de 45 productos (15 por categoría) y 45 imágenes ficticias WebP independientes. Guardas DEBUG/destino explícito, transacción, no reinicio de IDs y repetición del seed comprobada sin cambios. Administrador, configuración y horarios idénticos por comparación de estado. 0005 aplicada localmente. Evidencia privada y respaldos SHA-256: .qa/backups/20261017-reset-local/. Ningún respaldo o dato original añadido a Git.
+
+Validación final nueva: 39 Django afectados y 40 Chromium completos correctos; check/Ruff/migraciones/diff correctos. Verificación del sitio local real con axe en cinco anchos, fotos y estados 1/2/borrado; capturas desktop y de ambos iconos inspeccionadas. Cierre registrado en ROADMAP/QA y guía actualizada para distinguir el estado local actual de la preparación inicial sin migrar. La base de ensayo y el servidor QA se retiran, permanece http://localhost:8000/ con demos. No se cambió ARCA DYS ni se accedió/desplegó en Raspberry. Sin publicación ni CI remoto nuevo. Siguiente paso: Ctrl+F5 y probar el catálogo local con los datos ficticios.
+
+## Carrito compacto y precio público — ajuste final del 17/10/2026
+
+Implementado localmente en main, sin commit/push/despliegue: controles al pie derecho en catálogo, carrito más compacto con basura con 1 y − con más de 1, + siempre disponible; cantidad entera editable, sin etiqueta visible. Catálogo/carrito/mensaje usan sólo retail_price, sin Minorista, Tipo de precio ni condiciones mayoristas. Datos de mayorista/condiciones conservados en Admin/CSV/PDF. Compatibilidad v1 convierte tarifas anteriores con aviso y exige revisión antes de WhatsApp, sin precios persistidos como autoridad.
+
+Archivos de esta iteración: templates/home.html, cart_contents.html e includes/quantity_control.html; static/css/site.css; static/js/cart.js, cart-core.js y quantity.js; catalog/cart.py, views.py y whatsapp.py. Pruebas: catalog/test_cart.py, test_views.py y test_whatsapp.py, tests/cart.test.cjs y browser.spec.cjs. AGENTS/README y especificación/arquitectura/UX/guía/QA/roadmap actualizados a la decisión expresa de precio público único.
+
+Validación final: 161 Django, 9 Node, 40 Chromium (0 fallos), check/Ruff/migraciones/diff correctos. Caso reproducido de foco entre pestañas corregido y verificado en la suite; revisión real de la PC con 45 demos y axe en seis anchos, capturas inspeccionadas. Sin cambios de modelo/migración/seed/base en esta iteración ni dependencias nuevas. Se conserva la carga local y el servidor habitual 8000; runner QA temporal retirado al terminar. Detalles y pasos de actualización manual en CATALOGO_COMPACTO.md. Raspberry y ARCA DYS sin acceso/cambios.
+
+## Alineación y mensaje editable — 17/10/2026
+
+Implementado localmente en main, sin commit/push/despliegue. Cards con título/descripción/precio alineados por fila mediante CSS subgrid, sin truncar; header sin Catálogo dentro del catálogo, sin Ver horarios visible y aviso de persistencia del carrito retirado. Horarios/desplegable, cantidades enteras, controles derechos y precio minorista de cálculo conservados.
+
+Configuración comercial contiene mensaje general, formato por producto y vista previa con datos ficticios. Inicio con 🛍️, viñetas •, total monoespaciado 💰 y texto comercial solicitado. Se mantiene descripción opcional para identificar presentaciones. Sólo sustitución de campos permitidos, con aritmética/valores actuales del servidor, permisos/validación y HTML escapado al mostrar. Preview/copia/enlace idénticos y message_revision exige revisar un cambio de texto antes de continuar. El aviso previo sigue separado del mensaje editable.
+
+Nueva migración 0006 añade dos columnas con valores iniciales a BusinessSettings. Respaldo privado .qa/backups/20261017-whatsapp-settings/database.dump y checksum.json, operación aplicada en esta PC conservando 45 demos, tres categorías, imágenes, usuarios, dirección y horarios. Sin limpieza/seed ni nuevas dependencias/modelos. Runner QA temporal retirado al terminar; sitio local habitual disponible en 8000. Sin Raspberry ni cambios en ARCA DYS.
+
+Validación: 54 afectados iniciales, 172 completos, 6 horarios posteriores, 9 Node y 44 Chromium correctos; check/Ruff/migraciones/diff correctos. Siete anchos reales del sitio local con axe y capturas inspeccionadas, incluidos editor y diálogo custom. Se corrigieron etiquetas de campos horarios detectadas por axe. Guía, archivos, campos y pasos de actualización en WHATSAPP_MESSAGES.md; Ctrl+F5 y Admin → Configuración comercial → Mensaje de WhatsApp.
+
+## Carga local con fotos y presentaciones sin prefijo — 17/10/2026
+
+Completado por pedido expreso: 45 fichas sin [DEMO], 45 WebP independientes de las nueve fotos provistas, nombres repetidos por presentación y fotos correspondientes. Dietética 12/Cotillón 3/Repostería 30. Mismo título en 100 gr/kg/paquete y otras unidades admitidas, descripción/precio propio; marca identificable en foto y datos de simulación. Configuración, WhatsApp, usuarios y horarios conservados exactamente por huella; secuencias no reiniciadas. Respaldo DB/media, restauración y ensayo aislados, respaldo inmediato, aplicación local y repetición idempotente documentados en DATOS_PRUEBA_FOTOS.md.
+
+Seeder con manifiesto v2 por categoría/título/unidad/descripción, sin usar título como identidad exclusiva. V1 se conserva y aborta hasta revisión; no apropiación automática de registros. --image-map opcional validado para fotos por título y varias vistas, manteniendo el reparto previo sin mapa y todas las guardas/rollback/archivos independientes. Sin cambios de modelos/migraciones/dependencias. Reset puntual sólo en .qa, no un comando general destructivo.
+
+Verificación: 29 seed, 175 Django completos sin omisiones y 44 Chromium correctos; check/Ruff/migraciones/diff correctos. Prueba real local con fotos/variantes independientes y WhatsApp, cinco anchos/axe, capturas inspeccionadas y SHA-256 de originales intactos. La primera ejecución completa se interrumpió durante el mantenimiento; una auxiliar omitió Poppler, y la ejecución final completa sobre el contenedor habitual pasó las 175. Datos/backup/fotos privados ignorados por Git; copia de ensayo y QA retirados, sitio 8000 operativo. Sin mensajes enviados, publicación, acceso a Raspberry ni cambios en ARCA DYS.
+
+## Encabezado y ubicación desplegable — 17/10/2026
+
+Implementado en el checkout local de main: marca sin subtítulo, buscador y controles Ubicación/Horarios/carrito con franja inferior de categorías. Búsqueda/filtros disponibles desde carrito, Catálogo sólo fuera de home. Panel Ubicación nativo con dirección de Configuración comercial y enlace 📍 seguro en otra pestaña; retirados vista/template e iframe. Ambas rutas antiguas redirigen 301 al catálogo con panel abierto, incluso sin JS. header.js reúne cierre exterior/Escape/foco y exclusión de paneles; business-hours.js conserva el reloj de Buenos Aires.
+
+Se reprodujo y corrigió durante la validación una carrera entre un recálculo viejo y una eliminación de otra pestaña: comparación del estado guardado antes de renderizar/persistir, con nueva regresión. Formato de carrito y cálculo de precios conservados. Los 45 productos, 45 imágenes, tres categorías y única configuración local continúan presentes; no hubo edición de datos, nuevas migraciones o dependencias.
+
+Verificación final: 177 pruebas Django completas sin omisiones, 9 Node y 46 Chromium correctas; check, Ruff, migraciones pendientes de modelo y diff sin incidencias. Comprobación adicional del sitio local con sus 45 productos/45 imágenes/3 categorías/configuración existente: nueve anchos (320/390/600/768/800/1049/1050/1280/1440), ambos paneles dentro del viewport, axe sin incidencias automáticas, búsqueda desde carrito, seis presentaciones por nombre, cantidades sincronizadas, redirecciones y cero peticiones externas/errores JS. Capturas privadas local-header-location-1440.png y local-header-hours-390.png inspeccionadas. Esto no sustituye una evaluación completa con lectores de pantalla o teléfonos reales.
+
+Guía y lista de archivos/pasos de actualización en ENCABEZADO_UBICACION.md. Sitio local habitual en 8000; QA y DB temporal retirados. Sin commit, push, mensajes enviados, acceso/despliegue Raspberry ni cambios al repositorio ARCA DYS.
+
+## Encabezado con más espacio y apertura por mouse — 17/10/2026
+
+Buscador máximo 600 px desde 1050 px, acciones del header más legibles, 48 px de alto y 16 px entre ellas. Categorías sin íconos. Flechas SVG estáticas hacia abajo y pin SVG en lugar del emoji del mapa. header.js usa pointerenter/leave sólo para mouse y media hover/fine: abre sin cambiar foco, espera 200 ms al salir para alcanzar el contenido y conserva el panel mientras su enlace tiene foco. Escape/clic exterior/cambio de panel, Enter/Espacio y toque nativos; sin JS conserva details.
+
+Archivos de este ajuste: plantillas includes/catalog_navigation.html, location_panel.html y business_hours.html, static/css/site.css, static/js/header.js, test_business.py/browser.spec.cjs y documentación. Sin cambios de base, modelos, API, precios, cantidades o configuración comercial; 45 fichas/fotos conservadas. Sitio local en 8000, QA temporal retirado; sin commit/push ni acceso/despliegue Raspberry.
+
+Validación final del ajuste: 177 Django completos, 9 Node y 50 Chromium correctos, sin omisiones; check/Ruff/makemigrations --check/diff correctos. Las nuevas pruebas comprueban ancho máximo de búsqueda, acciones de 48 px/separación de 16 px, categorías sin íconos, pin SVG, flecha fija antes/después, apertura por hover sin mover foco, recorrido al panel, cierre al salir, cambio de panel/Escape, enlace enfocado persistente, teclado y pantalla táctil real emulada (tap abre/cierra/exterior). Fallback sin JS y filtros/carrito/WhatsApp siguen cubiertos en la suite completa.
+
+Sitio local habitual: diez anchos (320/390/600/768/800/1049/1050/1280/1440/1920), ambos paneles dentro del viewport, sin desbordes ni incidencias automáticas axe WCAG 2A/AA/2.1AA, sin peticiones externas ni errores JS; 45 productos conservados. Capturas privadas header-hover-closed-1440.png, header-hover-location-panel-1440.png y header-hover-location-panel-390.png inspeccionadas. Se conserva foco visible por teclado. Esta revisión automática no afirma una auditoría completa de lectores o dispositivos reales.
+
+## Carrito lateral y encabezado — 17/10/2026
+
+Implementado localmente: clic en carrito/Ver carrito abre dialog fijo derecho con iframe propio de /carrito/?panel=1, fondo difuminado e inert, sin desplazar catálogo. Lista vertical con scroll y summary fijo en el pie; ancho 500 px, pantalla completa hasta 600 px. Cruz arriba izquierda/volver móvil, cierre exterior/Escape y foco recuperado tras cerrar. Vacío con total cero y Agregar productos. Misma lógica minorista/cantidades/CSRF/revisión/copiar/WhatsApp; cierre invalida revisión/cierra provisional. Frame sólo SAMEORIGIN; mensajes verifican origen/emisor. /carrito/ permanece como acceso directo/fallback, sin dependencia/modelo/migración nueva.
+
+Buscador sin contorno al clicar, foco de Tab en el formulario completo y fallback sin JS; ubicación centrada desde summary y limitada al viewport, recalculada al abrir/resize. Archivos y actualización en CARRITO_LATERAL.md. Datos locales (45 fichas/fotos, usuarios/configuración) conservados; no seed/reset, commit/push ni acceso/despliegue Raspberry. QA temporal retirado y sitio habitual en 8000.
+
+Verificación final: 180 Django completos, 9 Node y 59 Chromium correctos; 9 del grupo lateral repetidos tras añadir la eliminación del último artículo, también correctos. Ruff/check/makemigrations --check/diff correctos. Cobertura de SAMEORIGIN/frame mínimo/fallback, foco del buscador por mouse/Tab, centro limitado de Ubicación, geometría y scroll sin desplazar catálogo, pie fijo, lista larga, vacío/última eliminación, cantidades sincronizadas, toque/volver, Escape anidado, copiado real en iframe, revisión y cancelación de provisional WhatsApp, mensaje de origen/ventana incorrecta, fallo de carga y apertura desde aviso con retorno de foco.
+
+Comprobación sobre el sitio local con seis presentaciones/fotos de Baño de repostería blanco: nueve anchos (320/390/430/600/768/800/1050/1280/1440), panel a la derecha o completo, total fijo al hacer scroll, sin desplazamiento inicial del catálogo, sin errores JS/peticiones externas/incidencias automáticas axe WCAG 2A/AA/2.1AA. Capturas privadas local-cart-drawer-1440.png, local-cart-drawer-390.png y local-location-centered-1440.png inspeccionadas. No se afirma evaluación exhaustiva con lectores o dispositivos físicos.
+
+## Centrado responsive, ancho y footer directo — 17/10/2026
+
+Cards centradas en cada columna sin estirarse ni alterar la altura por fila; panel al 46% del viewport con mínimo 520 px y completo hasta 600 px. Avisos centrados en ambos ejes y acción al lado cuando cabe. Footer Ubicación enlaza directamente a Maps configurado, en otra pestaña segura; sin dirección no ofrece enlace ficticio. Se retiró el delegado del footer que abría el panel del header.
+
+Archivos funcionales de este ajuste: static/css/site.css, static/js/header.js y templates/base.html. Pruebas: catalog/test_business.py y tests/browser.spec.cjs; especificación, arquitectura, UX, guías y seguimiento actualizados. Sin cambios de modelos, API, cálculos, datos o dependencias.
+
+Verificación final: 181 Django completos, 9 Node y 63 Chromium correctos; check/Ruff/makemigrations --check/diff correctos. Grilla comprobada en doce anchos (320/390/520/600/700/740/768/800/1000/1050/1280/1440), igual altura por fila y centro con tolerancia inferior a 1 px. Avisos éxito/error centrados, acción inline en escritorio y textos largos sin desbordar en móvil. Carrito completo hasta 600 px y ancho esperado en ocho anchos hasta 1920. Footer: URL configurada/fallback, nueva pestaña segura, sin abrir el desplegable y disponibilidad cuando falta dirección.
+
+Sitio local habitual: seis presentaciones con fotografías, doce anchos de grilla y cinco del carrito, sin errores JS ni incidencias automáticas axe WCAG 2A/AA/2.1AA. Capturas privadas local-centered-grid-740.png, local-centered-notice-1440.png y local-wide-cart-1440.png inspeccionadas. La prueba del enlace Maps intercepta la navegación por hostname/ruta para evitar cargar el servicio externo; no depende del contenido de Google. No se afirma evaluación exhaustiva con lectores o dispositivos físicos.
+
+QA temporal retirado; sitio habitual en 8000. No hubo reset/seed, commit/push ni acceso/despliegue Raspberry. Para ver el cambio local, Ctrl+F5; una actualización futura autorizada se describe en CARRITO_LATERAL.md.
+
+## Aclaración de avisos y filas de cinco — 17/10/2026
+
+Se corrigió la interpretación del centrado: recuadro arriba, contenido centrado dentro. Se conserva la acción al lado cuando cabe y el comportamiento accesible/temporizadores. El estado de consulta pasa a visually-hidden sin espacio/márgenes variables, en vista directa y lateral.
+
+La fila de dos provenía de la paginación de 12. Paginator pasa a 20 para llenar filas de cuatro/cinco sin lógica responsive en JS ni duplicar/ocultar fichas. 45 productos ocupan 20/20/5, con orden/rangos/filtros/GET conservados. En conjuntos distintos, una última página parcial refleja la cantidad real.
+
+Archivos funcionales de esta tarea: static/css/site.css, templates/includes/cart_app.html y catalog/views.py. Pruebas: catalog/test_views.py y tests/browser.spec.cjs. README/especificación/arquitectura/UX/guías/QA/seguimiento actualizados. Sin nuevos modelos, migraciones, dependencias o cambios de datos.
+
+Verificación final: 182 Django completos, 9 Node y 66 Chromium correctos; grupo específico de centrado/carga (7) también correcto. check/Ruff/makemigrations --check/diff correctos. Pruebas de navegador verifican avisos al borde superior con texto centrado/acción inline y adaptación móvil, filas completas en las tres páginas de 45 fixtures a cinco columnas (1920/1440) y primeras páginas a cuatro columnas (1280), filtros/GET sin JS/rangos/IDs sin repetir.
+
+Nueva regresión detiene respuestas reales de recálculo y compara geometría antes/durante/después al sumar/restar en /carrito/ y en iframe: lista, primera ficha y resumen idénticos. role=status permanece accesible y recortado a 1 px, aria-busy/revisión bloqueada durante consulta y habilitada después. No se desactiva la verificación del servidor para ocultar el salto.
+
+Sitio habitual con fotografías: 45 IDs distintos en páginas 20/20/5, filas de cinco completas a 1920x1080 y ocho anchos (320/390/520/740/1000/1280/1440/1920) sin desbordes, errores JS ni incidencias automáticas axe WCAG 2A/AA/2.1AA. Capturas privadas local-complete-rows-3-1920.png, local-top-notice-1920.png y local-cart-no-loading-space-1920.png inspeccionadas. No se afirma auditoría exhaustiva de dispositivos físicos/lectores. QA temporal retirado; datos locales conservados.
+
+Sitio habitual en 8000; Ctrl+F5 para probar. Sin commit/push, reset/seed, mensajes enviados ni acceso/despliegue Raspberry. Pasos de actualización futura en CARRITO_LATERAL.md.
+
+## Carrito silencioso y estable — 17/10/2026
+
+Implementado: sin éxitos de cantidad/borrado dentro del carrito ni Cargando al abrir. Catálogo con Se agregó {producto} al carrito. Ver carrito; cruz SVG sutil del tono del aviso, sin borde naranja. Recálculo conserva filas/fotos/encabezados/controles y sólo cambia bloques cuyo contenido realmente varía, incluido subtotal/total. Scroll interno restaurado, sin navegación del iframe. Se conserva último valor verificado durante consulta con aria-busy y revisión bloqueada; errores ocultan importes y permiten reintentar.
+
+La lista del frame usa flex en columna sin compresión de hijos; elimina filas cortas con controles fuera de su borde al agregar muchos productos. Vista previa con copiar como icono accesible a la derecha y sin total/párrafo redundantes; advertencia comercial y total del mensaje intactos.
+
+Archivos funcionales: static/js/cart.js, cart-drawer.js y quantity.js; static/css/site.css; templates/cart_review.html, includes/notification.html y cart_drawer.html. Tests de vistas/WhatsApp/navegador y documentación actualizados. Sin cambios de modelos/endpoints/DB/migraciones/dependencias.
+
+Verificación final: 184 Django completos, 9 Node y 72 Chromium correctos; seis del grupo silencioso repetidos durante el ajuste y también correctos. check/Ruff/makemigrations --check/diff y sintaxis JS correctos. Nuevo mensaje por producto/acción, cruz SVG de color heredado para cuatro estados, carga sin aviso, cantidades/eliminación silenciosas, identidad de fotos/títulos/otras fichas, observador sin mutaciones en fila intacta y cero navegaciones del iframe al editar. Revisión con icono accesible a la derecha, sin párrafos retirados y total dentro del mensaje; copiado real/API/fallback conservados.
+
+Lista larga probada en seis anchos automatizados y con las 45 fichas/fotos locales en ocho (320/390/600/768/1050/1280/1440/1920): controles y miniaturas dentro de cada borde, filas separadas, scroll propio/pie fijo y eliminación correcta. Sin errores JS ni incidencias automáticas axe WCAG 2A/AA/2.1AA. Capturas privadas local-long-cart-top-1920.png, local-long-cart-bottom-390.png, local-review-copy-icon-390.png y local-green-notice-1920.png inspeccionadas. Sin auditoría exhaustiva de teléfonos físicos/lectores de pantalla. Pruebas de WhatsApp interceptadas, sin envíos.
+
+QA/base temporal retirados; sitio habitual en 8000 y 45 productos conservados. Sin reset/seed, commit/push, mensajes enviados ni acceso/despliegue Raspberry. Ctrl+F5 y guía CARRITO_LATERAL.md para prueba/actualización futura autorizada.
+
+## Zoom sin marco y revisión simplificada — 17/10/2026
+
+Visor con fondo negro 85%, foto completa sin marco y cruz SVG blanca fina fuera de imagen, sin caja/naranja. Mismo componente en catálogo/carrito. Botón de revisión sin parpadeo de opacidad durante consultas; protección disabled/CSRF/revalidación conservada. Total visible, retiro de región estática de advertencia, botones Volver/Enviar a WhatsApp, textarea de diez líneas y copiar junto al label.
+
+Usuario confirmó mínimo 1. Backend/JS validan enteros positivos y dan error negativo exacto, sólo arriba; descripción accesible/aria-invalid persisten y otros errores de disponibilidad/unidad conservan detalle. Error transitorio de cantidad se cierra cuando esa cantidad se corrige, sin cerrar avisos de otro contenido. No se redondea ni cambia unidad/precio.
+
+0007 actualiza default y frase Subtotal estimado: en formatos existentes sin reemplazar el texto personalizado restante. Aplicada sólo en esta PC con respaldo de BusinessSettings en .qa/backups/20261017-subtotal-label/business-settings-before.json y comparación exacta antes/después. Productos/usuarios/horarios con hash idéntico, resto de configuración idéntico; 45 fichas conservadas. Reversa de datos noop para respetar ediciones posteriores; recuperación del texto desde respaldo si se requiere.
+
+Archivos: static/css/site.css, static/js/catalog.js/cart.js/cart-core.js/quantity.js, templates/includes/image_dialog.html/quantity_control.html/cart_app.html, templates/cart_contents.html/cart_review.html, catalog/cart.py/views.py/whatsapp_templates.py y migración 0007. Tests de cantidad/WhatsApp/compatibilidad/migración/navegador y documentación actualizados.
+
+Verificación final: 188 Django completos, 9 Node y 77 Chromium correctos; ocho de visor/cantidad/botón repetidos tras retirar aviso corregido, también correctos. check/Ruff/makemigrations --check/diff y sintaxis JS correctos. Migración 0007 probada con default anterior, formato personalizado con frase y formato sin frase: sólo cambia la etiqueta solicitada y conserva otros campos/productos. Estado de migraciones local al día.
+
+Navegador comprueba cruz blanca sin borde/fondo fuera de foto, fondo 85%, sin marco blanco, proporción/naturalidad/límites en catálogo y carrito, foco/teclado/Escape/clic fuera. Cantidades negativas/cero/decimales sólo anuncian arriba, sin bloque visible, con aria-invalid/descripción accesible, revisión bloqueada y mínimo 1 válido. Aviso anterior se retira al corregir. Botón conserva opacidad 1 y nodo durante recálculo mientras mantiene bloqueo seguro. Vista previa sin región retirada ni referencia ARIA huérfana, diez líneas, copiar junto al label y Volver/Enviar a WhatsApp; total en mensaje y Subtotal actualizados. Copiado real y revalidación/serial/storage/errores/WhatsApp interceptado siguen cubiertos sin enviar mensajes.
+
+Sitio habitual con fotos locales: zoom en ocho anchos (320/390/600/768/1050/1280/1440/1920), visor del carrito/revisión en escritorio y móvil, negativo sólo arriba y corrección a 1; sin errores JS ni incidencias automáticas axe WCAG 2A/AA/2.1AA. Capturas privadas local-zoom-borderless-1920.png, local-cart-zoom-borderless-390.png, local-review-clean-390.png y local-quantity-negative-toast-390.png inspeccionadas. No sustituye auditoría exhaustiva de dispositivos físicos/lectores.
+
+QA retirado y sitio habitual en 8000. Sin seed/reset, commit/push, mensajes enviados ni acceso/despliegue Raspberry. Ctrl+F5; pasos futuros autorizados y migración en CARRITO_LATERAL.md.
+
+
+## Pesos enteros, cajas y avisos — 18/10/2026
+
+194 tests Django completos sin omisiones, 9 Node y 81 Chromium correctos. Check, Ruff, makemigrations --check --dry-run y diff --check correctos. La primera suite de navegador detectó expectativas anteriores (sin input, avisos inline y centavos); se actualizaron esas expectativas y el juego CSV. La ejecución final completa con fixtures limpias pasó todos los escenarios, incluido copiado real, revalidación, sincronización, errores de conexión/storage, fotos y flujo WhatsApp interceptado sin enviar mensajes.
+
+Cobertura nueva: ambos precios en Admin/CSV rechazan fracciones, .00/coma, signos y exponentes; save rechaza centavos antes de que numeric redondee; migración conserva nulos/fotos/fechas/configuración e identidades y trunca 100.99→100, 0.99→0 y límites anteriores. Formato y cálculo exactos en catálogo/carrito/WhatsApp/exportaciones. Cantidad boxed en catálogo y carrito; bloqueo de teclado/paste/IME antes de mutar, rechazo completo de 9,1 sin convertir a 91, cero/negativos/fracciones de API/storage bloquean revisión y sólo muestran diagnóstico arriba. Mantener mínimo 1, navegación/caret, borradores y sincronización.
+
+Aplicación local: dump PostgreSQL privado en .qa/backups/20261018-integer-prices/database.dump (45.292 bytes, SHA-256 88155a867f43631404270c98d6ce77c0f3b64a8834263d259ae0f40b0849c3ba). Se restauró y migró una copia aparte; comparación exacta antes/después y ensayo idénticos: 45 productos conservados, 6 con fracciones descartadas, sólo retail/wholesale cambiados; fotos/manifiesto/categorías/usuarios/configuración/horarios intactos. Reportes before/after/verification privados con datos sensibles, ignorados por Git. Reversa de esquema no recupera centavos: usar el respaldo si se requiere restaurar esos importes.
+
+Sitio local comprobado con las fotos del dueño en 320/390/600/768/1050/1280/1440/1920 px y panel en 320/390/768/1920; cero infracciones axe A/AA/2.1 y errores JS, sin desbordes, precios enteros y cajas alineadas. Capturas locales .qa/screenshots/local-whole-* inspeccionadas. Sin limpieza/seed, cambios en fuentes originales, commit/push, mensajes enviados ni acceso/despliegue Raspberry. QA temporal y base de ensayo retirados; sitio habitual en 8000.
+
+
+## WhatsApp: integridad Unicode y pedido legible — 18/10/2026
+
+Causa reproducida con número ficticio/mensaje sintético: wa.me alteró 🛍️/💰/📌 a U+FFFD al redirigir con ambos codificadores de espacios. api.whatsapp.com/send mantuvo el texto exacto en su enlace a Web. Cambio de endpoint y codificación única quote UTF-8 estricta, sin tocar la lógica de revalidación/cancelación/popup/stock/precios. No se enviaron mensajes reales.
+
+Usuario confirmó incluir el formato adjunto. Seis unidades, singular/plural, contenido individual sin multiplicación, marca opcional, negrita WhatsApp para nombre/subtotal/total, precio por unidad sin tarifa, un separador y cierre 📌. Sólo descripción libre disponible; reconocer formas completas de peso/composición y preservar otras redacciones en línea adicional, sin inventar contenido. Aliases nuevos compatibles con formatos anteriores.
+
+203 Django completos sin omisiones y 84 Chromium correctos; pruebas de seis casos del adjunto (total $247.400), variantes mismo título, marcas/ausencias/contenido/plurales/ambigüedad, validación y conservación de formatos propios/migraciones, Unicode/ZWJ/acentos/reservados y HTML del enlace. Navegador valida botón y respaldo desktop/móvil, texto/copia/link iguales, límites/revalidación/cancelación y lo demás existente. Primeras ejecuciones detectaron expectativas del formato anterior; ajustadas sin cambiar los cálculos. Ruff/check/makemigrations/diff correctos.
+
+0009 aplicada sólo local: respaldo de BusinessSettings en .qa/backups/20261018-whatsapp-format (1.231 bytes, SHA-256 6aa530c1f8c0a5afd2338179ddcf886f1e000c342cbd984ef41eb0286d8bb65e), comparación sólo dos defaults y hashes íntegros de 45 productos, categorías, usuarios, horarios y media/manifiesto. Sin reset/reseed. Formatos propios no se sobrescriben.
+
+Pedido local de dos presentaciones de Baño de repostería blanco: 4 cajas de 5 kg + 2 packs de 3 paquetes de 500 g, total $239.200; textarea, copiado real (normalizando CRLF de Windows) y destino interceptado idénticos. Capturas local-whatsapp-readable-1920/390 inspeccionadas, cero axe A/AA/2.1 y errores JS. QA/base temporal retirados; normal 8000 operativo. Sin cambios de infraestructura, despliegue Raspberry, commit/push ni envío real. La recepción/renderizado final en la app de WhatsApp la comprueba el usuario al enviar.

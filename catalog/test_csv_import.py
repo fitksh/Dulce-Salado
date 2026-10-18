@@ -37,7 +37,7 @@ def csv_upload(rows, *, delimiter=";", bom=True, name="productos.csv", quoting=c
 
 
 def csv_row(**changes):
-    values = ["Repostería", "Producto ficticio QA", "", "", "kg", "", "14500,00", "", "", ""]
+    values = ["Repostería", "Producto ficticio QA", "", "", "kg", "", "14500", "", "", ""]
     for key, value in changes.items():
         values[int(key.removeprefix("column"))] = value
     return values
@@ -63,13 +63,13 @@ class CSVImportEngineTests(TestCase):
                     self.assertEqual(Product.objects.count(), 0)
 
     def test_optional_texts_nullable_wholesale_defaults_and_inactive(self):
-        for unit, step in (("kg", "0.10"), ("unidad", "1.00"), ("paquete", "1.00")):
+        for unit, step in ((unit, "1.00") for unit in Product.SaleUnit.values):
             for active, expected in (("", True), ("Sí", True), ("No", False), ("true", True), ("FALSE", False), ("1", True), ("0", False)):
                 with self.subTest(unit=unit, active=active):
                     product = self.preview([csv_row(column4=unit, column9=active)]).rows[0].product
                     self.assertEqual(product.quantity_step, Decimal(step))
                     self.assertIsInstance(product.retail_price, Decimal)
-                    self.assertEqual(product.retail_price, Decimal("14500.00"))
+                    self.assertEqual(product.retail_price, Decimal("14500"))
                     self.assertIsNone(product.wholesale_price)
                     self.assertEqual((product.brand, product.description, product.wholesale_condition), ("", "", ""))
                     self.assertEqual(product.is_active, expected)
@@ -80,14 +80,14 @@ class CSVImportEngineTests(TestCase):
             self.assertEqual(preview.new_count, 1)
             self.assertEqual(preview.error_count, 0)
 
-    def test_decimal_prices_zero_and_wholesale_above_retail_are_allowed(self):
-        for value, expected in (("14500,00", "14500.00"), ("14500.00", "14500.00"), ("14500", "14500"), ("0", "0")):
-            product = self.preview([csv_row(column6=value, column7="18000,00")]).rows[0].product
+    def test_integer_prices_zero_and_wholesale_above_retail_are_allowed(self):
+        for value, expected in (("14500", "14500"), ("0", "0")):
+            product = self.preview([csv_row(column6=value, column7="18000")]).rows[0].product
             self.assertEqual(product.retail_price, Decimal(expected))
-            self.assertEqual(product.wholesale_price, Decimal("18000.00"))
+            self.assertEqual(product.wholesale_price, Decimal("18000"))
 
-    def test_explicit_steps_include_fifty_grams_and_whole_units(self):
-        for unit, step in (("kg", "0.05"), ("kg", "0,10"), ("kg", "1.00"), ("unidad", "1.00"), ("paquete", "2")):
+    def test_explicit_steps_are_fixed_at_one_for_every_presentation(self):
+        for unit, step in ((unit, step) for unit in Product.SaleUnit.values for step in ("1",)):
             preview = self.preview([csv_row(column4=unit, column5=step)])
             self.assertEqual(preview.error_count, 0)
             self.assertEqual(preview.rows[0].product.quantity_step, Decimal(step.replace(",", ".")))
@@ -115,7 +115,7 @@ class CSVImportEngineTests(TestCase):
                     self.assertEqual(self.preview([row]).error_count, 1)
         for unit, step in (("kg", "0"), ("unidad", "0.05"), ("paquete", "0,10"), ("kg", "10000000")):
             self.assertEqual(self.preview([csv_row(column4=unit, column5=step)]).error_count, 1)
-        self.assertEqual(self.preview([csv_row(column6="10000000000")]).error_count, 1)
+        self.assertEqual(self.preview([csv_row(column6="1000000000000")]).error_count, 1)
 
     def test_normalized_existing_real_demo_and_file_duplicates_are_omitted(self):
         real = Product.objects.create(category=self.category, name="Chocolate Águila", brand="Café", retail_price="99")
@@ -209,7 +209,7 @@ class CSVImportEngineTests(TestCase):
         from django.contrib.auth import get_user_model
         from django.urls import reverse
 
-        product = Product.objects.create(category=self.category, name="Chocolate QA", retail_price="99.50", quantity_step="1")
+        product = Product.objects.create(category=self.category, name="Chocolate QA", retail_price="99", quantity_step="1")
         self.client.force_login(get_user_model().objects.create_superuser("csv-export-qa", "", "qa-password"))
         response = self.client.get(reverse("admin:catalog_product_export_csv"))
         records = read_csv(SimpleUploadedFile("export.csv", response.content))
@@ -217,18 +217,18 @@ class CSVImportEngineTests(TestCase):
         self.assertEqual((preview.new_count, preview.duplicate_count, preview.error_count), (0, 1, 0))
         self.assertEqual(create_from_preview(records, preview.fingerprint), (0, 1))
         product.refresh_from_db()
-        self.assertEqual(product.retail_price, Decimal("99.50"))
+        self.assertEqual(product.retail_price, Decimal("99"))
 
-    def test_imported_fifty_gram_step_accepts_a_quarter_kilo_in_the_existing_cart(self):
-        records = read_csv(csv_upload([csv_row(column5="0.05")]))
+    def test_imported_presentation_accepts_integers_and_blocks_old_fractions(self):
+        records = read_csv(csv_upload([csv_row(column4="100 gr", column5="1")]))
         preview = preview_rows(records)
         create_from_preview(records, preview.fingerprint)
         product = Product.objects.get(name="Producto ficticio QA")
-        item = {"id": product.pk, "quantity": "0.25", "price_type": "retail", "sale_unit": "kg",
+        item = {"id": product.pk, "quantity": "2", "price_type": "retail", "sale_unit": "100 gr",
                 "revision": product_revision(product)}
         cart = calculate_cart([item])
         self.assertTrue(cart["valid"])
-        self.assertEqual(cart["total"], Decimal("3625.00"))
+        self.assertEqual(cart["total"], Decimal("29000"))
         self.assertFalse(calculate_cart([{**item, "quantity": "0.26"}])["valid"])
 
 
@@ -302,15 +302,15 @@ class CSVImportAdminTests(TestCase):
         preview = response.context["preview"]
         self.assertEqual((preview.new_count, preview.duplicate_count, preview.error_count), (1, 1, 0))
         self.assertContains(response, "Confirmar importación")
-        self.assertContains(response, "14500,00")
+        self.assertContains(response, "14500")
         self.assertEqual(list(Product.objects.values()), before)
         self.client.post(self.url, {"preview_token": self.token(response)})
         self.assertEqual(list(Product.objects.values()), before)
         result = self.confirm(self.token(response), follow=True)
         self.assertContains(result, "1 productos creados y 1 duplicados omitidos")
         created = Product.objects.get(name="Producto ficticio QA")
-        self.assertEqual(created.retail_price, Decimal("14500.00"))
-        self.assertEqual(created.quantity_step, Decimal("0.10"))
+        self.assertEqual(created.retail_price, Decimal("14500"))
+        self.assertEqual(created.quantity_step, Decimal("1"))
         self.assertIsNone(created.wholesale_price)
         self.assertEqual(created.image.name, "")
         self.assertEqual(list(Product.objects.filter(pk__in=[self.real.pk, self.demo.pk]).values()), before)

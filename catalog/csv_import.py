@@ -23,7 +23,7 @@ FIELDS = ("category", "name", "brand", "description", "sale_unit", "quantity_ste
 MAX_FILE_BYTES = 256 * 1024
 MAX_ROWS = 500
 MAX_TEXT_LENGTH = 4000
-DECIMAL_PATTERN = re.compile(r"[0-9]+(?:[.,][0-9]{1,2})?\Z")
+INTEGER_PATTERN = re.compile(r"[0-9]+\Z")
 HTML_PATTERN = re.compile(r"<\s*/?\s*[a-zA-Z][^>]*>")
 CONTROL_PATTERN = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
@@ -120,8 +120,8 @@ def _decimal(value, label, *, default=None):
         if default is None:
             raise ValidationError(f"{label}: completá el valor obligatorio.")
         return default
-    if not DECIMAL_PATTERN.fullmatch(value):
-        raise ValidationError(f"{label}: usá un número sin separador de miles, por ejemplo 14500,00 o 14500.00.")
+    if not INTEGER_PATTERN.fullmatch(value):
+        raise ValidationError(f"{label}: usá sólo dígitos, sin decimales ni separador de miles, por ejemplo 14500.")
     return Decimal(value.replace(",", "."))
 
 
@@ -140,12 +140,12 @@ def _product(values, categories):
     if not clean[1]:
         errors.append("Nombre: completá el valor obligatorio.")
     if clean[4] not in Product.SaleUnit.values:
-        errors.append("Unidad de venta: usá kg, unidad o paquete.")
+        errors.append("Unidad de venta: usá 100 gr, kg, caja, pack, paquete o bolsa.")
     active = normalized(clean[9])
     if active not in {"", "si", "no", "true", "false", "1", "0"}:
         errors.append("Activo: usá Sí/No, True/False, 1/0 o dejalo vacío para Sí.")
     numbers = {}
-    for index, default in ((5, Decimal("0.10") if clean[4] == "kg" else Decimal("1.00")),
+    for index, default in ((5, Decimal("1.00")),
                            (6, None), (7, None)):
         try:
             numbers[FIELDS[index]] = None if index == 7 and not clean[index] else _decimal(clean[index], HEADERS[index], default=default)
@@ -169,8 +169,10 @@ def preview_rows(records, *, categories=None):
     for category in categories if categories is not None else Category.objects.all():
         categories_by_name[normalized(category.name)].append(category)
     existing = defaultdict(list)
-    for pk, category_id, name, brand in Product.objects.values_list("pk", "category_id", "name", "brand").order_by("pk"):
-        existing[(category_id, normalized(name), normalized(brand))].append(pk)
+    for pk, category_id, name, brand, unit, description in Product.objects.values_list(
+        "pk", "category_id", "name", "brand", "sale_unit", "description",
+    ).order_by("pk"):
+        existing[(category_id, normalized(name), normalized(brand), unit, normalized(description))].append(pk)
     rows, seen = [], {}
     for record in records:
         row = ImportRow(number=record["number"], values=list(record["values"]))
@@ -181,12 +183,13 @@ def preview_rows(records, *, categories=None):
             row.errors = error.messages
             continue
         product = row.product
-        identity = (product.category_id, normalized(product.name), normalized(product.brand))
+        identity = (product.category_id, normalized(product.name), normalized(product.brand),
+                    product.sale_unit, normalized(product.description))
         row.existing_ids = existing.get(identity, [])
         if len(row.existing_ids) > 1:
-            row.errors.append("Identidad ambigua: hay varios productos existentes con esta categoría, nombre y marca.")
+            row.errors.append("Identidad ambigua: hay varios productos existentes con esta categoría, nombre, marca, unidad y descripción.")
         elif row.existing_ids:
-            row.duplicate_reason = "Ya existe un producto con esta categoría, nombre y marca. Se omite sin actualizarlo."
+            row.duplicate_reason = "Ya existe un producto con esta categoría, nombre, marca, unidad y descripción. Se omite sin actualizarlo."
         elif identity in seen:
             previous = seen[identity]
             if all(getattr(product, key) == getattr(previous.product, key) for key in FIELDS[3:]):

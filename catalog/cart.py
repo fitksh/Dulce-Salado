@@ -1,7 +1,7 @@
 import hashlib
 import json
 import re
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 
@@ -9,8 +9,8 @@ from .models import Product
 
 
 def product_revision(product):
-    values = [product.name, product.brand, product.sale_unit, str(product.quantity_step),
-              str(product.retail_price), str(product.wholesale_price), product.wholesale_condition]
+    values = ["retail-only", product.name, product.brand, product.description, product.sale_unit,
+              str(product.quantity_step), str(product.retail_price)]
     return hashlib.sha256(json.dumps(values, ensure_ascii=False).encode()).hexdigest()[:20]
 
 
@@ -41,17 +41,20 @@ def calculate_cart(items):
         pk__in=[item["id"] for item in items], is_active=True, category__is_active=True,
     ).select_related("category")}
     rows, normalized, notices = [], [], []
-    total = Decimal("0.00")
+    total = Decimal("0")
     for item in items:
         entry = {key: item.get(key, "") for key in ("id", "quantity", "price_type", "revision", "sale_unit")}
         product = products.get(item["id"])
-        row = {"entry": entry, "product": product, "errors": [], "subtotal": None, "quantity_value": entry["quantity"]}
+        row = {"entry": entry, "product": product, "errors": [], "quantity_error": "", "subtotal": None, "quantity_value": entry["quantity"]}
         if product is None:
             row["errors"].append("Este producto ya no está disponible en el catálogo. Quitalo del carrito.")
         else:
+            if entry["price_type"] != "retail":
+                notices.append(f"{product.name}: el carrito ahora utiliza el precio publicado. Revisá el importe actualizado antes de continuar.")
+            entry["price_type"] = "retail"
             revision = product_revision(product)
             if entry["revision"] and revision != entry["revision"]:
-                notices.append(f"{product.name}: cambió la información del catálogo. Revisá precios, unidad y condiciones actuales.")
+                notices.append(f"{product.name}: cambió la información del catálogo. Revisá el precio y la unidad actuales.")
             entry["revision"] = revision
             if entry["sale_unit"] and entry["sale_unit"] != product.sale_unit:
                 row["errors"].append("Cambió la unidad de venta. Ingresá nuevamente la cantidad para la unidad actual.")
@@ -59,23 +62,30 @@ def calculate_cart(items):
             else:
                 entry["sale_unit"] = product.sale_unit
             text = entry["quantity"].replace(",", ".")
-            if not re.fullmatch(r"[0-9]{1,7}(\.[0-9]{1,2})?", text):
-                row["errors"].append("Ingresá una cantidad válida con hasta dos decimales.")
+            if re.fullmatch(r"-[0-9]+(\.[0-9]+)?", text) and Decimal(text) < 0:
+                row["quantity_error"] = "No se pueden ingresar valores negativos"
+            elif not re.fullmatch(r"[0-9]{1,7}(\.[0-9]{1,2})?", text):
+                row["quantity_error"] = "Ingresá una cantidad entera válida, sin decimales."
             else:
                 amount = Decimal(text)
-                if amount <= 0 or amount % product.quantity_step != 0:
-                    row["errors"].append(f"La cantidad debe ser positiva y múltiplo de {product.quantity_step} {product.sale_unit}.")
-                elif product.sale_unit != "kg" and amount != amount.to_integral_value():
-                    row["errors"].append("Unidad y paquete requieren cantidades enteras.")
+                if amount != amount.to_integral_value():
+                    row["quantity_error"] = "Solo se permiten cantidades enteras, sin decimales."
+                elif amount < 1:
+                    row["quantity_error"] = "Ingresá una cantidad de al menos 1."
                 else:
                     row["amount"] = amount
-            price = product.wholesale_price if entry["price_type"] == "wholesale" else product.retail_price
+                    if row["quantity_value"]:
+                        row["quantity_value"] = str(int(amount))
+            if row["quantity_error"]:
+                row["quantity_value"] = ""
+                row["errors"].append(row["quantity_error"])
+            price = product.retail_price
             row["price"] = price
-            if price is None:
-                row["errors"].append("El precio mayorista ya no está disponible. Seleccioná minorista para continuar.")
+            row["remove_on_decrease"] = row.get("amount", 0) <= 1 or not row["quantity_value"]
             if not row["errors"]:
-                row["subtotal"] = (price * row["amount"]).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                row["subtotal"] = price * row["amount"]
                 total += row["subtotal"]
+        row["visible_errors"] = [error for error in row["errors"] if error != row["quantity_error"]]
         rows.append(row)
         normalized.append(entry)
     valid = bool(rows) and all(not row["errors"] for row in rows)

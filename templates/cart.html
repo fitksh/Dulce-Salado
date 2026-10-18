@@ -1,16 +1,3 @@
 {% extends "base.html" %}
 {% block title %}Tu carrito{% endblock %}
-{% block content %}
-  <h1 class="visually-hidden">Revisá tu carrito.</h1>
-  <div id="cart-app" data-refresh-url="{% url 'cart_refresh' %}" data-review-url="{% url 'cart_review' %}" data-whatsapp-url="{% url 'cart_whatsapp' %}">
-    <form id="cart-token" hidden>{% csrf_token %}</form>
-    <p id="cart-loading" role="status">Consultando el catálogo vigente…</p>
-    <div id="cart-request-error" hidden></div>
-    <div id="cart-contents"></div>
-    <p class="notice">El carrito se guarda sólo en este navegador. No confirma un pedido.</p>
-    <dialog id="cart-review-dialog" aria-labelledby="review-title" aria-describedby="review-warning">
-      {% include "includes/notification.html" %}
-      <div id="cart-review-contents"></div>
-    </dialog>
-  </div>
-{% endblock %}
+{% block content %}{% include "includes/cart_app.html" %}{% endblock %}

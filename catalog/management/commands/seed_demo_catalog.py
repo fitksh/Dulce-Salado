@@ -50,7 +50,7 @@ def demo_images(directory, count):
             raise CommandError("--images-dir no contiene imágenes JPEG, PNG o WebP válidas; no se creó ningún producto.")
     except OSError as error:
         raise CommandError(f"No se pudo leer --images-dir: {error}. No se creó ningún producto.") from error
-    # Cada fuente aparece floor/ceil(45/N) veces; si N > 45, se eligen 45 distintas.
+    # Reparto equilibrado por defecto; el mapa opcional fija fotos por producto.
     generator = random.Random(0)
     generator.shuffle(images)
     assignments = [images[index % len(images)] for index in range(count)]
@@ -65,15 +65,43 @@ def normalize(value):
 def demo_specs():
     groups = json.loads(DATA_PATH.read_text(encoding="utf-8"))
     for category, rows in groups.items():
-        for index, (name, unit, step, retail, wholesale, condition) in enumerate(rows):
+        for row in rows:
+            name, unit, step, retail, wholesale, condition, metadata = row
             yield category, {
-                "name": f"[DEMO] {name}",
-                "brand": f"Marca Demo {category}" if index % 3 else "",
-                "description": f"{name}. Producto ficticio de demostración; precios de prueba.",
+                "name": name, "brand": metadata["brand"], "description": metadata["description"],
                 "sale_unit": unit, "quantity_step": Decimal(step),
                 "retail_price": Decimal(retail), "wholesale_price": Decimal(wholesale) if wholesale else None,
                 "wholesale_condition": condition, "is_active": True, "image": "",
             }
+
+
+def seed_key(category, spec):
+    return json.dumps([normalize(category), spec["name"], spec["sale_unit"], spec["description"]],
+                      ensure_ascii=False, separators=(",", ":"))
+
+
+def mapped_images(path, images, specs):
+    try:
+        mapping = json.loads(Path(path).read_text(encoding="utf-8"))
+        names = {spec["name"] for _, spec in specs}
+        if not isinstance(mapping, dict) or set(mapping) != names:
+            raise ValueError("El mapa debe incluir exactamente los nombres del seed.")
+        sources = dict(images)
+        assigned, occurrences = [], {}
+        for _, spec in specs:
+            name = spec["name"]
+            candidates = mapping[name]
+            candidates = [candidates] if isinstance(candidates, str) else candidates
+            if (not isinstance(candidates, list) or not candidates
+                    or any(not isinstance(candidate, str) or candidate not in sources for candidate in candidates)):
+                raise ValueError(f"Fotos inexistentes o inválidas para {name}.")
+            index = occurrences.get(name, 0)
+            source = candidates[index % len(candidates)]
+            occurrences[name] = index + 1
+            assigned.append((source, sources[source]))
+        return assigned
+    except (OSError, ValueError, TypeError) as error:
+        raise CommandError(f"Mapa de imágenes inválido: {error}. No se escribió ningún producto.") from error
 
 
 def fingerprint(product):
@@ -84,11 +112,12 @@ def fingerprint(product):
 
 
 class Command(BaseCommand):
-    help = "Simula 45 productos [DEMO] en DEBUG. --apply escribe; --remove simula su limpieza conservadora."
+    help = "Simula 45 presentaciones de prueba sin prefijo en DEBUG. --apply escribe; --remove simula su limpieza conservadora."
 
     def add_arguments(self, parser):
         parser.add_argument("--apply", action="store_true", help="Confirmar las escrituras de la operación indicada.")
         parser.add_argument("--remove", action="store_true", help="Limpiar sólo altas propias intactas; combinar con --apply para borrar.")
+        parser.add_argument("--image-map", help="JSON opcional: nombre de producto a archivo(s) del directorio de fotos.")
         parser.add_argument("--images-dir", help="Directorio local de fotos para nuevas altas; reparto reproducible, sin recursión.")
 
     def read_manifest(self, path, names):
@@ -97,7 +126,9 @@ class Command(BaseCommand):
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             entries = data["products"]
-            if data["version"] != 1 or not isinstance(entries, dict) or not set(entries).issubset(names):
+            if data["version"] == 1:
+                raise CommandError("Manifiesto anterior v1 conservado: no se escribió nada. Respaldá base/media y revisá la carga anterior antes de sustituirlo; no se adopta por nombre.")
+            if data["version"] != 2 or not isinstance(entries, dict) or not set(entries).issubset(names):
                 raise ValueError
             for entry in entries.values():
                 if (set(entry) not in ({"pk", "created_at", "fingerprint"},
@@ -116,7 +147,7 @@ class Command(BaseCommand):
             raise CommandError("Manifiesto inválido o ilegible: no se modificó ningún producto. Conservá el archivo para revisión.") from error
 
     def write_manifest(self, path, entries):
-        self.write_manifest_bytes(path, json.dumps({"version": 1, "products": entries}, ensure_ascii=False, indent=2).encode("utf-8"))
+        self.write_manifest_bytes(path, json.dumps({"version": 2, "products": entries}, ensure_ascii=False, indent=2).encode("utf-8"))
 
     def write_manifest_bytes(self, path, content):
         temporary = None
@@ -139,8 +170,12 @@ class Command(BaseCommand):
             raise CommandError("seed_demo_catalog sólo está permitido con DEBUG=True.")
         if options["remove"] and options["images_dir"] is not None:
             raise CommandError("--images-dir se usa sólo para crear; la limpieza no necesita el directorio original.")
+        if options.get("image_map") and (not options["images_dir"] or options["remove"]):
+            raise CommandError("--image-map requiere --images-dir y sólo se utiliza al crear.")
         specs = list(demo_specs())
         images = demo_images(options["images_dir"], len(specs)) if options["images_dir"] is not None else []
+        if options.get("image_map"):
+            images = mapped_images(options["image_map"], images, specs)
         self.created_images = []
         self.manifest_backup = None
         self.manifest_attempted = False
@@ -201,17 +236,18 @@ class Command(BaseCommand):
                 raise CommandError(f"Categoría {label}: debe existir una única categoría activa con ese nombre. No se escribió nada.")
             resolved[label] = matches[0]
         path = Path(settings.MEDIA_ROOT) / MANIFEST_NAME
-        entries = self.read_manifest(path, {spec["name"] for _, spec in specs})
+        entries = self.read_manifest(path, {seed_key(label, spec) for label, spec in specs})
         self.manifest_backup = path.read_bytes() if path.exists() else None
         changed = 0
         preserved = 0
         pending = []
         for index, (label, spec) in enumerate(specs):
             name = spec["name"]
-            record = entries.get(name)
+            key = seed_key(label, spec)
+            record = entries.get(key)
             owned = Product.objects.select_for_update().filter(pk=record["pk"]).first() if record else None
             identified = owned is not None and owned.created_at.isoformat() == record["created_at"]
-            collisions = Product.objects.filter(name=name)
+            collisions = Product.objects.filter(category=resolved[label], name=name, sale_unit=spec["sale_unit"], description=spec["description"])
             if options["remove"]:
                 if not identified:
                     if record or collisions.exists():
@@ -225,7 +261,7 @@ class Command(BaseCommand):
                 self.stdout.write(f"Eliminaría: {name}")
                 if options["apply"]:
                     owned.delete()
-                    del entries[name]
+                    del entries[key]
             else:
                 if identified or collisions.exists() or record:
                     preserved += 1
@@ -235,9 +271,9 @@ class Command(BaseCommand):
                 changed += 1
                 self.stdout.write(f"Crearía: {name}")
                 if options["apply"]:
-                    pending.append((product, images[index] if images else None))
+                    pending.append((product, images[index] if images else None, key))
         # Todos los datos/imágenes se validan antes de la primera alta o copia.
-        for product, source in pending:
+        for product, source, key in pending:
             image_hash = None
             if source:
                 source_name, data = source
@@ -256,9 +292,9 @@ class Command(BaseCommand):
                 image_hash = hashlib.sha256(content.read()).hexdigest()
             product.save()
             product.refresh_from_db()
-            entries[product.name] = {"pk": product.pk, "created_at": product.created_at.isoformat(), "fingerprint": fingerprint(product)}
+            entries[key] = {"pk": product.pk, "created_at": product.created_at.isoformat(), "fingerprint": fingerprint(product)}
             if image_hash:
-                entries[product.name].update(image=product.image.name, image_sha256=image_hash)
+                entries[key].update(image=product.image.name, image_sha256=image_hash)
         if options["apply"] and changed:
             self.manifest_attempted = True
             self.write_manifest(path, entries)

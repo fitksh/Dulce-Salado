@@ -18,14 +18,14 @@ class ProductTests(TestCase):
         self.category = Category.objects.create(name="Prueba", slug="prueba")
 
     def product(self, **kwargs):
-        return Product(category=self.category, name="Producto de test", retail_price=Decimal("10.25"), **kwargs)
+        return Product(category=self.category, name="Producto de test", retail_price=Decimal("10"), **kwargs)
 
-    def test_decimal_prices_and_optional_wholesale(self):
+    def test_integer_prices_and_optional_wholesale(self):
         product = self.product()
         product.full_clean()
         product.save()
         product.refresh_from_db()
-        self.assertEqual(product.retail_price, Decimal("10.25"))
+        self.assertEqual(product.retail_price, Decimal("10"))
         self.assertIsNone(product.wholesale_price)
         self.assertEqual(str(product), product.name)
 
@@ -42,8 +42,9 @@ class ProductTests(TestCase):
                 with self.assertRaises(ValidationError):
                     product.full_clean()
 
-    def test_kg_accepts_decimal_increment(self):
-        self.product(sale_unit="kg", quantity_step=Decimal("0.1")).full_clean()
+    def test_kg_rejects_decimal_increment(self):
+        with self.assertRaises(ValidationError):
+            self.product(sale_unit="kg", quantity_step=Decimal("0.1")).full_clean()
 
     def test_database_prevents_negative_price(self):
         with self.assertRaises(IntegrityError), transaction.atomic():
@@ -57,12 +58,13 @@ class ProductTests(TestCase):
             self.category.delete()
 
     def test_admin_default_increment_matches_unit(self):
-        for unit, expected in (("kg", "0.1"), ("unidad", "1"), ("paquete", "1")):
+        for unit, expected in ((unit, "1") for unit in Product.SaleUnit.values):
             form = ProductAdminForm(data={
                 "category": self.category.pk, "name": "Test", "sale_unit": unit,
-                "quantity_step": "", "retail_price": "100.50", "is_active": True,
+                "quantity_step": "", "retail_price": "100", "is_active": True,
             })
             self.assertTrue(form.is_valid(), form.errors)
+            self.assertNotIn("quantity_step", form.fields)
             self.assertEqual(form.save().quantity_step, Decimal(expected))
 
 
@@ -85,10 +87,10 @@ class CatalogAdminTests(TestCase):
         self.assertEqual(response.status_code, 302)
         response = self.client.post(reverse("admin:catalog_product_add"), {
             "category": Category.objects.get().pk, "name": "Test", "sale_unit": "kg",
-            "quantity_step": "", "retail_price": "99.99", "is_active": True,
+            "quantity_step": "", "retail_price": "99", "is_active": True,
         })
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(Product.objects.get().quantity_step, Decimal("0.10"))
+        self.assertEqual(Product.objects.get().quantity_step, Decimal("1"))
 
     def test_native_admin_success_messages_for_create_and_edit(self):
         owner = get_user_model().objects.create_superuser(username="messages-owner", email="", password="test")
@@ -100,13 +102,13 @@ class CatalogAdminTests(TestCase):
         category_data["name"] = "Categoría editada"
         response = self.client.post(reverse("admin:catalog_category_change", args=[category.pk]), category_data, follow=True)
         self.assert_native_success(response)
-        product_data = {"category": category.pk, "name": "Test", "sale_unit": "unidad", "quantity_step": "1", "retail_price": "10", "is_active": True}
+        product_data = {"category": category.pk, "name": "Test", "sale_unit": "pack", "quantity_step": "1", "retail_price": "10", "is_active": True}
         response = self.client.post(reverse("admin:catalog_product_add"), product_data, follow=True)
         self.assert_native_success(response)
-        product_data["retail_price"] = "12.50"
+        product_data["retail_price"] = "12"
         response = self.client.post(reverse("admin:catalog_product_change", args=[Product.objects.get().pk]), product_data, follow=True)
         self.assert_native_success(response)
-        self.assertEqual(Product.objects.get().retail_price, Decimal("12.50"))
+        self.assertEqual(Product.objects.get().retail_price, Decimal("12"))
 
     def assert_native_success(self, response):
         self.assertEqual(response.status_code, 200)

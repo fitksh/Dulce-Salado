@@ -1,10 +1,13 @@
 {% load l10n %}
 <div class="quantity-control">
-  <label for="{{ input_id_prefix }}{{ product.pk }}">Cantidad ({{ product.sale_unit }})</label>
-  <div class="quantity-stepper">
-    <button type="button" class="secondary quantity-adjust" data-direction="-1" aria-label="Reducir cantidad de {{ product.name }}" hidden>−</button>
-    <input id="{{ input_id_prefix }}{{ product.pk }}" name="quantity" class="{{ input_class }}" type="number" inputmode="{% if product.sale_unit == 'kg' %}decimal{% else %}numeric{% endif %}" min="{{ product.quantity_step|unlocalize }}" step="{{ product.quantity_step|unlocalize }}" max="9999999.99" value="{{ quantity }}" required aria-describedby="{{ input_id_prefix }}error-{{ product.pk }}{% if cart_error %} cart-errors-{{ product.pk }}{% endif %}">
-    <button type="button" class="secondary quantity-adjust" data-direction="1" aria-label="Aumentar cantidad de {{ product.name }}" hidden>+</button>
+  <label class="visually-hidden" for="{{ input_id_prefix }}{{ product.pk }}">Cantidad de {{ product.name }} ({{ product.sale_unit }})</label>
+  <div class="quantity-stepper" role="group" aria-label="Cantidad de {{ product.name }}">
+    <button id="cart-decrease-{{ product.pk }}" type="button" class="secondary quantity-adjust cart-adjust" data-direction="-1" data-remove="{{ remove_on_decrease|yesno:'true,false' }}" aria-label="{% if remove_on_decrease %}Quitar {{ product.name }} del carrito{% else %}Reducir cantidad de {{ product.name }}{% endif %}" hidden>
+      <span class="cart-minus" aria-hidden="true" {% if remove_on_decrease %}hidden{% endif %}>−</span>
+      <svg class="icon trash-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" {% if not remove_on_decrease %}hidden{% endif %}><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg>
+    </button>
+    <input id="{{ input_id_prefix }}{{ product.pk }}" name="quantity" class="{{ input_class }}" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="7" data-digits-only value="{{ quantity }}" required aria-describedby="{{ input_id_prefix }}error-{{ product.pk }}{% if cart_error %} cart-errors-{{ product.pk }} cart-quantity-server-error-{{ product.pk }}{% endif %}"{% if quantity_invalid %} aria-invalid="true"{% endif %}>
+    <button id="cart-increase-{{ product.pk }}" type="button" class="quantity-adjust cart-adjust" data-direction="1" aria-label="Aumentar cantidad de {{ product.name }}" hidden>+</button>
   </div>
-  <p id="{{ input_id_prefix }}error-{{ product.pk }}" class="notice error quantity-error" hidden></p>
+  <p id="{{ input_id_prefix }}error-{{ product.pk }}" class="visually-hidden quantity-error" hidden></p>
 </div>

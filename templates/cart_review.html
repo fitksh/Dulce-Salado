@@ -1,20 +1,19 @@
-{% load catalog_format %}
 {{ cart.items|json_script:"review-current-items" }}
+<input type="hidden" id="whatsapp-message-revision" value="{{ message_revision }}">
 <h2 id="review-title" class="visually-hidden" tabindex="-1">Antes de abrir WhatsApp</h2>
-<p class="notice warning" id="review-warning">{{ warning }}</p>
-{% if cart.notices %}<div class="notice warning" data-review-notice><ul>{% for notice in cart.notices %}<li>{{ notice }}</li>{% endfor %}</ul></div>{% endif %}
+{% if cart.notices %}<div class="visually-hidden" data-review-notice><ul>{% for notice in cart.notices %}<li>{{ notice }}</li>{% endfor %}</ul></div>{% endif %}
 {% if cart.valid %}
-  <p>Total estimado: <strong>{{ cart.total|ars }}</strong></p>
-  <label for="whatsapp-message">Mensaje que vas a preparar</label>
-  <textarea id="whatsapp-message" readonly rows="8">{{ message }}</textarea>
-  <button type="button" class="secondary" id="copy-message">Copiar mensaje completo</button>
+  <div class="review-message-heading">
+    <label for="whatsapp-message">Mensaje que vas a preparar</label>
+    <button type="button" class="secondary" id="copy-message" aria-label="Copiar mensaje completo" title="Copiar mensaje completo"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h3"/></svg></button>
+  </div>
+  <textarea id="whatsapp-message" readonly rows="10">{{ message }}</textarea>
 {% else %}
-  <p class="notice error" data-review-error>El carrito requiere correcciones. Volvé para revisar los artículos indicados.</p>
+  <p class="visually-hidden" data-review-error>El carrito requiere correcciones. Volvé para revisar los artículos indicados.</p>
 {% endif %}
-{% if not whatsapp_configured %}<p class="notice">El comercio todavía no habilitó su número de WhatsApp en el catálogo.</p>{% endif %}
-<p class="muted">WhatsApp abrirá con el texto preparado. Vos decidís enviarlo; el sitio no confirma ni registra pedidos.</p>
+{% if not whatsapp_configured %}<p class="visually-hidden" data-review-error>El comercio todavía no habilitó su número de WhatsApp en el catálogo.</p>{% endif %}
 <div class="dialog-actions">
-  <button type="button" class="secondary" id="review-cancel">Volver al carrito</button>
-  <button type="button" id="review-continue" {% if not cart.valid or not whatsapp_configured %}disabled{% endif %}>Continuar a WhatsApp</button>
+  <button type="button" class="secondary" id="review-cancel">Volver</button>
+  <button type="button" id="review-continue" {% if not cart.valid or not whatsapp_configured %}disabled{% endif %}>Enviar a WhatsApp</button>
 </div>
 {% if ready_url %}<p class="muted">Si no se abrió WhatsApp, usá este enlace. El envío lo hacés vos desde la aplicación.</p><a class="button" id="whatsapp-ready" href="{{ ready_url }}" target="_blank" rel="noopener noreferrer">Abrir WhatsApp con el mensaje preparado</a>{% endif %}

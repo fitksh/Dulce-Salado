@@ -60,12 +60,12 @@ def main():
             Product.objects.create(
                 category=category, name="QA Chocolate (test)", brand="QA Marca",
                 description="Producto descartable de prueba; no representa información comercial.",
-                sale_unit="kg", quantity_step="0.1", retail_price="100.25", wholesale_price="90.50",
+                sale_unit="kg", quantity_step="1", retail_price="100", wholesale_price="90",
                 wholesale_condition="Condición de test, confirmar con el comercio. " + "Datos ficticios de prueba. " * 8,
                 image=test_photo((600, 400)),
             )
             Product.objects.create(
-                category=other, name="QA Velas (test)", retail_price="25.10",
+                category=other, name="QA Velas (test)", retail_price="25",
                 image=test_photo((400, 400)),
             )
             Product.objects.bulk_create([

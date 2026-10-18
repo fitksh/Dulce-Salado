@@ -76,7 +76,7 @@ class ProductImageTests(TestCase):
 
     def test_admin_rejects_invalid_upload(self):
         form = ProductAdminForm(data={
-            "category": self.category.pk, "name": "Test", "sale_unit": "unidad", "retail_price": "10",
+            "category": self.category.pk, "name": "Test", "sale_unit": "pack", "retail_price": "10",
         }, files={"image": SimpleUploadedFile("fake.png", b"invalid")})
         self.assertFalse(form.is_valid())
         self.assertIn("image", form.errors)

@@ -22,6 +22,8 @@
   document.getElementById("image-dialog-close").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); });
   dialog.addEventListener("close", () => {
+    // El navegador ya restaura el foco; no volver a quitarlo si el usuario siguió con otro control.
+    if (document.activeElement !== document.body && !dialog.contains(document.activeElement)) return;
     const target = opener?.isConnected ? opener : Array.from(document.querySelectorAll(".product-image-open")).find(link => link.href === opener?.href);
     target?.focus({ preventScroll: true });
   });

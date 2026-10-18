@@ -32,8 +32,8 @@ class PDFTestCase(TestCase):
         self.category = Category.objects.create(name="Repostería & dietética", slug="reposteria")
         self.product = Product.objects.create(
             category=self.category, name="[DEMO] Chocolate ñ <especial>", brand="Café Águila",
-            description="Línea uno\nLínea dos & más", sale_unit="kg", retail_price="1234.56",
-            wholesale_price="1000.01", wholesale_condition="Desde 3 kg; confirmar con el comercio", is_active=False,
+            description="Línea uno\nLínea dos & más", sale_unit="kg", retail_price="1234",
+            wholesale_price="1000", wholesale_condition="Desde 3 kg; confirmar con el comercio", is_active=False,
         )
         self.staff = get_user_model().objects.create_user(username="pdf-staff", is_staff=True)
         self.urls = [reverse(f"admin:catalog_product_export_pdf_{variant}") for variant in ("images", "plain")]
@@ -111,7 +111,7 @@ class ProductPDFTests(PDFTestCase):
             text = " ".join(self.text(data).split())
             for value in ("Dulce y Salado", "Catálogo de productos", "Página 1", self.product.name,
                           self.category.name, self.product.brand, "Línea uno Línea dos & más",
-                          "Unidad de venta: kg", "Precio minorista: $ 1.234,56", "Precio mayorista: $ 1.000,01",
+                          "Unidad de venta: kg", "Precio minorista: $ 1.234", "Precio mayorista: $ 1.000",
                           self.product.wholesale_condition, "Estado: Inactivo", "Precios estimativos en ARS"):
                 self.assertIn(value, text)
             for forbidden in ("ID:", "Creado:", "Actualizado:", "Incremento", "Stock", "products/"):
@@ -224,7 +224,7 @@ class ProductPDFTests(PDFTestCase):
     def test_normal_products_stay_together_at_page_breaks(self):
         self.allow()
         Product.objects.bulk_create([
-            Product(category=self.category, name=f"Registro QA {i:02}", brand=f"Marca QA {i:02}", retail_price="15.25",
+            Product(category=self.category, name=f"Registro QA {i:02}", brand=f"Marca QA {i:02}", retail_price="15",
                     wholesale_condition=f"Condición QA {i:02}") for i in range(15)
         ])
         for url in self.urls:
@@ -233,7 +233,7 @@ class ProductPDFTests(PDFTestCase):
                 page = next(page for page in pages if f"Registro QA {index:02}" in page)
                 self.assertIn(f"Marca QA {index:02}", page)
                 self.assertIn(f"Condición QA {index:02}", page)
-                self.assertIn("Precio minorista: $ 15,25", page)
+                self.assertIn("Precio minorista: $ 15", page)
 
 
 class ProductTablePDFTests(PDFTestCase):
@@ -259,7 +259,7 @@ class ProductTablePDFTests(PDFTestCase):
             data = self.pdf(url)
             text = " ".join(self.text(data).split())
             for value in (self.product.name, self.product.brand, "Línea uno Línea dos & más",
-                          "$ 1.234,56", "$ 1.000,01", self.product.wholesale_condition, "Estado: Inactivo"):
+                          "$ 1.234", "$ 1.000", self.product.wholesale_condition, "Estado: Inactivo"):
                 self.assertIn(value, text)
             self.assertNotIn(self.category.name, text)
             self.assertNotIn("Categoría", text)
@@ -283,7 +283,7 @@ class ProductTablePDFTests(PDFTestCase):
     def test_repeated_headers_normal_rows_stay_together_and_long_text_is_complete(self):
         self.allow()
         Product.objects.bulk_create([
-            Product(category=self.category, name=f"Registro QA {i:02}", brand=f"Marca QA {i:02}", retail_price="15.25",
+            Product(category=self.category, name=f"Registro QA {i:02}", brand=f"Marca QA {i:02}", retail_price="15",
                     description=f"Descripción QA {i:02}. " * 4, wholesale_condition=f"Condición QA {i:02}")
             for i in range(25)
         ])

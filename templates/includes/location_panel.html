@@ -1,0 +1,13 @@
+<details id="ubicacion" class="location-panel" data-header-panel{% if request.GET.ubicacion == '1' %} open{% endif %}>
+  <summary class="header-control">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+    Ubicación <svg class="disclosure-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg>
+  </summary>
+  <div class="header-panel-content location-details">
+    {% if business.location_url %}
+      <div class="location-address"><address>{{ business.address }}</address><a class="maps-link" href="{{ business.location_url }}" target="_blank" rel="noopener noreferrer" aria-label="Abrir en Google Maps (se abre en otra pestaña)"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></a></div>
+    {% else %}
+      <p>La dirección del comercio todavía no está disponible.</p>
+    {% endif %}
+  </div>
+</details>

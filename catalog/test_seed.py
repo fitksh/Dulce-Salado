@@ -14,8 +14,18 @@ from django.test import TestCase, override_settings
 from PIL import Image
 
 from .images import optimize_product_image
-from .management.commands.seed_demo_catalog import MANIFEST_NAME, Command, demo_images, demo_specs
+from .management.commands.seed_demo_catalog import (
+    MANIFEST_NAME,
+    Command,
+    demo_images,
+    demo_specs,
+    seed_key,
+)
 from .models import Category, Product
+
+
+def product_key(product):
+    return seed_key(product.category.name, {"name": product.name, "sale_unit": product.sale_unit, "description": product.description})
 
 
 @override_settings(DEBUG=True)
@@ -32,7 +42,7 @@ class DemoSeedTests(TestCase):
         self.categories = [Category.objects.create(name=name, slug=slug) for name, slug in (
             ("DIETETICA", "dietetica"), ("Cotillón", "cotillon"), ("Repostería", "reposteria"),
         )]
-        self.commercial = Product.objects.create(category=self.categories[0], name="Comercial", retail_price="123.45")
+        self.commercial = Product.objects.create(category=self.categories[0], name="Comercial", retail_price="123")
         self.manifest = Path(self.media.name) / MANIFEST_NAME
 
     def seed(self, *args):
@@ -59,7 +69,7 @@ class DemoSeedTests(TestCase):
                 for path in Path(self.media.name).rglob("*") if path.is_file()}
 
     def photo_assignment(self):
-        return {product.name: hashlib.sha256(Path(product.image.path).read_bytes()).hexdigest()
+        return {product_key(product): hashlib.sha256(Path(product.image.path).read_bytes()).hexdigest()
                 for product in Product.objects.exclude(pk=self.commercial.pk)}
 
     def test_default_dry_run_does_not_write_database_or_manifest(self):
@@ -67,20 +77,20 @@ class DemoSeedTests(TestCase):
         self.assertEqual(Product.objects.count(), 1)
         self.assertFalse(self.manifest.exists())
 
-    def test_apply_creates_45_valid_products_15_per_existing_category_without_images(self):
+    def test_apply_creates_45_valid_products_per_existing_category_without_images(self):
         self.seed("--apply")
         self.assertEqual(Category.objects.count(), 3)
         self.assertEqual(Product.objects.count(), 46)
         demos = Product.objects.exclude(pk=self.commercial.pk)
         for category in self.categories:
-            self.assertEqual(demos.filter(category=category).count(), 15)
-        self.assertEqual(set(demos.values_list("sale_unit", flat=True)), {"kg", "unidad", "paquete"})
-        self.assertEqual(set(demos.filter(sale_unit="kg").values_list("quantity_step", flat=True)), {Decimal("0.10"), Decimal("0.25")})
+            self.assertEqual(demos.filter(category=category).count(), {"dietetica": 12, "cotillon": 3, "reposteria": 30}[category.slug])
+        self.assertEqual(set(demos.values_list("sale_unit", flat=True)), set(Product.SaleUnit.values))
+        self.assertEqual(set(demos.values_list("quantity_step", flat=True)), {Decimal("1")})
         self.assertTrue(demos.filter(wholesale_price__isnull=True).exists())
-        self.assertGreater(demos.exclude(wholesale_condition="").values("wholesale_condition").distinct().count(), 3)
+        self.assertGreaterEqual(demos.exclude(wholesale_condition="").values("wholesale_condition").distinct().count(), 3)
         for product in demos:
             product.full_clean()
-            self.assertTrue(product.name.startswith("[DEMO] "))
+            self.assertNotIn("[DEMO]", product.name)
             self.assertTrue(product.description)
             self.assertTrue(product.is_active)
             self.assertFalse(product.image)
@@ -91,17 +101,17 @@ class DemoSeedTests(TestCase):
 
     def test_repeated_apply_preserves_manual_edits_even_after_rename(self):
         self.seed("--apply")
-        demo = Product.objects.filter(name__startswith="[DEMO]").first()
+        demo = Product.objects.exclude(pk=self.commercial.pk).first()
         demo.name = "Demo editado manualmente"
-        demo.retail_price = "999.99"
+        demo.retail_price = "999"
         demo.save()
         original_pks = set(Product.objects.values_list("pk", flat=True))
         self.seed("--apply")
         self.assertEqual(set(Product.objects.values_list("pk", flat=True)), original_pks)
         demo.refresh_from_db()
-        self.assertEqual(str(demo.retail_price), "999.99")
+        self.assertEqual(str(demo.retail_price), "999")
         self.commercial.refresh_from_db()
-        self.assertEqual(str(self.commercial.retail_price), "123.45")
+        self.assertEqual(str(self.commercial.retail_price), "123")
 
     def test_missing_ambiguous_or_inactive_categories_abort_before_any_writes(self):
         for case in ("missing", "ambiguous", "inactive"):
@@ -137,7 +147,7 @@ class DemoSeedTests(TestCase):
         collision = Product.objects.create(category=self.categories[0], **spec)
         unrelated = Product.objects.create(category=self.categories[0], name="[DEMO] Comercial ajeno", retail_price=1)
         self.seed("--apply")
-        edited = Product.objects.filter(name__startswith="[DEMO]").exclude(pk__in=[collision.pk, unrelated.pk]).first()
+        edited = Product.objects.exclude(pk__in=[self.commercial.pk, collision.pk, unrelated.pk]).first()
         edited.description = "Editado manualmente"
         edited.save()
         before = Product.objects.count()
@@ -151,8 +161,8 @@ class DemoSeedTests(TestCase):
 
     def test_cleanup_preserves_duplicate_names_and_missing_manifest(self):
         self.seed("--apply")
-        original = Product.objects.filter(name__startswith="[DEMO]").first()
-        clone = Product.objects.create(category=original.category, name=original.name, retail_price=1)
+        original = Product.objects.exclude(pk=self.commercial.pk).first()
+        clone = Product.objects.create(category=original.category, name=original.name, sale_unit=original.sale_unit, description=original.description, retail_price=1)
         self.seed("--remove", "--apply")
         self.assertEqual(Product.objects.filter(pk__in=[original.pk, clone.pk]).count(), 2)
         self.manifest.unlink()
@@ -172,7 +182,7 @@ class DemoSeedTests(TestCase):
         self.assertEqual(Product.objects.count(), 1)
         self.manifest.unlink()
         self.seed("--apply")
-        original = Product.objects.filter(name__startswith="[DEMO]").first()
+        original = Product.objects.exclude(pk=self.commercial.pk).first()
         pk, name, category = original.pk, original.name, original.category
         original.delete()
         replacement = Product.objects.create(pk=pk, category=category, name=name, retail_price=1)
@@ -195,10 +205,10 @@ class DemoSeedTests(TestCase):
         first_paths = {product.image.name for product in demos}
         self.assertEqual(len(first_paths), 45)
         distribution = Counter()
-        specs = {spec["name"]: spec for _, spec in demo_specs()}
+        specs = {seed_key(label, spec): spec for label, spec in demo_specs()}
         for product in demos:
             self.assertRegex(product.image.name, r"^products/[0-9a-f]{32}\.webp$")
-            for field, expected in specs[product.name].items():
+            for field, expected in specs[product_key(product)].items():
                 if field != "image":
                     self.assertEqual(getattr(product, field), expected)
             with Image.open(product.image.path) as photo:
@@ -211,8 +221,8 @@ class DemoSeedTests(TestCase):
         self.assertGreater(len(set(list(assignment.values())[:9])), 1)
         entries = json.loads(self.manifest.read_text(encoding="utf-8"))["products"]
         for product in demos:
-            self.assertEqual(entries[product.name]["image"], product.image.name)
-            self.assertEqual(entries[product.name]["image_sha256"], assignment[product.name])
+            self.assertEqual(entries[product_key(product)]["image"], product.image.name)
+            self.assertEqual(entries[product_key(product)]["image_sha256"], assignment[product_key(product)])
         with self.captureOnCommitCallbacks(execute=True):
             self.seed("--remove", "--apply")
         self.assertEqual(list(Product.objects.all()), [self.commercial])
@@ -243,7 +253,7 @@ class DemoSeedTests(TestCase):
         self.with_images("--apply")
         demo = Product.objects.exclude(pk=self.commercial.pk).first()
         demo.name = "Demo renombrado con foto"
-        demo.retail_price = "999.99"
+        demo.retail_price = "999"
         demo.save()
         before = list(Product.objects.order_by("pk").values())
         files = self.media_files()
@@ -369,7 +379,7 @@ class DemoSeedTests(TestCase):
 
     def test_manifest_failure_removes_all_new_copies_and_restores_previous_manifest_bytes(self):
         self.source()
-        previous = b'{"version":1,"products":{}}\n'
+        previous = b'{"version":2,"products":{}}\n'
         self.manifest.write_bytes(previous)
         write = Command.write_manifest
 
@@ -391,7 +401,7 @@ class DemoSeedTests(TestCase):
         Product.objects.filter(pk=self.commercial.pk).update(image=shared.image.name)
         edited.description = "Demo modificado"
         edited.save()
-        clone = Product.objects.create(category=duplicated.category, name=duplicated.name, retail_price=1)
+        clone = Product.objects.create(category=duplicated.category, name=duplicated.name, sale_unit=duplicated.sale_unit, description=duplicated.description, retail_price=1)
         unrelated = Product.objects.create(category=self.categories[0], name="[DEMO] Ajeno", retail_price=1)
         before = self.media_files()
         self.seed("--remove")
@@ -476,3 +486,43 @@ class DemoSeedTests(TestCase):
                     self.assertEqual(photo.size, (1, 1200))
                     kinds.add("oriented")
         self.assertEqual(kinds, {"transparent", "oriented"})
+
+    def test_same_title_presentations_are_independent_idempotent_and_removable(self):
+        self.seed("--apply")
+        rows = list(Product.objects.filter(name="Baño de repostería blanco"))
+        self.assertEqual(len(rows), 6)
+        self.assertTrue({"100 gr", "kg", "paquete"} <= {row.sale_unit for row in rows})
+        self.assertEqual(len({row.pk for row in rows}), 6)
+        self.assertEqual(len({row.description for row in rows}), 6)
+        before = list(Product.objects.order_by("pk").values())
+        self.seed("--apply")
+        self.assertEqual(list(Product.objects.order_by("pk").values()), before)
+        self.seed("--remove", "--apply")
+        self.assertEqual(list(Product.objects.all()), [self.commercial])
+
+    def test_legacy_manifest_is_preserved_and_never_adopted_by_name(self):
+        original = json.dumps({"version": 1, "products": {}})
+        self.manifest.write_text(original)
+        with self.assertRaisesMessage(CommandError, "anterior v1 conservado"):
+            self.seed("--apply")
+        self.assertEqual(self.manifest.read_text(), original)
+        self.assertEqual(list(Product.objects.all()), [self.commercial])
+
+    def test_image_map_matches_repeated_presentations_and_rejects_missing_files(self):
+        source = self.source("white.png")
+        other = self.source("other.png", color=(10, 20, 30))
+        mapping = {spec["name"]: other.name for _, spec in demo_specs()}
+        mapping["Baño de repostería blanco"] = [source.name]
+        path = self.images_dir / "map.json"
+        path.write_text(json.dumps(mapping))
+        self.with_images("--image-map", str(path), "--apply")
+        photos = list(Product.objects.filter(name="Baño de repostería blanco"))
+        self.assertEqual(len({row.image.name for row in photos}), 6)
+        self.assertEqual(len({Path(row.image.path).read_bytes() for row in photos}), 1)
+        self.assertNotEqual(Path(photos[0].image.path).read_bytes(), Path(Product.objects.get(name="Pasta de maní natural", sale_unit="kg").image.path).read_bytes())
+        mapping["Baño de repostería blanco"] = "../missing.png"
+        path.write_text(json.dumps(mapping))
+        before = self.media_files()
+        with self.assertRaisesMessage(CommandError, "Mapa de imágenes inválido"):
+            self.with_images("--image-map", str(path), "--apply")
+        self.assertEqual(self.media_files(), before)

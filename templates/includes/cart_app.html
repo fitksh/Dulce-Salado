@@ -1,0 +1,11 @@
+<h1 class="visually-hidden">Revisá tu carrito.</h1>
+  <div id="cart-app" data-panel="{{ cart_panel|yesno:'1,0' }}" data-refresh-url="{% url 'cart_refresh' %}" data-review-url="{% url 'cart_review' %}" data-whatsapp-url="{% url 'cart_whatsapp' %}">
+    <form id="cart-token" hidden>{% csrf_token %}</form>
+    <p id="cart-loading" class="visually-hidden" role="status"></p>
+    <div id="cart-request-error" hidden></div>
+    <div id="cart-contents"></div>
+    <dialog id="cart-review-dialog" aria-labelledby="review-title">
+      {% include "includes/notification.html" %}
+      <div id="cart-review-contents"></div>
+    </dialog>
+  </div>

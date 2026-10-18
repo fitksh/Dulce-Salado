@@ -2,28 +2,6 @@
 {% load catalog_format l10n %}
 {% block title %}Catálogo{% endblock %}
 {% block content %}
-  <form method="get" class="search-form" role="search">
-    <label class="visually-hidden" for="catalog-search">Buscar productos</label>
-    <div class="search-controls">
-      <input type="search" id="catalog-search" name="q" value="{{ query }}" placeholder="Buscar productos, marcas y más..." maxlength="180">
-      {% if selected_category %}<input type="hidden" name="categoria" value="{{ selected_category.slug }}">{% endif %}
-      <button type="submit">Buscar</button>
-    </div>
-  </form>
-  <form method="get" class="category-select">
-    <label class="visually-hidden" for="category-filter">Categoría</label>
-    <input type="hidden" name="q" value="{{ query }}">
-    <div class="search-controls"><select id="category-filter" name="categoria">
-      <option value="">Todas las categorías</option>
-      {% for category in categories %}<option value="{{ category.slug }}" {% if selected_category.pk == category.pk %}selected{% endif %}>{{ category.name }}</option>{% endfor %}
-    </select><button type="submit" class="secondary">Filtrar</button></div>
-  </form>
-  <nav class="categories" aria-label="Filtrar por categoría">
-    <a class="chip{% if not selected_category %} selected{% endif %}" href="?q={{ query|urlencode }}" {% if not selected_category %}aria-current="page"{% endif %}>Todas las categorías</a>
-    {% for category in categories %}
-      <a class="chip{% if selected_category.pk == category.pk %} selected{% endif %}" href="?categoria={{ category.slug|urlencode }}&amp;q={{ query|urlencode }}" {% if selected_category.pk == category.pk %}aria-current="page"{% endif %}>{{ category.name }}</a>
-    {% endfor %}
-  </nav>
   <div class="section-heading">
     <h1 id="catalog-title" class="visually-hidden">Nuestros productos</h1>
     <p>{% if page.paginator.count %}{{ page.start_index }}–{{ page.end_index }} de{% else %}0 de{% endif %} {{ page.paginator.count }} producto{{ page.paginator.count|pluralize:"s" }}{% if query %} para “{{ query }}”{% endif %}</p>
@@ -41,24 +19,21 @@
           {% endif %}
         </div>
         <div class="product-info">
-          <p class="product-category">{{ product.category.name }}</p>
           <h3 id="product-{{ product.pk }}">{{ product.name }}</h3>
-          {% if product.brand %}<p class="product-brand">{{ product.brand }}</p>{% endif %}
           {% if product.description %}<p class="product-description">{{ product.description }}</p>{% endif %}
-          <dl class="prices">
-            <div><dt>Minorista</dt><dd>{{ product.retail_price|ars }} <span>/ {{ product.sale_unit }}</span></dd></div>
-            {% if product.wholesale_price is not None %}<div><dt>Mayorista</dt><dd>{{ product.wholesale_price|ars }} <span>/ {{ product.sale_unit }}</span></dd></div>{% endif %}
-          </dl>
-          {% if product.wholesale_price is not None and product.wholesale_condition %}<p class="wholesale-note">{{ product.wholesale_condition }}</p>{% endif %}
-          <form class="add-product" data-id="{{ product.pk }}" data-revision="{{ product.cart_revision }}" data-unit="{{ product.sale_unit }}">
-            <div class="product-controls">
-              {% include "includes/quantity_control.html" with product=product input_id_prefix="quantity-" quantity=product.quantity_step|unlocalize input_class="" %}
-              <div><label for="price-{{ product.pk }}">Tipo de precio</label>
-                <select id="price-{{ product.pk }}" name="price_type"><option value="retail" selected>Minorista</option>{% if product.wholesale_price is not None %}<option value="wholesale">Mayorista</option>{% endif %}</select>
-              </div>
+          <p class="product-price"><span class="visually-hidden">Precio: </span>{{ product.retail_price|ars }} <span>/ {{ product.sale_unit }}</span></p>
+          <div class="add-product" data-id="{{ product.pk }}" data-name="{{ product.name }}" data-revision="{{ product.cart_revision }}" data-unit="{{ product.sale_unit }}">
+            <div class="catalog-stepper" role="group" aria-label="Cantidad de {{ product.name }}">
+              <button type="button" class="secondary catalog-decrease" aria-label="Eliminar {{ product.name }} del carrito" hidden>
+                <span class="catalog-minus" aria-hidden="true" hidden>−</span>
+                <svg class="icon catalog-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg>
+              </button>
+              <input type="text" class="catalog-amount" inputmode="numeric" pattern="[0-9]+" maxlength="7" data-digits-only aria-label="Cantidad de {{ product.name }} en el carrito" hidden>
+              <button type="button" class="catalog-increase" aria-label="Agregar {{ product.name }} al carrito" aria-describedby="catalog-error-{{ product.pk }}" hidden>+</button>
             </div>
-            <button type="submit">Agregar al carrito</button>
-          </form>
+            <p id="catalog-error-{{ product.pk }}" class="visually-hidden catalog-error" hidden></p>
+          </div>
+          <noscript><p>Activá JavaScript para armar el carrito.</p></noscript>
         </div>
       </article>
     {% empty %}

@@ -1,0 +1,11 @@
+<form action="{% url 'home' %}" method="get" class="search-form" role="search">
+  <label class="visually-hidden" for="catalog-search">Buscar productos</label>
+  <div class="search-controls">
+    <div class="search-field">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
+      <input type="search" id="catalog-search" name="q" value="{{ query|default:'' }}" placeholder="Buscar productos, marcas y más..." maxlength="180">
+    </div>
+    {% if selected_category %}<input type="hidden" name="categoria" value="{{ selected_category.slug }}">{% endif %}
+    <button type="submit">Buscar</button>
+  </div>
+</form>

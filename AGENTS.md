@@ -24,7 +24,7 @@ Python 3.12, Django 5.2 LTS, PostgreSQL, templates Django, CSS, JavaScript vanil
 React, Vue, Svelte, SPA, DRF, GraphQL, Celery, Redis, microservicios, cuentas de clientes, pedidos persistidos, inventario, pagos, envíos, facturación, reglas automáticas de mayorista, imágenes múltiples por producto, API de WhatsApp Business, analítica avanzada, PWA, integración cloud storage o infraestructura VPS.
 
 ## Negocio y seguridad
-- El mayorista lo selecciona el cliente manualmente; por defecto minorista, sin evaluar automáticamente condiciones. Se avisa que corresponde confirmación comercial.
+- El catálogo público, carrito y mensaje utilizan sólo retail_price vigente, sin selector ni etiqueta de tarifa. Mayorista/condiciones se conservan en Admin, CSV y PDF; no se aplican al carrito. Avisar y exigir nueva revisión si un carrito anterior se convierte de mayorista a minorista.
 - Los precios son estimativos, en ARS, y la disponibilidad se consulta al comercio.
 - No almacenar precios como autoridad en `localStorage`; refrescar desde catálogo vigente al abrir/revisar el carrito.
 - No crear pedidos ni afirmar que el WhatsApp fue enviado. `wa.me` precarga un mensaje, cuyo envío hace el cliente.

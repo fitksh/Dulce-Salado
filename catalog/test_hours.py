@@ -8,6 +8,7 @@ from django.urls import reverse
 
 from .business import BUSINESS_TIME_ZONE, business_hours
 from .models import BusinessSettings, OpeningInterval
+from .whatsapp_templates import DEFAULT_MESSAGE_TEMPLATE, DEFAULT_PRODUCT_TEMPLATE
 
 
 class OpeningHoursTests(TestCase):
@@ -76,7 +77,8 @@ class OpeningHoursAdminTests(TestCase):
         self.url = reverse("admin:catalog_businesssettings_change", args=[1])
 
     def save_intervals(self, rows):
-        data = {"address": "", "maps_url": "", "hours_initialized": "on", "opening_intervals-TOTAL_FORMS": len(rows), "opening_intervals-INITIAL_FORMS": sum(bool(row.get("id")) for row in rows)}
+        data = {"address": "", "maps_url": "", "hours_initialized": "on",
+                "whatsapp_message_template": DEFAULT_MESSAGE_TEMPLATE, "whatsapp_product_template": DEFAULT_PRODUCT_TEMPLATE, "opening_intervals-TOTAL_FORMS": len(rows), "opening_intervals-INITIAL_FORMS": sum(bool(row.get("id")) for row in rows)}
         for index, row in enumerate(rows):
             data.update({f"opening_intervals-{index}-{key}": value for key, value in row.items()})
         return self.client.post(self.url, data)

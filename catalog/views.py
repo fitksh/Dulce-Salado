@@ -5,11 +5,12 @@ from django.core.paginator import Paginator
 from django.db.models import Case, IntegerField, Q, Value, When
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.cache import never_cache
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.http import require_POST
 
 from .cart import calculate_cart, parse_items, product_revision
 from .models import Category, Product
-from .whatsapp import PRICE_WARNING, whatsapp_message, whatsapp_url
+from .whatsapp import message_configuration, whatsapp_message, whatsapp_url
 
 
 def catalog_list(request):
@@ -28,7 +29,8 @@ def catalog_list(request):
             When(brand__icontains=query, then=Value(1)),
             default=Value(2), output_field=IntegerField(),
         )).order_by("search_rank", "name", "pk")
-    page = Paginator(products, 12).get_page(request.GET.get("page"))
+    # Veinte completa filas tanto de cuatro como de cinco columnas.
+    page = Paginator(products, 20).get_page(request.GET.get("page"))
     for product in page:
         product.cart_revision = product_revision(product)
     return render(request, "home.html", {
@@ -36,12 +38,10 @@ def catalog_list(request):
     })
 
 
+@xframe_options_sameorigin
 def cart_page(request):
-    return render(request, "cart.html")
-
-
-def directions_page(request):
-    return render(request, "directions.html")
+    panel = request.GET.get("panel") == "1"
+    return render(request, "cart_frame.html" if panel else "cart.html", {"cart_panel": panel})
 
 
 @require_POST
@@ -51,13 +51,16 @@ def cart_refresh(request):
         cart = calculate_cart(parse_items(request.POST.get("items")))
     except ValidationError as error:
         return render(request, "cart_error.html", {"error": error.messages[0]}, status=400)
-    return render(request, "cart_contents.html", {"cart": cart})
+    return render(request, "cart_contents.html", {"cart": cart, "cart_panel": request.POST.get("panel") == "1"})
 
 
-def render_review(request, cart, ready_url=""):
+def render_review(request, cart, configuration=None, ready=False):
+    configuration = configuration if configuration is not None else message_configuration()
+    message = whatsapp_message(cart, configuration)
     return render(request, "cart_review.html", {
-        "cart": cart, "warning": PRICE_WARNING, "message": whatsapp_message(cart),
-        "whatsapp_configured": bool(settings.WHATSAPP_PHONE), "ready_url": ready_url,
+        "cart": cart, "message": message,
+        "message_revision": configuration["revision"],
+        "whatsapp_configured": bool(settings.WHATSAPP_PHONE), "ready_url": whatsapp_url(message) if ready else "",
     })
 
 
@@ -79,8 +82,15 @@ def cart_whatsapp(request):
         cart = calculate_cart(submitted)
     except ValidationError as error:
         return render(request, "cart_error.html", {"error": error.messages[0]}, status=400)
-    changed = any(before.get("revision") != after["revision"] for before, after in zip(submitted, cart["items"]))
+    changed = any(
+        before.get("revision") != after["revision"] or before["price_type"] != after["price_type"]
+        for before, after in zip(submitted, cart["items"])
+    )
     if changed and not cart["notices"]:
         cart["notices"].append("Revisá la información actual del catálogo antes de continuar.")
+    configuration = message_configuration()
+    if request.POST.get("message_revision") != configuration["revision"]:
+        cart["notices"].append("El mensaje del comercio cambió. Revisá el texto actualizado antes de continuar.")
+        changed = True
     ready = request.POST.get("accepted") == "yes" and cart["valid"] and not changed
-    return render_review(request, cart, whatsapp_url(whatsapp_message(cart)) if ready else "")
+    return render_review(request, cart, configuration, ready)

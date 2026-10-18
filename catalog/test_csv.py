@@ -15,7 +15,7 @@ class ProductCSVTests(TestCase):
         self.other = Category.objects.create(name="Cotillón", slug="cotillon")
         self.product = Product.objects.create(
             category=self.category, name="Chocolate", brand='Marca; "Especial"', description="Línea 1\nLínea 2",
-            sale_unit="kg", quantity_step="0.10", retail_price="1234.56", wholesale_price="1000.01",
+            sale_unit="kg", quantity_step="1", retail_price="1234", wholesale_price="1000",
             wholesale_condition="Consultar", is_active=False,
         )
         Product.objects.create(category=self.other, name="Velas", retail_price="20")
@@ -43,21 +43,21 @@ class ProductCSVTests(TestCase):
         self.staff.save()
         self.assertEqual(self.client.get(self.url).status_code, 302)
 
-    def test_encoding_exact_columns_and_excel_decimal_format(self):
+    def test_encoding_exact_columns_and_integer_price_format(self):
         self.allow()
         response = self.client.get(self.url)
         self.assertTrue(response.content.startswith(b"\xef\xbb\xbf"))
         self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")
         rows = self.rows(response)
         self.assertEqual(rows[0], ["Categoría", "Nombre", "Marca", "Descripción", "Unidad de venta", "Incremento de cantidad", "Precio minorista", "Precio mayorista", "Condición mayorista", "Activo"])
-        self.assertEqual(rows[1], ["Repostería", "Chocolate", 'Marca; "Especial"', "Línea 1\nLínea 2", "kg", "0,10", "1234,56", "1000,01", "Consultar", "No"])
+        self.assertEqual(rows[1], ["Repostería", "Chocolate", 'Marca; "Especial"', "Línea 1\nLínea 2", "kg", "1", "1234", "1000", "Consultar", "No"])
         self.assertEqual(rows[2][7], "")
         self.assertEqual(rows[2][-1], "Sí")
 
     def test_filters_search_and_all_pages_match_admin_queryset(self):
         self.allow()
         Product.objects.bulk_create([
-            Product(category=self.category, name=f"Chocolate {i:03}", sale_unit="kg", quantity_step="0.1", retail_price="1", is_active=False)
+            Product(category=self.category, name=f"Chocolate {i:03}", sale_unit="kg", quantity_step="1", retail_price="1", is_active=False)
             for i in range(110)
         ])
         filters = {"category__id__exact": self.category.pk, "sale_unit__exact": "kg", "is_active__exact": "0", "q": "chocolate", "p": "1"}
