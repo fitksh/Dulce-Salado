@@ -187,3 +187,7 @@ Título numerado/subtotal/total con negrita nativa de WhatsApp, marca opcional, 
 ## Pedidos: corrección del resultado y detalle — 18/10/2026
 
 Éxito centrado en la ventana principal tras cerrar el carrito; dos párrafos exactos, dos acciones compactas iguales a la derecha y sin enlace adicional. Diálogo nativo con nombre/descripción, teclado y foco de retorno. Formulario con radios horizontales, dirección calle/número en grilla y ciudad debajo, sin campo adicional. CTA con SVG WhatsApp de 24 px y gap 9 px. Detalle en una sola card de 860 px, marca interna, productos compactos con subtotales a la derecha y total destacado; contenido largo fluye sin recorte. Validación a 320/390/768/1280 y axe.
+
+## Detalle compacto de pedidos — ajuste posterior del 18/10/2026
+
+Última decisión para /orders/: una card con padding moderado, encabezado marca/código-fecha en dos columnas desde 700 px y apilado debajo. Se retiran los avisos visuales, marca de artículos, label Subtotal y modalidad; sólo se muestra Dirección cuando corresponde. Nombre destacado seguido de descripción literal entre paréntesis y peso normal, cantidad/precio unitario debajo e importe separado a la derecha (fila propia hasta 600 px). Separadores finos, filas compactas y total prominente. Centrado de contenido corto y scroll natural de contenido largo. Sin modificación de instantáneas o WhatsApp.

@@ -280,3 +280,13 @@ Cierre funcional de pedidos Raspberry: revisión f5ddd0a verificada en imagen AR
 
 El hash publicado, CI y despliegue efectivo se verifican después del commit y se informan con sus evidencias en el cierre de la tarea. El procedimiento incluye respaldo restaurado, comparación de datos y actualización exclusiva de web; no se reinicializa el catálogo.
 - [ ] Dominio HTTPS público y comprobación del enlace en WhatsApp desde fuera de la LAN.
+
+## Detalle de pedidos compacto — 18/10/2026
+
+- [x] Encabezado adaptable, textos redundantes retirados, presentación junto al nombre e importes compactos.
+- [x] Dirección condicional y privacidad conservadas; campos históricos y mensajes sin cambios.
+- [x] Pruebas Django del detalle y Chromium de texto largo, descripciones, importes y accesibilidad en cuatro anchos.
+
+- [x] Regresión completa: 226 Django, 9 Node y 93 Chromium sin fallos ni omisiones; check/Ruff/migraciones/diff correctos.
+
+El commit publicado, CI y despliegue se comprueban al cierre y se informan con sus resultados reales. Esta actualización no requiere migraciones ni nuevos pedidos en la Raspberry.

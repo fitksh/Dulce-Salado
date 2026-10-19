@@ -158,6 +158,15 @@ test("Pedidos persistidos: datos, errores, resultado, reenvío y privacidad", { 
         assert.match(await detail.locator("h1").innerText(), /DYS-/);
         assert.equal(await detail.locator("header").count(), 0);
         assert.equal(await detail.locator(".order-detail .brand-logo").count(), 1);
+        assert.equal(await detail.locator(".order-warning, .order-privacy").count(), 0);
+        assert.ok(!/Solicitud de pedido\.|Este enlace es privado\.|Subtotal|Retiro en el local|Envío a domicilio/.test(await detail.locator("body").innerText()));
+        assert.equal(await detail.locator(".order-address").count(), delivery ? 1 : 0);
+        const heading = await detail.locator(".order-heading").evaluate(n => {
+          const brand = n.querySelector(".order-brand").getBoundingClientRect(), reference = n.querySelector(".order-reference").getBoundingClientRect();
+          return {brand: brand.toJSON(), reference: reference.toJSON()};
+        });
+        if (width >= 700) assert.ok(heading.brand.right < heading.reference.left && heading.reference.top < heading.brand.bottom);
+        else assert.ok(heading.reference.top >= heading.brand.bottom);
         const card = await detail.locator(".order-detail").boundingBox();
         assert.ok(card.width <= 860 && Math.abs(card.x + card.width / 2 - width / 2) < 1);
         if (card.height < 868) assert.ok(Math.abs(card.y + card.height / 2 - 450) < 1);
@@ -171,8 +180,8 @@ test("Pedidos persistidos: datos, errores, resultado, reenvío y privacidad", { 
           for (let i = 0; i < 30; i++) list.append(row.cloneNode(true));
         });
         assert.ok((await detail.locator(".order-detail").boundingBox()).y >= 16);
-        await detail.locator(".order-privacy").scrollIntoViewIfNeeded();
-        assert.ok(await detail.evaluate(() => scrollY > 0 && document.querySelector(".order-privacy").getBoundingClientRect().bottom <= innerHeight));
+        await detail.locator(".order-total").scrollIntoViewIfNeeded();
+        assert.ok(await detail.evaluate(() => scrollY > 0 && document.querySelector(".order-total").getBoundingClientRect().bottom <= innerHeight));
         await detail.close(); await popup.close();
         const resend = s.context.waitForEvent("page");
         await s.page.locator("#whatsapp-ready").click();
@@ -405,4 +414,48 @@ test("Pedidos persistidos: datos, errores, resultado, reenvío y privacidad", { 
     } finally { await s.context.close(); }
   });
 
+});
+
+test("Detalle compacto: instantánea extensa, presentación literal e importes sin superposición", async t => {
+  const browser = await chromium.launch();
+  t.after(() => browser.close());
+  const context = await browser.newContext({viewport: {width: 1280, height: 900}});
+  const page = await context.newPage();
+  const response = await page.goto(`${base}/orders/a7eb823e-94a4-4b0c-98da-b2c9c3817f36/`);
+  assert.equal(response.status(), 200);
+  assert.match(response.headers()["cache-control"], /no-store/);
+  assert.match(response.headers()["x-robots-tag"], /noindex/);
+  for (const width of [320, 390, 768, 1280]) {
+    await t.test(`${width}px: textos, jerarquía, títulos extensos y total`, async () => {
+      await page.setViewportSize({width, height: 900}); await page.evaluate(() => scrollTo(0,0));
+      const body = await page.locator("body").innerText();
+      assert.ok(!/Solicitud de pedido\.|Este enlace es privado\.|Subtotal|Marca oculta QA|Envío a domicilio|Retiro en el local/.test(body));
+      assert.equal(await page.locator(".order-products li").count(), 5);
+      const titles = page.locator(".order-products h3");
+      assert.equal(await titles.nth(0).innerText(), "Crema de chocolate (Venta por kilogramo.)");
+      assert.equal(await titles.nth(1).innerText(), "Crema de chocolate (Paquete de 500 gr.)");
+      assert.equal(await titles.nth(3).innerText(), "Sin presentación");
+      assert.equal(await titles.nth(3).locator(".order-presentation").count(), 0);
+      assert.equal(await page.locator(".order-products script, header").count(), 0);
+      assert.equal(await page.locator(".order-address").innerText(), "San Martín 123\nViedma");
+      const layout = await page.locator(".order-products li").evaluateAll(rows => rows.map(n => {
+        const info=n.querySelector(".order-product-info").getBoundingClientRect(), amount=n.querySelector(".order-subtotal").getBoundingClientRect(), card=n.getBoundingClientRect();
+        return {info:info.toJSON(),amount:amount.toJSON(),card:card.toJSON(),padding:parseFloat(getComputedStyle(n).paddingTop)};
+      }));
+      for(const row of layout){
+        assert.ok(row.padding <= 9);
+        assert.ok(row.info.right <= row.amount.left || row.info.bottom <= row.amount.top);
+        assert.ok(row.amount.right <= row.card.right && row.amount.left >= row.card.left);
+      }
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      assert.ok((await page.locator(".order-detail").boundingBox()).y >= 16);
+      await page.locator(".order-total").scrollIntoViewIfNeeded();
+      assert.ok(await page.locator(".order-total").evaluate(n => n.getBoundingClientRect().bottom <= innerHeight));
+      const typography = await page.locator(".order-presentation").first().evaluate(n=>({weight:getComputedStyle(n).fontWeight,parent:getComputedStyle(n.parentElement).fontWeight}));
+      assert.equal(typography.weight,"400"); assert.ok(Number(typography.parent)>400);
+      const axe = await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21aa"]).analyze();
+      assert.deepEqual(axe.violations.map(v=>v.id),[]);
+      await page.screenshot({path:`.qa/screenshots/compact-detail-long-${width}.png`,fullPage:true});
+    });
+  }
 });

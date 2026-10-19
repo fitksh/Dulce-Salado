@@ -6,7 +6,7 @@ import sys
 import tempfile
 from io import BytesIO
 from pathlib import Path
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
@@ -26,7 +26,7 @@ from django.core.management import call_command  # noqa: E402
 from django.test.runner import DiscoverRunner  # noqa: E402
 from PIL import Image, ImageDraw  # noqa: E402
 
-from catalog.models import Category, Product  # noqa: E402
+from catalog.models import Category, Order, Product  # noqa: E402
 
 
 def stop_server(signum, frame):
@@ -80,6 +80,27 @@ def main():
             Product.objects.create(category=hidden, name="QA Invisible", retail_price="1")
             Product.objects.create(category=category, name="QA Inactivo", retail_price="1", is_active=False)
             get_user_model().objects.create_superuser("qa-admin", "", "qa-only-password-582")
+            # Instantánea histórica sólo en la base descartable, sin tocar productos ni WhatsApp.
+            detail_items = [
+                {"name": "Crema de chocolate", "brand": "Marca oculta QA", "description": "Venta por kilogramo.",
+                 "quantity": "1", "sale_unit": "kg", "unit_price": "12000", "subtotal": "12000"},
+                {"name": "Crema de chocolate", "brand": "Marca oculta QA", "description": "(Paquete de 500 gr.)",
+                 "quantity": "2", "sale_unit": "paquete", "unit_price": "6000", "subtotal": "12000"},
+                {"name": "Nombre histórico muy extenso " * 5, "brand": "Marca oculta QA",
+                 "description": "Descripción literal ambigua & <etiqueta>, sin reinterpretar. " * 6,
+                 "quantity": "2", "sale_unit": "kg", "unit_price": "8000", "subtotal": "16000"},
+                {"name": "Sin presentación", "brand": "Marca oculta QA", "description": "",
+                 "quantity": "1", "sale_unit": "caja", "unit_price": "100", "subtotal": "100"},
+                {"name": "Importe grande", "brand": "Marca oculta QA", "description": "",
+                 "quantity": "9999999", "sale_unit": "pack", "unit_price": "999999999999",
+                 "subtotal": str(9999999 * 999999999999)},
+            ]
+            Order.objects.create(token=UUID("a7eb823e-94a4-4b0c-98da-b2c9c3817f36"), confirmation_key=uuid4(),
+                                 request_hash="a" * 64, full_name="Cliente histórico QA", delivery_mode="delivery",
+                                 street="San Martín", number="123", city="Viedma", items=detail_items,
+                                 total=sum(int(item["subtotal"]) for item in detail_items),
+                                 message="Mensaje histórico intacto", detail_url="https://catalogo.example.com/orders/qa/",
+                                 whatsapp_url="https://api.whatsapp.com/send?phone=5491100000000&text=QA")
             print("QA aislado listo: http://127.0.0.1:8001/", flush=True)
             call_command("runserver", "0.0.0.0:8001", use_reloader=False)
     except KeyboardInterrupt:

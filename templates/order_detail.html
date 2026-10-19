@@ -5,22 +5,23 @@
 <title>{{ order.code }} · Dulce y Salado</title><link rel="stylesheet" href="{% static 'css/site.css' %}">
 </head><body class="order-page">
 <main class="order-detail">
-  <div class="order-brand"><a class="brand" href="{% url 'home' %}" aria-label="Dulce y Salado, inicio">
-    <img class="brand-logo" src="{% static 'img/logo.webp' %}" alt="" width="64" height="64"><span>Dulce y Salado</span>
-  </a></div>
-  <h1>Pedido {{ order.code }}</h1>
-  <p class="order-date"><time datetime="{{ order.created_at|date:'c' }}">{{ order.created_at|date:"d/m/Y H:i" }} (Argentina)</time></p>
-  <p class="order-warning">Solicitud de pedido. Los precios y la disponibilidad quedan sujetos a confirmación del comercio.</p>
+  <div class="order-heading">
+    <div class="order-brand"><a class="brand" href="{% url 'home' %}" aria-label="Dulce y Salado, inicio">
+      <img class="brand-logo" src="{% static 'img/logo.webp' %}" alt="" width="64" height="64"><span>Dulce y Salado</span>
+    </a></div>
+    <div class="order-reference"><h1>Pedido {{ order.code }}</h1>
+      <p class="order-date"><time datetime="{{ order.created_at|date:'c' }}">{{ order.created_at|date:"d/m/Y H:i" }} (Argentina)</time></p>
+    </div>
+  </div>
   <section aria-labelledby="customer-title"><h2 id="customer-title">Datos del cliente</h2><p>{{ order.full_name }}</p>
-    <h3>{{ order.get_delivery_mode_display }}</h3>
-    {% if order.delivery_mode == 'delivery' %}<dl class="order-address"><dt>Calle</dt><dd>{{ order.street }}</dd><dt>Número</dt><dd>{{ order.number }}</dd><dt>Ciudad</dt><dd>{{ order.city }}</dd></dl>{% endif %}
+    {% if order.delivery_mode == 'delivery' %}<h3>Dirección</h3><address class="order-address">{{ order.street }} {{ order.number }}<br>{{ order.city }}</address>{% endif %}
   </section>
   <section aria-labelledby="products-title"><h2 id="products-title">Productos</h2><ol class="order-products">
-    {% for item in order.items %}<li><div class="order-product-info"><h3>{{ item.name }}</h3>{% if item.brand %}<p>{{ item.brand }}</p>{% endif %}{% if item.description %}<p>{{ item.description }}</p>{% endif %}
+    {% for item in order.items %}<li><div class="order-product-info">
+      <h3>{{ item.name }}{% with presentation=item.description|order_presentation %}{% if presentation %} <span class="order-presentation">{{ presentation }}</span>{% endif %}{% endwith %}</h3>
       <p class="order-unit">{{ item.quantity }} × {{ item.sale_unit }} · Precio unitario {{ item.unit_price|ars }}</p></div>
-      <p class="order-subtotal"><span>Subtotal</span><strong>{{ item.subtotal|ars }}</strong></p>
+      <p class="order-subtotal"><strong>{{ item.subtotal|ars }}</strong></p>
     </li>{% endfor %}</ol>
     <p class="order-total"><span>Total</span><strong>{{ order.total|ars }}</strong></p>
   </section>
-  <p class="muted order-privacy">Este enlace es privado. Compartilo solamente con quienes deban consultar el pedido.</p>
 </main></body></html>

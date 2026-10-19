@@ -178,6 +178,46 @@ class OrderTests(TestCase):
         with self.assertRaises(ValidationError):
             order.save()
 
+    def test_detail_is_visual_only_and_preserves_snapshot_message_and_delivery(self):
+        order = self.send(delivery_mode="delivery", street="San Martín", number="123", city="Viedma").context["order"]
+        before = Order.objects.filter(pk=order.pk).values().get()
+        response = self.client.get(reverse("order_detail", args=[order.token]))
+        for removed in ("Solicitud de pedido.", "Este enlace es privado.", "Subtotal", "Envío a domicilio", "Retiro en el local"):
+            self.assertNotContains(response, removed)
+        self.assertContains(response, '<h3>Dirección</h3>')
+        self.assertContains(response, 'San Martín 123<br>Viedma')
+        self.assertContains(response, '<span class="order-presentation">(500 gr)</span>')
+        self.assertNotContains(response, '<p>QA</p>')
+        self.assertEqual(Order.objects.filter(pk=order.pk).values().get(), before)
+        self.assertIn("QA", order.items[0]["brand"])
+        self.assertIn("Los precios y la disponibilidad", order.message)
+        self.assertIn("Envío a domicilio", order.message)
+
+    def test_pickup_detail_has_no_address_or_delivery_label(self):
+        order = self.send().context["order"]
+        response = self.client.get(reverse("order_detail", args=[order.token]))
+        self.assertContains(response, "Datos del cliente")
+        self.assertNotContains(response, "Dirección")
+        self.assertNotContains(response, "Retiro en el local")
+
+    def test_detail_preserves_literal_presentations_and_escapes_them(self):
+        from .templatetags.catalog_format import order_presentation
+
+        for original, expected in (("", ""), ("  ", ""), ("Venta por kilogramo.", "(Venta por kilogramo.)"),
+                                   ("(Paquete de 500 gr.)", "(Paquete de 500 gr.)"),
+                                   (" (Texto histórico.) ", " (Texto histórico.) "),
+                                   ("Sin interpretación & <script>QA</script>", "(Sin interpretación & <script>QA</script>)")):
+            with self.subTest(original=original):
+                self.assertEqual(order_presentation(original), expected)
+        Product.objects.filter(pk=self.product.pk).update(description="Sin interpretación & <script>QA</script>")
+        self.product.refresh_from_db()
+        self.items[0]["revision"] = product_revision(self.product)
+        order = self.send(items=json.dumps(self.items)).context["order"]
+        response = self.client.get(reverse("order_detail", args=[order.token]))
+        self.assertContains(response, "(Sin interpretación &amp; &lt;script&gt;QA&lt;/script&gt;)")
+        self.assertNotContains(response, "<script>")
+        self.assertEqual(Order.objects.get(pk=order.pk).items[0]["description"], self.product.description)
+
     def test_admin_readonly_and_preserves_commercial_records(self):
         owner = get_user_model().objects.create_superuser("qa-order", "", "qa-only")
         self.client.force_login(owner)
