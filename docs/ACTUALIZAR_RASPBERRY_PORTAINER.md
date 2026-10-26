@@ -1,3 +1,186 @@
+# Producción pública en Raspberry y Cloudflare — 25/10/2026
+
+Esta sección describe la configuración vigente. El registro del 18/10 conservado
+más abajo es histórico; sus referencias a `runserver`, DEBUG y sitio sólo LAN ya
+no describen el despliegue público.
+
+## Servicios y entradas
+
+- Sitio y pedidos: **https://dulceysalado.ar/**. Administrador: **https://dulceysalado.ar/admin/**.
+- Raspberry Pi 5 ARM64; checkout `/mnt/datos/docker/dulce-salado/source`, rama `main`.
+- Stack Portainer existente `dulce-salado`, ID 20, endpoint 3. No sustituirlo por
+  el `compose.yaml` de desarrollo: usar [deploy/portainer.production.yaml](../deploy/portainer.production.yaml)
+  junto con las variables comerciales y secretos ya guardados en Portainer.
+- `dulce_salado_web`: imagen local `dulce-salado:raspi`, Gunicorn, dos workers
+  gthread con dos threads cada uno. Python 3.12/Linux ARM64; Gunicorn 26.2.0 fue
+  comprobado en la imagen. Sin puerto publicado ni migraciones al arrancar.
+- `dulce_salado_nginx`: imagen local `dulce-salado-nginx:raspi`, un worker Nginx,
+  usuario sin privilegios, sistema de archivos de sólo lectura y temporales en
+  `/tmp`. Es el único que publica **8003:8000**. Sirve static y fotografías.
+- `dulce_salado_db`: PostgreSQL existente, saludable, sin recreación ni puerto
+  público. Bind intacto `/mnt/datos/docker/dulce-salado/postgres`.
+- Fotos intactas en `/mnt/datos/docker/dulce-salado/media`: web conserva su
+  montaje de escritura para Admin; Nginx lo monta sólo lectura en `/srv/media`.
+- El SSD real está montado en `/mnt/datos` (`/dev/sda`, ext4); `/mnt` por sí solo
+  pertenece a la partición del sistema. No cambiar los binds existentes.
+
+## Cloudflare y confianza del proxy
+
+Se reutilizó el túnel **dulce-salado-rpi**, ID
+`c40c7c01-5022-427e-bd66-5e10cd21bd43`, y su contenedor
+`cloudflared_dulce_salado`, sin modificarlo ni reiniciarlo.
+La ruta publicada es el dominio raíz `dulceysalado.ar`, sin subdominio ni path,
+con servicio **`http://dulce_salado_nginx:8080`**. Cloudflare creó únicamente el
+CNAME de este hostname hacia `<tunnel-id>.cfargotunnel.com`. No se creó Access,
+no se publicaron otros servicios y no se abrieron puertos en el router.
+
+Nginx se une a la red externa existente `cloudflared-dulce-salado_default` y a
+la red del stack. La red del túnel observada es `172.23.0.0/16`: el listener
+8080, sin publicación en el host, acepta sólo ese origen. Se comprobó el
+servicio desde un contenedor de diagnóstico que compartió la red real de
+cloudflared. No usar `localhost` como destino de otro contenedor.
+
+Cloudflare [reemplaza X-Forwarded-Proto por el protocolo del visitante](https://developers.cloudflare.com/fundamentals/reference/http-headers/#x-forwarded-proto).
+Nginx exige `https` en esa entrada o redirige 301 al dominio HTTPS y luego
+envía un valor literal `https` a Django. En la entrada LAN 8000 siempre envía
+`http`, ignorando encabezados aportados por el cliente. Limpia además
+Forwarded/X-Forwarded-Host/Port/SSL; Django no confía en X-Forwarded-Host y
+Gunicorn no agrega otra política de confianza de encabezados.
+
+`SECURE_PROXY_SSL_HEADER` sólo se habilita con `DJANGO_TRUST_PROXY_HTTPS=1`.
+Esto es seguro en esta topología porque Gunicorn no publica puertos y Nginx
+controla el encabezado. Si cambia la red del túnel, verificar su CIDR y adaptar
+Nginx antes de desplegar. No conectar contenedores no confiables a esa red.
+
+## Variables de producción
+
+Conservar en Portainer los valores originales de `DJANGO_SECRET_KEY`,
+`POSTGRES_PASSWORD`, `WHATSAPP_PHONE` y cualquier variable comercial.
+El stack utiliza:
+
+```text
+DJANGO_DEBUG=0
+DJANGO_ALLOWED_HOSTS=dulceysalado.ar,192.168.0.80,localhost,127.0.0.1
+PUBLIC_BASE_URL=https://dulceysalado.ar
+ORDER_ALLOW_LOCAL_URLS=0
+DJANGO_SECURE_COOKIES=1
+DJANGO_TRUST_PROXY_HTTPS=1
+DJANGO_CSRF_TRUSTED_ORIGINS=https://dulceysalado.ar
+```
+
+Sesión y CSRF usan cookies Secure; se conservan HttpOnly/SameSite de Django.
+El catálogo se puede leer por `http://192.168.0.80:8003/`. Admin redirige al
+dominio público; realizar pedidos y autenticarse desde HTTPS, ya que los
+navegadores no envían cookies Secure sobre HTTP de la LAN.
+
+El Dockerfile ejecuta `collectstatic` durante la construcción con un valor
+descartable sólo para ese paso; la imagen no incorpora la clave real y exige
+su entorno al arrancar. El proxy copia los estáticos de esa misma imagen web.
+Media permite sólo lectura de extensiones de imagen, sin índices, manifiestos
+privados, archivos ocultos ni enlaces simbólicos. Django no sirve media en
+producción. El Compose de desarrollo mantiene explícitamente `runserver`.
+
+## Caché y comprobaciones de seguridad
+
+Nginx fija `Cache-Control: private, no-store` en todas las respuestas dinámicas,
+incluidos pedidos, errores y Admin. Los detalles conservan `noindex` y
+`Referrer-Policy: no-referrer`; Cloudflare respondió DYNAMIC, sin Age ni HIT.
+Sólo static/fotos tienen caché pública. No activar reglas Cache Everything
+para HTML ni rutas de pedidos. Los access logs de Nginx/Gunicorn están
+desactivados para no registrar los tokens privados de las URL.
+
+`python manage.py check --deploy` devuelve sólo dos advertencias, sin silenciar:
+
+- **security.W008**: `SECURE_SSL_REDIRECT=False` permite leer el catálogo LAN.
+  La entrada pública de Nginx fuerza HTTPS. Se verificaron 301 por HTTP y 200
+  por HTTPS, también enviando valores X-Forwarded-Proto falsos, sin bucles.
+- **security.W004**: HSTS permanece en cero para no imponer una política
+  persistente antes de evaluar todos los nombres/subdominios. HTTPS y cookies
+  Secure ya funcionan; no se habilita includeSubDomains ni preload.
+
+Referencias: [confianza del proxy en Django](https://docs.djangoproject.com/en/5.2/ref/settings/#secure-proxy-ssl-header),
+[Gunicorn](https://gunicorn.org/reference/settings/) y
+[distribución instalable en PyPI](https://pypi.org/project/gunicorn/26.2.0/).
+
+## Construir y actualizar sin tocar otros servicios
+
+1. Inventariar IDs, imágenes, inicio, reinicios, configuración, puertos, redes
+   y montajes de todos los contenedores. Comparar montajes por destino, ya que
+   Docker no garantiza su orden en `inspect`. Verificar Git limpio o preservar
+   cambios previos. Actualizar sólo con fast-forward.
+2. Respaldar PostgreSQL con `pg_dump -Fc`, media completa, YAML y Env reales de
+   Portainer; conservar la imagen anterior. Restaurar el dump en una base
+   independiente y comparar tablas/secuencia; extraer media en un directorio
+   de ensayo y comparar SHA-256. No hacer seed ni reset.
+3. Comprobar migraciones pendientes. Esta publicación no agregó migraciones:
+   `catalog.0001` a `0011` ya estaban aplicadas. Cualquier migración futura se
+   ensaya primero sobre la base restaurada.
+4. Construir en `source`, conservando el sitio anterior activo:
+
+```sh
+revision=$(git rev-parse HEAD)
+docker build --build-arg REVISION="$revision" -t dulce-salado:"$revision" .
+docker build --build-arg REVISION="$revision" --build-arg WEB_IMAGE=dulce-salado:"$revision" \
+  -f deploy/Dockerfile.nginx -t dulce-salado-nginx:"$revision" .
+docker run --rm --read-only --tmpfs /tmp:mode=1777 \
+  dulce-salado-nginx:"$revision" -t
+docker tag dulce-salado:"$revision" dulce-salado:raspi
+docker tag dulce-salado-nginx:"$revision" dulce-salado-nginx:raspi
+```
+
+5. Editar el **stack existente** con el YAML de producción y el entorno
+   conservado. Mantener `pull_policy: never`, sin descargar imágenes ni prune.
+   Sólo web se recrea y se incorpora/actualiza nginx; DB debe conservar su ID.
+6. Revisar salud, acceso LAN y público, certificado, fotos, cookies, CSRF,
+   pedido/detalle y no-store. Reiniciar sólo web/nginx y verificar recuperación.
+   Comparar inventario y datos. Un push no despliega por sí solo la Raspberry.
+
+Nunca eliminar el stack ni utilizar `down -v`, `system prune` o limpiezas
+globales. No reiniciar cloudflared, PostgreSQL ni servicios ajenos para actualizar
+el catálogo. El checkout no se monta sobre `/app`: hay que reconstruir la imagen.
+
+## Respaldo, pruebas y rollback de esta publicación
+
+Respaldo principal privado:
+`/home/pi/backups/dulce-salado/20261025-production/`, con directorio 700 y archivos
+600. Incluye `postgres.dump`, `media.tar.gz`, `portainer-stack.json`,
+`portainer-stack-file.json`, inventario, snapshots y huellas. La restauración
+completa de DB/media se ensayó antes del despliegue. Copia adicional fuera del
+dispositivo en la carpeta privada `outputs/production-private` de esta tarea,
+fuera del repositorio Git. No versionar ni compartir esos archivos.
+
+La comparación conserva 45 productos, tres categorías, configuración,
+horarios, el usuario y sus credenciales, 15 pedidos anteriores y 91 archivos
+media. La tarea agregó únicamente los dos pedidos técnicos expresamente autorizados
+**DYS-000016 y DYS-000018**, con nombre `PRUEBA TÉCNICA PUBLICACIÓN - NO ES COMPRA`.
+No procesarlos como compras; se conservan como evidencia. Las cuatro aperturas
+de WhatsApp fueron interceptadas. Los enlaces nuevos usan el dominio HTTPS;
+las instantáneas históricas mantienen sus textos y enlaces originales.
+Se observó además una solicitud nueva fuera de esos dos ensayos; se conserva sin modificar.
+La comprobación de login del propietario actualiza únicamente su última
+conexión y sesión, sin cambiar usuario ni contraseña.
+
+Pruebas ejecutadas: 234 Django en ARM64 con Poppler, sin fallos ni omisiones;
+nueve Node, Ruff, check y migraciones sin cambios. HTTPS público, tres páginas
+de catálogo, 45 fotos, pedido/reenvío de escritorio y móvil con iframe,
+persistencia, vaciado, no-store, CSRF y login real del administrador. Los
+detalles técnicos probados no presentaron errores JS ni infracciones axe.
+
+Para revertir **sin perder pedidos nuevos**:
+
+1. Detener y retirar sólo `dulce_salado_nginx`, que ocupa 8003 y sólo lee media.
+2. Etiquetar `dulce-salado:rollback-production-20261025` como `dulce-salado:raspi`.
+3. Restaurar el YAML y Env de los JSON de respaldo en el stack existente,
+   actualizar sin pull/prune y verificar web por LAN y DB saludable.
+4. Retirar sólo la ruta pública de este dominio si el rollback vuelve a
+   `runserver`: no dejarlo expuesto. No modificar DNS ajenos.
+
+No hay cambio de esquema: revertir el código no requiere restaurar DB/media.
+Una restauración de datos exigiría analizar antes las escrituras posteriores.
+Se conserva el procedimiento privado `ROLLBACK.txt` junto al respaldo.
+
+---
+
 # Raspberry y Portainer: instalacion verificada el 18/10/2026
 
 ## Actualización posterior: solicitudes de pedido

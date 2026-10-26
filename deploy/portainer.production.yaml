@@ -1,0 +1,85 @@
+# Existing Portainer stack dulce-salado (20, endpoint 3). Keep its environment.
+# Build both local ARM64 images first. This is not the development compose.yaml.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: dulce_salado_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dulce_salado
+      POSTGRES_USER: dulce_salado
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: America/Argentina/Buenos_Aires
+    volumes:
+      - /mnt/datos/docker/dulce-salado/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    image: dulce-salado:raspi
+    pull_policy: never
+    container_name: dulce_salado_web
+    restart: unless-stopped
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DJANGO_DEBUG: "0"
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      DJANGO_SECURE_COOKIES: "1"
+      DJANGO_TRUST_PROXY_HTTPS: "1"
+      DJANGO_CSRF_TRUSTED_ORIGINS: https://dulceysalado.ar
+      POSTGRES_DB: dulce_salado
+      POSTGRES_USER: dulce_salado
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      WHATSAPP_PHONE: ${WHATSAPP_PHONE:-}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      ORDER_ALLOW_LOCAL_URLS: ${ORDER_ALLOW_LOCAL_URLS:-0}
+      TZ: America/Argentina/Buenos_Aires
+    volumes:
+      - /mnt/datos/docker/dulce-salado/media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=5)"]
+      interval: 30s
+      timeout: 8s
+      start_period: 20s
+      retries: 3
+
+  nginx:
+    image: dulce-salado-nginx:raspi
+    pull_policy: never
+    container_name: dulce_salado_nginx
+    restart: unless-stopped
+    ports:
+      - "8003:8000"
+    volumes:
+      - /mnt/datos/docker/dulce-salado/media:/srv/media:ro
+    networks:
+      - default
+      - tunnel
+    depends_on:
+      web:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8000/static/img/logo.webp"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  tunnel:
+    external: true
+    name: cloudflared-dulce-salado_default

@@ -261,7 +261,7 @@ El registro documental se incorpora a main y a la imagen final; no cambia funcio
 - [x] CI f5ddd0a success 39169933812: 220 Django, 9 Node, 84 Chromium.
 - [x] Prueba real de retiro/envío, persistencia, detalle, vaciado y reenvío idéntico; sin envíos reales.
 - [x] Un usuario, permisos, configuración, horarios y 45 originales fotográficos preservados; otros 13 contenedores intactos.
-- [ ] Dominio HTTPS público futuro; actualmente prueba local expresamente autorizada.
+- [x] Dominio HTTPS público configurado el 25/10/2026; ver registro de producción al final.
 
 
 CI fb1d148 pasó 220 Django, Node, lint/check y migraciones, pero canceló por timeout de 60 s la preparación de Presentaciones compactas, sin llegar a sus subpruebas. Se confirma la sesión Admin y el mensaje de alta correcta antes de cerrar la página que crea el fixture, con diagnóstico de etapas y timeout de acción acotado. No se aumentó el timeout general ni se eliminaron aserciones. Regresión local repetida: 84 Chromium correctos, cero fallos/omisiones. CI posterior y prueba funcional Raspberry pendientes antes de declarar cierre.
@@ -279,7 +279,7 @@ Cierre funcional de pedidos Raspberry: revisión f5ddd0a verificada en imagen AR
 - [x] Raspberry inspeccionada: 45 productos, cuatro pedidos sin valores en la columna retirada; URL/texto guardados correctos.
 
 El hash publicado, CI y despliegue efectivo se verifican después del commit y se informan con sus evidencias en el cierre de la tarea. El procedimiento incluye respaldo restaurado, comparación de datos y actualización exclusiva de web; no se reinicializa el catálogo.
-- [ ] Dominio HTTPS público y comprobación del enlace en WhatsApp desde fuera de la LAN.
+- [x] Dominio HTTPS público y enlaces nuevos verificados mediante aperturas interceptadas, sin envío real.
 
 ## Detalle de pedidos compacto — 18/10/2026
 
@@ -290,3 +290,17 @@ El hash publicado, CI y despliegue efectivo se verifican después del commit y s
 - [x] Regresión completa: 226 Django, 9 Node y 93 Chromium sin fallos ni omisiones; check/Ruff/migraciones/diff correctos.
 
 El commit publicado, CI y despliegue se comprueban al cierre y se informan con sus resultados reales. Esta actualización no requiere migraciones ni nuevos pedidos en la Raspberry.
+
+## Producción con Cloudflare Tunnel — 25/10/2026
+
+- [x] Inventario previo, respaldos DB/media/configuración restaurados y rollback preparado.
+- [x] Gunicorn ARM64, Nginx sin privilegios, static/media y puerto LAN 8003 conservado.
+- [x] DEBUG=0, hosts restringidos, cookies Secure, CSRF y saneamiento de encabezados.
+- [x] Túnel existente y CNAME del dominio raíz, sin Access ni reiniciar cloudflared.
+- [x] 234 Django ARM64 sin omisiones, nueve Node, Ruff/check/migraciones y sintaxis Nginx.
+- [x] HTTPS público, 45 fotos, categorías, carrito, dos pedidos técnicos explícitamente autorizados, reenvío idéntico y detalles privados sin caché.
+- [x] Login real del propietario por HTTPS, CSRF y cookies seguras verificados.
+
+El hash definitivo, push, CI y comprobación final de reinicio/inventario se
+informan tras realizar esas operaciones. Detalles y advertencias de deploy
+justificadas en ACTUALIZAR_RASPBERRY_PORTAINER.md. Ningún mensaje real enviado.

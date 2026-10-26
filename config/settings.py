@@ -80,3 +80,22 @@ ORDER_ALLOW_LOCAL_URLS = os.environ.get("ORDER_ALLOW_LOCAL_URLS", "0") == "1"
 WHATSAPP_PHONE = os.environ.get("WHATSAPP_PHONE", "").strip()
 if WHATSAPP_PHONE and not re.fullmatch(r"[1-9][0-9]{7,14}", WHATSAPP_PHONE):
     raise ImproperlyConfigured("WHATSAPP_PHONE debe contener 8 a 15 dígitos internacionales, sin + ni espacios.")
+
+# Nginx must overwrite X-Forwarded-Proto and Gunicorn must have no published port.
+# Keep this opt-in: a directly reachable app must never trust client headers.
+SECURE_PROXY_SSL_HEADER = (
+    ("HTTP_X_FORWARDED_PROTO", "https")
+    if os.environ.get("DJANGO_TRUST_PROXY_HTTPS", "0") == "1" else None
+)
+USE_X_FORWARDED_HOST = False
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+SESSION_COOKIE_SECURE = os.environ.get("DJANGO_SECURE_COOKIES", "0" if DEBUG else "1") == "1"
+CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+# Public HTTPS is enforced at Nginx/Cloudflare; the LAN catalog remains readable.
+SECURE_SSL_REDIRECT = False
+# Enable gradually only after verifying HTTPS and all relevant subdomains.
+SECURE_HSTS_SECONDS = 0

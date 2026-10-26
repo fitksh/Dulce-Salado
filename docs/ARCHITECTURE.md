@@ -199,3 +199,16 @@ whatsapp_presentations.presentation_text deriva cantidad_presentacion/unidad_pre
 ## Resultado del pedido fuera del iframe
 
 order-result.js controla el único diálogo global de base. cart-drawer.js recibe únicamente datos desde su iframe activo con origin/source exactos y valida destino; cart.js confirma limpieza y libera el popup antes de solicitar el cierre. El fragmento del servidor comunica los valores persistidos; no se recalcula el mensaje. 0011 retira una columna obsoleta sin reescribir instantáneas. Detalle independiente en card única conserva las cabeceras privadas. Ver PEDIDOS.md.
+
+## Producción pública autorizada — 25/10/2026
+
+La decisión de diferir producción queda reemplazada para la Raspberry por
+Gunicorn (2 workers gthread/2 threads) detrás de Nginx, con static recolectado
+en la imagen y media persistente sólo lectura en el proxy. El túnel existente
+comparte únicamente su red con Nginx; DB y Gunicorn no publican puertos. Dos
+entradas de Nginx separan HTTPS del túnel y lectura HTTP del catálogo LAN.
+Nginx sanea los encabezados antes del opt-in de confianza en Django, cookies
+Secure y CSRF de mismo dominio; toda respuesta dinámica lleva private/no-store.
+No cambian modelos, reglas comerciales ni pedidos históricos. Configuración,
+advertencias de deploy justificadas, pruebas y rollback en
+[ACTUALIZAR_RASPBERRY_PORTAINER.md](ACTUALIZAR_RASPBERRY_PORTAINER.md).
