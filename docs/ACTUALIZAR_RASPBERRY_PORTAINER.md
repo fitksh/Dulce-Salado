@@ -252,3 +252,36 @@ El hash Git debe coincidir con la revision de la imagen activa. En la versión a
 ## Corrección posterior de pedidos
 
 Antes de aplicar 0011_remove_order_door: inspeccionar si la columna tiene valores, respaldar PostgreSQL completo (incluye la columna), media y configuración actual de Portainer. Detener sólo web durante el respaldo final/migración; restaurar en base descartable y comprobar que sólo desaparezca esa columna y se agregue el registro de migración. Comparar todos los otros valores, mensajes/URL históricas y secuencia. No ejecutar seed ni reset. Construir ARM64 con revisión etiquetada tras CI verde y conservar dulce-salado:rollback-corrections-20261018. Actualizar el stack existente con su YAML/variables idénticos, sin pull de imagen ni prune. Verificar el ID de imagen activo, revisión, DB healthy, media y demás contenedores. Eliminar la columna es irreversible para sus valores sin el dump: un rollback necesita respaldo y código coherentes, contemplando escrituras posteriores.
+
+
+## Rediseño mobile — actualización del 28/10/2026
+
+El cambio afecta templates, CSS y comportamiento de paneles del encabezado.
+No requiere migraciones ni cambios de datos, variables, dominio o redes. CSS y
+header.js llevan `?v=20261028-mobile` para que el navegador renueve su caché.
+La marca del detalle histórico conserva su presentación anterior.
+
+Validación funcional en CI de 3605b0c, ejecución 40693647065: 235 Django con
+Poppler, nueve Node y 99 Chromium, sin fallos ni omisiones. La documentación
+posterior no cambia los archivos funcionales de esa versión.
+
+Respaldo previo de esta actualización:
+`/home/pi/backups/dulce-salado/20261028-mobile/`, privado, con PostgreSQL,
+media, configuración actual, inventario y huellas SHA-256. Se restauró y comparó
+en una base temporal independiente: 45 productos, 18 pedidos y 91 archivos.
+Imágenes conservadas como `dulce-salado:rollback-mobile-20261028` y
+`dulce-salado-nginx:rollback-mobile-20261028`.
+
+Construir web y Nginx con la misma REVISION del checkout main actualizado.
+Nginx debe copiar los staticfiles de esa imagen web; actualizar sólo web dejaría
+estilos antiguos. Verificar la imagen candidata con una base temporal, renovar
+ambos tags raspi y recrear exclusivamente web/nginx con el archivo y variables
+originales del stack dulce-salado, sin pull, prune ni recreación de PostgreSQL.
+Comparar revisión activa, salud, entorno, montajes, puertos, datos y fotos; los
+otros 14 contenedores deben conservarse. No hace falta crear pedidos reales
+para comprobar este rediseño: carrito y totales pueden verificarse sin confirmar.
+
+Para revertir únicamente esta interfaz, restablecer ambos tags rollback como
+raspi y recrear sólo web/nginx con el mismo stack. No restaurar DB/media sobre
+escrituras nuevas. Mantener el respaldo y retirar únicamente las bases/servicios
+temporales de las pruebas después de comprobar el resultado.

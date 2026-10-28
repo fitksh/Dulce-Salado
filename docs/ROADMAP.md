@@ -313,14 +313,13 @@ justificadas en ACTUALIZAR_RASPBERRY_PORTAINER.md. Ningún mensaje real enviado.
 - [x] Dos columnas, separación de 8 px, fotos completas, títulos de dos líneas y controles de 44 px sin desbordar a 320 px.
 - [x] 99 comprobaciones Chromium y nueve Node correctas, sin fallos ni omisiones; cinco anchos móviles, filtros, toque/teclado, ubicación/horarios, cantidades, paginación, iframe y pedidos aislados.
 - [x] Capturas idénticas antes/después a 768/800/1050/1280/1440 px; Ruff, Django check, ausencia de migraciones, collectstatic y diff correctos.
-- [ ] Suite Django global sin limitaciones de plataforma: 235 ejecutadas en Windows/Python 3.14, 217 correctas, dos fallos previos del seed reproducidos en HEAD original (separadores de rutas y privilegio de symlink), 16 inspecciones PDF omitidas por Poppler ausente. No se modifican esas pruebas ajenas al rediseño.
+- [x] Suite global Linux/Python 3.12 con Poppler: 235 Django, nueve Node y 99 Chromium correctas, sin omisiones. CI 40693647065 de 3605b0c aprobado. Los dos fallos y 16 omisiones observados previamente eran limitaciones de Windows; no fue necesario modificar esas pruebas.
 
-Implementación local completada; publicación en Raspberry autorizada por el
-propietario. Se versionan URLs de CSS/header.js para renovar la caché de
-navegadores y se limita el cambio de logo al encabezado del catálogo.
-CI remoto y despliegue se verifican antes de declarar la publicación.
-Sin dependencias de aplicación, modelos, migraciones o lógica comercial nuevos.
-Datos reales conservados; pruebas con PostgreSQL/media descartables y aperturas
-externas interceptadas, sin mensajes enviados. Validación restante: ejecutar la
-suite Django completa en Linux con Poppler. Detalle de archivos/resultados en el
-informe de esta tarea; no se declara publicación de esta iteración.
+Código publicado en main con autorización del propietario y CI Linux aprobado.
+URLs de CSS/header.js versionadas para renovar la caché de navegadores, y cambio
+de logo limitado al encabezado del catálogo. Sin dependencias de aplicación,
+modelos, migraciones o lógica comercial nuevos. Respaldo previo de 45 productos,
+18 pedidos y 91 archivos media restaurado y comparado en Raspberry; imágenes
+anteriores retenidas. Procedimiento en ACTUALIZAR_RASPBERRY_PORTAINER.md.
+La revisión activa y la verificación posterior del sitio/datos se informan al
+cierre de la publicación. Pruebas aisladas sin envío de WhatsApp.
