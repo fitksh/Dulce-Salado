@@ -144,6 +144,20 @@ class CatalogViewTests(TestCase):
             self.assertLess(html.index('id="catalog-search"'), html.index('</header>'))
             self.assertLess(html.index('id="category-filter"'), html.index('</header>'))
 
+    def test_mobile_categories_reuse_active_filters_and_preserve_search(self):
+        Category.objects.create(name="Oculta mobile", slug="oculta-mobile", is_active=False)
+        response = self.client.get("/", {"categoria": "reposteria", "q": "chocolate"})
+        self.assertContains(response, 'id="mobile-category-list"', count=1)
+        self.assertContains(response, 'aria-controls="mobile-category-list"', count=1)
+        self.assertContains(response, 'aria-label="Categorías: Repostería"')
+        self.assertContains(response, 'href="/?categoria=reposteria&amp;q=chocolate"')
+        self.assertContains(response, 'href="/?q=chocolate"')
+        self.assertNotContains(response, 'oculta-mobile')
+        self.assertContains(response, 'class="button secondary cart-link"', count=1)
+        self.assertTemplateUsed(response, "includes/category_links.html")
+        self.assertContains(response, "/static/css/site.css?v=20261028-mobile")
+        self.assertContains(response, "/static/js/header.js?v=20261028-mobile")
+
     def test_cart_frame_is_same_origin_and_reuses_the_cart(self):
         response = self.client.get(reverse("cart"), {"panel": "1"})
         self.assertTemplateUsed(response, "cart_frame.html")

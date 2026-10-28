@@ -1,0 +1,8 @@
+    <a class="chip all-categories{% if not selected_category %} selected{% endif %}" href="{% url 'home' %}?q={{ query|default:''|urlencode }}" {% if not selected_category and request.resolver_match.url_name == 'home' %}aria-current="page"{% endif %}>
+      Todas las categorías
+    </a>
+    {% for category in categories %}
+      <a class="chip{% if selected_category.pk == category.pk %} selected{% endif %}" href="{% url 'home' %}?categoria={{ category.slug|urlencode }}&amp;q={{ query|default:''|urlencode }}" {% if selected_category.pk == category.pk %}aria-current="page"{% endif %}>
+        {{ category.name }}
+      </a>
+    {% endfor %}

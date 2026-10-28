@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#ad3c0c">
   <title>{% block title %}Catálogo{% endblock %} · Dulce y Salado</title>
-  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}?v=20261028-mobile">
   <script src="{% static 'js/cart-core.js' %}" defer></script>
   <script src="{% static 'js/notifications.js' %}" defer></script>
   <script src="{% static 'js/digits-only.js' %}" defer></script>
@@ -14,7 +14,7 @@
   <script src="{% static 'js/order-result.js' %}" defer></script>
   <script src="{% static 'js/cart.js' %}" defer></script>
   <script src="{% static 'js/business-hours.js' %}" defer></script>
-  <script src="{% static 'js/header.js' %}" defer></script>
+  <script src="{% static 'js/header.js' %}?v=20261028-mobile" defer></script>
   <script src="{% static 'js/cart-drawer.js' %}" defer></script>
   <script src="{% static 'js/catalog.js' %}" defer></script>
   {% block scripts %}{% endblock %}
@@ -28,12 +28,15 @@
     </a>
     {% include "includes/header_search.html" %}
     <nav class="header-actions" aria-label="Navegación principal">
-    {% include "includes/location_panel.html" %}
-    {% include "includes/business_hours.html" %}
     <a class="button secondary cart-link" href="{% url 'cart' %}"{% if request.resolver_match.url_name == 'cart' %} aria-current="page"{% endif %}>
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 3h3l3 12h11l3-9H6"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>
       <span class="visually-hidden">Carrito:</span><span data-cart-count>0</span><span class="visually-hidden">productos diferentes</span>
     </a>
+    <div class="header-info">
+      {% include "includes/location_panel.html" %}
+      {% include "includes/business_hours.html" %}
+      {% include "includes/mobile_categories.html" %}
+    </div>
     {% block header_actions %}{% endblock %}
     </nav>
   </div>

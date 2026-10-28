@@ -8,7 +8,7 @@
     if (panel.id !== "ubicacion" || !panel.open) return;
     const content = panel.querySelector(".location-details");
     const trigger = panel.querySelector("summary").getBoundingClientRect();
-    const parent = panel.closest(".header-actions").getBoundingClientRect();
+    const parent = content.offsetParent.getBoundingClientRect();
     const width = content.getBoundingClientRect().width;
     const center = Math.max(16 + width / 2, Math.min((trigger.left + trigger.right) / 2, window.innerWidth - 16 - width / 2));
     content.style.left = `${center - width / 2 - parent.left}px`;
@@ -25,14 +25,15 @@
   function open(panel) { cancelClose(panel); closeOthers(panel); panel.open = true; positionLocation(panel); }
   function focusInside(panel) { return panel.querySelector(".header-panel-content").contains(document.activeElement); }
   panels.forEach(panel => {
+    const clickOnly = panel.hasAttribute("data-click-only");
     panel.addEventListener("toggle", () => { if (panel.open) { closeOthers(panel); positionLocation(panel); } });
     panel.addEventListener("pointerenter", event => {
-      if (event.pointerType !== "mouse" || !hover.matches) return;
+      if (clickOnly || event.pointerType !== "mouse" || !hover.matches) return;
       if (panels.some(other => other !== panel && other.open && focusInside(other))) return;
       open(panel);
     });
     panel.addEventListener("pointerleave", event => {
-      if (event.pointerType !== "mouse" || !hover.matches) return;
+      if (clickOnly || event.pointerType !== "mouse" || !hover.matches) return;
       cancelClose(panel);
       // Permite cruzar el espacio hasta el panel sin cerrarlo durante el recorrido.
       closeTimers.set(panel, window.setTimeout(() => {
@@ -44,16 +45,31 @@
       if (event.key === "Enter" || event.key === " ") cancelClose(panel);
     });
     panel.querySelector("summary").addEventListener("click", event => {
-      if (event.detail > 0 && event.pointerType !== "touch" && hover.matches) {
+      if (!clickOnly && event.detail > 0 && event.pointerType !== "touch" && hover.matches) {
         event.preventDefault();
         open(panel);
       }
     });
+    if (clickOnly) panel.addEventListener("click", event => {
+      if (event.target.closest("a")) close(panel);
+    });
     panel.addEventListener("focusout", event => {
-      if (!panel.contains(event.relatedTarget) && !panel.matches(":hover")) close(panel);
+      if (!panel.contains(event.relatedTarget) && (clickOnly || !panel.matches(":hover"))) close(panel);
     });
   });
-  window.addEventListener("resize", () => panels.forEach(positionLocation));
+  const mobile = window.matchMedia("(max-width: 767px)");
+  const search = document.getElementById("catalog-search");
+  const desktopPlaceholder = search?.placeholder;
+  function updateViewport() {
+    if (search) search.placeholder = mobile.matches ? "Buscar productos..." : desktopPlaceholder;
+    panels.forEach(panel => {
+      if (!mobile.matches && panel.hasAttribute("data-click-only")) close(panel);
+      positionLocation(panel);
+    });
+  }
+  mobile.addEventListener("change", updateViewport);
+  window.addEventListener("resize", updateViewport);
+  updateViewport();
   panels.forEach(positionLocation);
   document.addEventListener("click", event => {
     panels.forEach(panel => { if (!panel.contains(event.target)) close(panel); });

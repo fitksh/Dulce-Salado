@@ -191,3 +191,34 @@ Título numerado/subtotal/total con negrita nativa de WhatsApp, marca opcional, 
 ## Detalle compacto de pedidos — ajuste posterior del 18/10/2026
 
 Última decisión para /orders/: una card con padding moderado, encabezado marca/código-fecha en dos columnas desde 700 px y apilado debajo. Se retiran los avisos visuales, marca de artículos, label Subtotal y modalidad; sólo se muestra Dirección cuando corresponde. Nombre destacado seguido de descripción literal entre paréntesis y peso normal, cantidad/precio unitario debajo e importe separado a la derecha (fila propia hasta 600 px). Separadores finos, filas compactas y total prominente. Centrado de contenido corto y scroll natural de contenido largo. Sin modificación de instantáneas o WhatsApp.
+
+
+## Rediseño mobile — 28/10/2026
+
+La solicitud actual reemplaza las composiciones móviles históricas sólo hasta
+767 px. Primera fila: logo original proporcional de 40 px, buscador de 38 px
+con lupa que envía el formulario GET y un único carrito con contador. El texto
+de marca se oculta visualmente; los nombres accesibles permanecen. El campo usa
+16 px al escribir para evitar ampliación automática en teléfonos.
+
+Segunda fila: Ubicación, Horarios/estado y Categorías. Categorías usa details y
+summary nativos, enlaces GET compartidos con escritorio y selección visible.
+Con JavaScript sólo abre mediante activación explícita y cierra por selección,
+clic exterior, Escape (restaura foco), salida del foco o paso a tablet. Sin
+JavaScript los enlaces y el desplegable nativo siguen funcionando. Abrir un
+panel no desplaza el catálogo. El selector anterior permanece sólo en el rango
+tablet 768–799 px; los enlaces de escritorio conservan su disposición.
+
+Catálogo con dos columnas minmax(0, 1fr), separación de 8 px y márgenes de 8 px.
+Fotos cuadradas contain completas; títulos de 13 px y descripción secundaria
+limitados visualmente a dos líneas, con el texto completo en el DOM. Precio en
+negrita y bloques alineados por subgrid como antes. Botones y campo de cantidad
+conservan 44 px de superficie incluso a 320 px; el campo limita su ancho para
+mostrar y editar cantidades largas sin desbordar. No cambian lógica, unidades,
+importes, sincronización, detalle de imagen ni paginación.
+
+Desde 768 px se conservan medidas y aspecto anteriores. La aceptación compara
+320/360/375/390/430 px y los límites 767/768; incluye teclado, toque, GET sin JS,
+menús, carrito lateral y controles de siete dígitos. Las capturas previas y
+posteriores de 768/800/1050/1280/1440 px resultaron idénticas antes de modificar
+los datos descartables de las pruebas.

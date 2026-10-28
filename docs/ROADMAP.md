@@ -304,3 +304,23 @@ El commit publicado, CI y despliegue se comprueban al cierre y se informan con s
 El hash definitivo, push, CI y comprobación final de reinicio/inventario se
 informan tras realizar esas operaciones. Detalles y advertencias de deploy
 justificadas en ACTUALIZAR_RASPBERRY_PORTAINER.md. Ningún mensaje real enviado.
+
+
+## Rediseño mobile del catálogo — 28/10/2026
+
+- [x] Logo/buscador/carrito en primera fila y Ubicación/Horarios/Categorías en segunda, hasta 767 px.
+- [x] Menú nativo de categorías reales con enlaces GET compartidos, selección visible, teclado, Escape, exterior y fallback sin JavaScript.
+- [x] Dos columnas, separación de 8 px, fotos completas, títulos de dos líneas y controles de 44 px sin desbordar a 320 px.
+- [x] 99 comprobaciones Chromium y nueve Node correctas, sin fallos ni omisiones; cinco anchos móviles, filtros, toque/teclado, ubicación/horarios, cantidades, paginación, iframe y pedidos aislados.
+- [x] Capturas idénticas antes/después a 768/800/1050/1280/1440 px; Ruff, Django check, ausencia de migraciones, collectstatic y diff correctos.
+- [ ] Suite Django global sin limitaciones de plataforma: 235 ejecutadas en Windows/Python 3.14, 217 correctas, dos fallos previos del seed reproducidos en HEAD original (separadores de rutas y privilegio de symlink), 16 inspecciones PDF omitidas por Poppler ausente. No se modifican esas pruebas ajenas al rediseño.
+
+Implementación local completada; publicación en Raspberry autorizada por el
+propietario. Se versionan URLs de CSS/header.js para renovar la caché de
+navegadores y se limita el cambio de logo al encabezado del catálogo.
+CI remoto y despliegue se verifican antes de declarar la publicación.
+Sin dependencias de aplicación, modelos, migraciones o lógica comercial nuevos.
+Datos reales conservados; pruebas con PostgreSQL/media descartables y aperturas
+externas interceptadas, sin mensajes enviados. Validación restante: ejecutar la
+suite Django completa en Linux con Poppler. Detalle de archivos/resultados en el
+informe de esta tarea; no se declara publicación de esta iteración.

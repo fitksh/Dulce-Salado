@@ -27,7 +27,19 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.deepEqual(result.violations.map(v => ({ id: v.id, nodes: v.nodes.map(n => n.target) })), []);
   }
   async function waitCart(text) { await page.locator(".total").filter({ hasText: text }).waitFor(); }
+  async function selectMobileCategory(target, name) {
+    await target.locator(".mobile-categories summary").click();
+    await target.locator(".category-menu").getByRole("link", { name, exact: true }).click();
+  }
   async function headerLayout(width) {
+    if (width < 768) {
+      const boxes = await page.locator(".header-inner").evaluate(node => [".brand", ".search-form", ".cart-link", ".header-info"].map(selector => node.querySelector(selector).getBoundingClientRect().toJSON()));
+      assert.ok(boxes.every(box => box.left >= 8 && box.right <= width - 8));
+      assert.ok(boxes.slice(0, 3).every(box => Math.abs(box.top + box.height / 2 - boxes[0].top - boxes[0].height / 2) < 1));
+      assert.ok(boxes[0].right <= boxes[1].left && boxes[1].right <= boxes[2].left);
+      assert.ok(boxes[3].top >= boxes[0].bottom);
+      return;
+    }
     const regions = await page.locator(".header-inner").evaluate(node => [".brand", ".search-form", ".header-actions"].map(selector => {
       const r = node.querySelector(selector).getBoundingClientRect();
       return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2 };
@@ -78,7 +90,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await page.getByText("Minorista", { exact: true }).count(), 0);
     assert.equal(await page.getByText("Mayorista", { exact: true }).count(), 0);
     assert.equal(await page.getByText("QA Invisible").count(), 0);
-    for (const [width, columns] of [[320, 1], [360, 1], [390, 1], [430, 1], [768, 2], [800, 3], [1000, 3], [1280, 4], [1440, 5]]) {
+    for (const [width, columns] of [[320, 2], [360, 2], [375, 2], [390, 2], [430, 2], [767, 2], [768, 2], [800, 3], [1000, 3], [1280, 4], [1440, 5]]) {
       await page.setViewportSize({ width, height: 844 });
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       const cards = await page.locator(".product-card").evaluateAll(nodes => nodes.map(node => {
@@ -106,14 +118,14 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       }), "0");
       assert.equal(await page.getByRole("link", { name: "Carrito: 0 productos diferentes" }).count(), 1);
       await headerLayout(width);
-      assert.equal(await page.locator(".brand-logo").evaluate(node => node.getBoundingClientRect().width), 64);
-      const actions = await page.locator(".header-actions > a, .header-control, .hours-unavailable").evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().toJSON()));
+      assert.equal(await page.locator(".brand-logo").evaluate(node => node.getBoundingClientRect().width), width < 768 ? 40 : 64);
+      const actions = await page.locator(width < 768 ? ".header-info .header-control, .hours-unavailable" : ".header-actions > a, .header-control, .hours-unavailable").evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().toJSON()).filter(box => box.height));
       assert.equal(actions.length, 3);
       assert.ok(actions.every(action => Math.abs(action.top + action.height / 2 - actions[0].top - actions[0].height / 2) < 1));
-      assert.equal(await page.locator('.header-actions a[aria-current="page"]').count(), 0);
+      assert.equal(await page.locator('.header-actions > a[aria-current="page"]').count(), 0);
       assert.equal(await page.locator(".catalog-bar").getByRole("link", { name: "Catálogo", exact: true }).count(), 0);
-      const targets = await page.locator("button, input:not([type=hidden]), select, .button, .chip").evaluateAll(nodes => nodes.filter(n => n.getBoundingClientRect().height > 0).map(n => ({ tag: n.tagName, height: n.getBoundingClientRect().height })));
-      assert.equal(targets.every(target => target.height >= 44), true, JSON.stringify(targets));
+      const targets = await page.locator("button, input:not([type=hidden]), select, .button, .chip").evaluateAll(nodes => nodes.filter(n => n.getBoundingClientRect().height > 0).map(n => ({ tag: n.tagName, height: n.getBoundingClientRect().height, search: !!n.closest(".search-form") })));
+      assert.equal(targets.every(target => target.height >= (width < 768 && target.search ? 36 : 44)), true, JSON.stringify(targets));
       const steppers = await page.locator(".quantity-adjust").evaluateAll(nodes => nodes.map(n => n.getBoundingClientRect().width));
       assert.equal(steppers.every(width => width >= 44), true);
       await page.screenshot({ path: `.qa/screenshots/catalog-${width}.png`, fullPage: true });
@@ -153,7 +165,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     await page.waitForURL(url => url.searchParams.get("q") === "QA Marca");
     await page.locator(".category-select button").waitFor({ state: "hidden" });
     assert.equal(await page.locator(".product-card").count(), 1);
-    await page.locator("#category-filter").selectOption("qa-cotillon");
+    await selectMobileCategory(page, "QA Cotillón (test)");
     await page.waitForURL(url => url.searchParams.get("categoria") === "qa-cotillon");
     await page.getByRole("heading", { name: "No encontramos productos" }).waitFor();
     assert.equal(await page.locator("#catalog-search").inputValue(), "QA Marca");
@@ -182,15 +194,14 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     assert.equal(await page.locator("#catalog-search").inputValue(), "QA Marca");
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${base}/carrito/`);
-    await page.locator("#category-filter").selectOption("qa-cotillon");
+    await selectMobileCategory(page, "QA Cotillón (test)");
     await page.waitForURL(url => url.pathname === "/" && url.searchParams.get("categoria") === "qa-cotillon");
     assert.equal(await page.locator(".product-card").count(), 1);
     assert.equal(await page.locator("#catalog-search").inputValue(), "");
     const plain = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
     const plainPage = await plain.newPage();
     await plainPage.goto(`${base}/carrito/`);
-    await plainPage.locator("#category-filter").selectOption("qa-cotillon");
-    await plainPage.getByRole("button", { name: "Filtrar", exact: true }).click();
+    await selectMobileCategory(plainPage, "QA Cotillón (test)");
     await plainPage.waitForURL(url => url.pathname === "/" && url.searchParams.get("categoria") === "qa-cotillon");
     assert.equal(await plainPage.locator(".product-card").count(), 1);
     await plain.close();
@@ -210,7 +221,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
           await img.decode();
           const frame = img.closest(".product-image").getBoundingClientRect();
           const link = img.parentElement.getBoundingClientRect(), box = img.getBoundingClientRect();
-          const scale = Math.max(box.width / img.naturalWidth, box.height / img.naturalHeight);
+          const scale = (innerWidth < 768 ? Math.min : Math.max)(box.width / img.naturalWidth, box.height / img.naturalHeight);
           const paintedWidth = img.naturalWidth * scale, paintedHeight = img.naturalHeight * scale;
           return { height: frame.height, linkHeight: link.height, imageHeight: box.height,
             fits: box.left >= frame.left && box.right <= frame.right && box.top >= frame.top && box.bottom <= frame.bottom,
@@ -222,8 +233,9 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
         assert.equal(dimensions.linkHeight, dimensions.height);
         assert.equal(dimensions.imageHeight, dimensions.height);
         assert.equal(dimensions.fits && dimensions.centered, true);
-        assert.equal(dimensions.fit, "cover");
-        assert.ok(dimensions.paintedWidth >= dimensions.width - .1 && dimensions.paintedHeight >= dimensions.height - .1);
+        assert.equal(dimensions.fit, width < 768 ? "contain" : "cover");
+        if (width < 768) assert.ok(dimensions.paintedWidth <= dimensions.width + .1 && dimensions.paintedHeight <= dimensions.height + .1);
+        else assert.ok(dimensions.paintedWidth >= dimensions.width - .1 && dimensions.paintedHeight >= dimensions.height - .1);
         ratios.push(dimensions.ratio);
         await photo.screenshot({ path: `.qa/screenshots/photo-${width}-${ratios.length}.png` });
         await photo.click();
@@ -329,8 +341,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
     const plain = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 360, height: 844 } });
     const plainPage = await plain.newPage();
     await plainPage.goto(`${base}/?q=QA`);
-    await plainPage.locator("#category-filter").selectOption("qa-cotillon");
-    await plainPage.getByRole("button", { name: "Filtrar", exact: true }).click();
+    await selectMobileCategory(plainPage, "QA Cotillón (test)");
     assert.equal(await plainPage.locator(".product-card").count(), 1);
     assert.equal(await plainPage.locator("#catalog-search").inputValue(), "QA");
     assert.equal(await plainPage.locator("#category-filter").inputValue(), "qa-cotillon");
@@ -1039,8 +1050,8 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
         for (const width of [320, 359, 360, 390, 399, 400, 600]) {
           await compact.setViewportSize({ width, height: 844 });
           const layout = await compact.locator(".header-actions").evaluate(node => {
-            const bounds = node.getBoundingClientRect();
-            const controls = [...node.querySelectorAll("summary, .cart-link")].map(control => control.getBoundingClientRect());
+            const bounds = node.closest(".header-inner").getBoundingClientRect();
+            const controls = [...node.querySelectorAll("summary, .cart-link")].map(control => control.getBoundingClientRect()).filter(box => box.height);
             return { fits: controls.every(control => control.left >= bounds.left && control.right <= bounds.right),
               touch: controls.every(control => control.width >= 44 && control.height >= 44),
               scroll: document.documentElement.scrollWidth <= innerWidth };
@@ -1150,7 +1161,7 @@ test("MVP en navegador aislado: catálogo, carrito, Admin y WhatsApp", { timeout
       assert.equal(await page.locator(".product-card").count(), end - start + 1);
       await page.getByText(`Página ${number} de 3`, { exact: true }).waitFor();
       seen.push(...await page.locator(".product-card").evaluateAll(nodes => nodes.map(node => node.getAttribute("aria-labelledby"))));
-      for (const [width, columns] of [[1920, 5], [1440, 5], [1280, 4]]) {
+      for (const [width, columns] of [[1920, 5], [1440, 5], [1280, 4], [390, 2], [320, 2]]) {
         await page.setViewportSize({ width, height: 1080 });
         const rows = await page.locator(".product-card").evaluateAll(cards => {
           const rows = [];
@@ -1543,7 +1554,7 @@ test("Encabezado: espacio, paneles por mouse, teclado y toque", { timeout: 60000
       await page.setViewportSize({ width, height: 900 });
       const bounds = await page.locator("header").evaluate(header => {
         const search = header.querySelector(".search-form").getBoundingClientRect();
-        const actions = [...header.querySelectorAll(".header-control, .cart-link")].map(node => ({ ...node.getBoundingClientRect().toJSON(), font: parseFloat(getComputedStyle(node).fontSize) }));
+        const actions = [...header.querySelectorAll(".header-control, .cart-link")].map(node => ({ ...node.getBoundingClientRect().toJSON(), font: parseFloat(getComputedStyle(node).fontSize) })).filter(box => box.height).sort((left, right) => left.left - right.left);
         return { search: search.toJSON(), actions };
       });
       assert.ok(bounds.search.width <= 600);
@@ -2363,3 +2374,5 @@ test("WhatsApp: emojis íntegros en apertura directa y enlace de respaldo", { ti
 });
 
 require("./orders.browser.cjs");
+
+require("./mobile.browser.cjs");

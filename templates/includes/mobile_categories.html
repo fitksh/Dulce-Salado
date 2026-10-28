@@ -1,0 +1,9 @@
+<details class="mobile-categories" data-header-panel data-click-only>
+  <summary class="header-control{% if selected_category %} category-active{% endif %}" aria-controls="mobile-category-list" aria-label="Categorías: {% if selected_category %}{{ selected_category.name }}{% else %}Todas las categorías{% endif %}">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="3" cy="6" r="1"/><circle cx="3" cy="12" r="1"/><circle cx="3" cy="18" r="1"/></svg>
+    Categorías
+  </summary>
+  <nav id="mobile-category-list" class="header-panel-content category-menu" aria-label="Filtrar por categoría">
+    {% include "includes/category_links.html" %}
+  </nav>
+</details>
